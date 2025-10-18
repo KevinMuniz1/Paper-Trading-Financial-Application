@@ -3,7 +3,8 @@ function LoggedInName()
 function doLogout(event:any) : void
 {
 event.preventDefault();
-alert('doLogout');
+localStorage.removeItem("user_data")
+window.location.href = '/';
 };
 return(
 <div id="loggedInDiv">
