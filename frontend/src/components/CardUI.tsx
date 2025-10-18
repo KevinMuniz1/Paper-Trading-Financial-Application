@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 
 
-const [message,setMessage] = useState('');
-const [searchResults,setResults] = useState('');
-const [cardList,setCardList] = useState('');
-const [search,setSearchValue] = React.useState('');
-const [card,setCardNameValue] = React.useState('');
+function CardUI()
+{
+
+    const [message,setMessage] = React.useState('');
+    const [searchResults,setResults] = React.useState('');
+    const [cardList,setCardList] = React.useState('');
+    const [search,setSearchValue] = React.useState('');
+    const [card,setCardNameValue] = React.useState('');
 
 function handleSearchTextChange( e: any ) : void
 {
@@ -16,9 +19,7 @@ function handleCardTextChange( e: any ) : void
 {
 setCardNameValue( e.target.value );
 }
-76
-function CardUI()
-{
+
 function addCard(e: any) : void
 {
     e.preventDefault();

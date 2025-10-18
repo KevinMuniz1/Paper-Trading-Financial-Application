@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 
-const [message,setMessage] = useState('');
-const [loginName,setLoginName] = React.useState('');
-const [loginPassword,setPassword] = React.useState('');
+function Login()
+{
+
+    const [message,setMessage] = React.useState('');
+    const [loginName,setLoginName] = React.useState('');
+    const [loginPassword,setPassword] = React.useState('');
 
 function handleSetLoginName( e: any ) : void
 {
@@ -12,8 +15,7 @@ function handleSetPassword( e: any ) : void
 {
 setPassword( e.target.value );
 }
-function Login()
-{
+
 function doLogin(event:any) : void
 {
     event.preventDefault();
