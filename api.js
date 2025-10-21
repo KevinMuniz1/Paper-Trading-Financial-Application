@@ -1,3 +1,9 @@
+require('express');
+require('mongodb');
+
+exports.setApp = function ( app, client )
+{
+
 app.post('/api/login', async (req, res, next) =>
 {
 // incoming: login, password
@@ -57,3 +63,4 @@ _ret.push( results[i].User);
 var ret = {results:_ret, error:error};
 res.status(200).json(ret);
 });
+}

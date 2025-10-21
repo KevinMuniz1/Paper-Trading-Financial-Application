@@ -2,6 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const { MongoClient } = require('mongodb'); 
+const { PORT, MONGODB_URL } = require('./config');
 
 const app = express();
 
@@ -35,5 +36,7 @@ app.get('/', (req, res) => {
   res.send('Server is alive!');
 });
 
-app.listen(5000, () => console.log("Server running on port 5000"));
+
+
+app.listen(PORT, () => console.log("Server running on port" + PORT));
 
