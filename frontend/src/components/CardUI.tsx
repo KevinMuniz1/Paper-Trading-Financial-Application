@@ -18,11 +18,11 @@ function CardUI() {
   {
   if (import.meta.env.MODE != 'development')
   {
-  return 'http://' + app_name + ':5000/' + route;
+  return 'http://' + app_name + ':5050/' + route;
   }
   else
   {
-  return 'http://localhost:5000/' + route;
+  return 'http://localhost:5050/' + route;
   }
   }
 
