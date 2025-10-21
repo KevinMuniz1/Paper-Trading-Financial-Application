@@ -38,7 +38,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           port: ${{ secrets.SERVER_PORT }}
-          source: "./server.js, ./package.json, ./package-lock.json"
+          source: "./server.js, ./package.json, ./package-lock.json, ./config.js, ./api.js"
           target: "/var/paperTradeServer"
 
       # 5️ Deploy built frontend to /var/www/html
