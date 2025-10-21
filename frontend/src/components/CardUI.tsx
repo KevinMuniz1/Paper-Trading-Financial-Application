@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { buildPath } from './Path';
 
 function CardUI() {
 
@@ -13,18 +14,6 @@ function CardUI() {
   const [search, setSearchValue] = useState('');
   const [card, setCardNameValue] = useState('');
 
-  const app_name = 'paper-trade-app.com';
-  function buildPath(route:string) : string
-  {
-  if (import.meta.env.MODE != 'development')
-  {
-  return 'http://' + app_name + ':5000/' + route;
-  }
-  else
-  {
-  return 'http://localhost:5000/' + route;
-  }
-  }
 
   function handleSearchTextChange(e: any): void {
     setSearchValue(e.target.value);
@@ -41,9 +30,11 @@ function CardUI() {
     const js = JSON.stringify(obj);
 
     try {
-      const response = await fetch(buildPath('api/searchCards'),
-      {method:'POST',body:js,headers:{'Content-Type':
-      'application/json'}});
+      const response = await fetch(buildPath('searchcards'), { 
+        method: 'POST',
+        body: js,
+        headers: { 'Content-Type': 'application/json' },
+      });
 
       const txt = await response.text();
       const res = JSON.parse(txt);
@@ -71,9 +62,11 @@ function CardUI() {
     const js = JSON.stringify(obj);
 
     try {
-      const response = await fetch(buildPath('api/addCard'),
-      {method:'POST',body:js,headers:{'Content-Type':
-      'application/json'}});
+      const response = await fetch(buildPath('addcard'), { 
+        method: 'POST',
+        body: js,
+        headers: { 'Content-Type': 'application/json' },
+      });
 
       const txt = await response.text();
       const res = JSON.parse(txt);
