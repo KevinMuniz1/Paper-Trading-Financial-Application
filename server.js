@@ -92,4 +92,4 @@ app.get('/', (req, res) => {
   res.send('Server is alive!');
 });
 
-app.listen(5050, () => console.log("Server running on port 5050")); // start Node + Express server on port 5000
+app.listen(5000, () => console.log("Server running on port 5000")); // start Node + Express server on port 5000
