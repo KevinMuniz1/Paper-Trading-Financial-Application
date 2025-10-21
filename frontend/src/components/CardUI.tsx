@@ -13,16 +13,16 @@ function CardUI() {
   const [search, setSearchValue] = useState('');
   const [card, setCardNameValue] = useState('');
 
-  const app_name = 'cop4331-5.com';
+  const app_name = 'paper-trade-app.com';
   function buildPath(route:string) : string
   {
   if (import.meta.env.MODE != 'development')
   {
-  return 'http://' + app_name + ':5050/' + route;
+  return 'http://' + app_name + ':5000/' + route;
   }
   else
   {
-  return 'http://localhost:5050/' + route;
+  return 'http://localhost:5000/' + route;
   }
   }
 
