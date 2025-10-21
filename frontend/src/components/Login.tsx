@@ -1,10 +1,23 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 function Login() {
   const [message, setMessage] = useState('');
   const [loginName, setLoginName] = useState('');
   const [loginPassword, setPassword] = useState('');
+
+  const app_name = "paper-trade-app.com";
+  function buildPath(route:string) : string
+{
+if (import.meta.env.MODE != 'development')
+{
+return 'http://' + app_name + ':5050/' + route;
+}
+else
+{
+return 'http://localhost:5050/' + route;
+}
+}
 
   const navigate = useNavigate();
 
@@ -15,11 +28,9 @@ function Login() {
     const js = JSON.stringify(obj);
 
     try {
-      const response = await fetch('http://localhost:5000/api/login', {
-        method: 'POST',
-        body: js,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      const response = await fetch(buildPath('api/login'),
+      {method:'POST',body:js,headers:{'Content-Type':
+      'application/json'}});
 
       const res = JSON.parse(await response.text());
 

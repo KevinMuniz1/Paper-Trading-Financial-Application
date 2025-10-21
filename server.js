@@ -4,22 +4,17 @@ const cors = require('cors');
 const { MongoClient } = require('mongodb'); 
 
 const app = express();
-app.use(cors());
-app.use(express.json());
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'Origin, X-Requested-With, Content-Type, Accept, Authorization'
-  );
-  res.setHeader(
-    'Access-Control-Allow-Methods',
-    'GET, POST, PATCH, DELETE, OPTIONS'
-  );
-  next();
-});
 
-const url = "mongodb+srv://admin:password123%2A%2A@finance-app.ilbngw2.mongodb.net/?retryWrites=true&w=majority&appName=Finance-app";
+app.use(cors({
+  origin: 'http://localhost:5173',
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
+app.use(express.json());
+
+require('dotenv').config();
+const url = process.env.MONGODB_URL;
 const client = new MongoClient(url);
 
 async function connectDB() {
@@ -97,4 +92,4 @@ app.get('/', (req, res) => {
   res.send('Server is alive!');
 });
 
-app.listen(5000, () => console.log("Server running on port 5000")); // start Node + Express server on port 5000
+app.listen(5050, () => console.log("Server running on port 5050")); // start Node + Express server on port 5000
