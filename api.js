@@ -1,5 +1,7 @@
 require('express');
 require('mongodb');
+require('dotenv').config(); 
+const { PORT, MONGODB_URL } = require('./config');
 
 exports.setApp = function ( app, client )
 {
