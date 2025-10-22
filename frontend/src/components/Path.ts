@@ -1,10 +1,10 @@
-const app_name = 'paper-trade-app.com';
-const { PORT, MONGODB_URL } = require('./config');
+// Path.ts - API configuration for frontend
 
-export function buildPath(route: string): string {
-  if (process.env.MODE !== 'development') {
-    return 'https://' + app_name + '/api/' + route;
-  } else {
-    return 'http://localhost:' + PORT + '/api/' + route;
-  }
-}
+const isDevelopment = window.location.hostname === 'localhost';
+const API_BASE_URL = isDevelopment 
+  ? 'http://localhost:5000/api' 
+  : 'http://paper-trade-app.com/api';
+
+export const buildPath = (route: string): string => {
+  return `${API_BASE_URL}/${route}`;
+};
