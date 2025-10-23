@@ -32,8 +32,8 @@ app.post('/api/addcard', async (req, res, next) =>
 {
 // incoming: userId, color
 // outgoing: error
-const { userId, user } = req.body;
-const newUser = {userId, user};
+const { userId, User } = req.body;
+const newUser = {userId, User};
 var error = '';
 try
 {

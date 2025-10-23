@@ -13,7 +13,7 @@ function CardUI() {
   const [searchResults, setResults] = useState('');
   const [cardList, setCardList] = useState('');
   const [search, setSearchValue] = useState('');
-  const [user, setCardNameValue] = useState('');
+  const [User, setCardNameValue] = useState('');
 
 
   function handleSearchTextChange(e: any): void {
@@ -58,7 +58,7 @@ function CardUI() {
 
   async function addCard(e: any): Promise<void> {
     e.preventDefault();
-    const obj = { userId, user };
+    const obj = { userId, User };
     const js = JSON.stringify(obj);
 
     try {
