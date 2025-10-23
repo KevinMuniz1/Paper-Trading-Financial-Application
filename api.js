@@ -33,12 +33,12 @@ app.post('/api/addcard', async (req, res, next) =>
 // incoming: userId, color
 // outgoing: error
 const { userId, user } = req.body;
-const newUser = {User:user,UserId:userId};
+const newUser = {userId, user};
 var error = '';
 try
 {
 const db = client.db('Finance-app');
-const result = db.collection('Users').insertOne(newUser);
+await db.collection('Users').insertOne(newUser);
 }
 catch(e)
 {
