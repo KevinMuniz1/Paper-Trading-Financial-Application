@@ -17,13 +17,13 @@ function Login() {
 
     const obj = { login: loginName, password: loginPassword };
     const js = JSON.stringify(obj);
-    
+
     try {
-    const response = await fetch(buildPath('login'), {
-  method: 'POST',
-  body: js,
-  headers: { 'Content-Type': 'application/json' }
-});
+      const response = await fetch(buildPath('login'), {
+        method: 'POST',
+        body: js,
+        headers: { 'Content-Type': 'application/json' }
+      });
 
       const res = JSON.parse(await response.text());
 
@@ -37,7 +37,7 @@ function Login() {
         };
         localStorage.setItem('user_data', JSON.stringify(user));
         setMessage('');
-        navigate('/cards');
+        navigate('/dashboard');
       }
     } catch (error: any) {
       alert(error.toString());
@@ -67,6 +67,15 @@ function Login() {
         onClick={doLogin}
       /><br />
       <span id="loginResult">{message}</span>
+
+      {/*<p>Don't have an account? <a href="/register">Register here</a></p>*/}
+      <div style={{ marginTop: '20px', textAlign: 'center' }}>
+        <span>Don't have an account? </span>
+        <a href="/register" style={{ color: '#007bff', textDecoration: 'underline' }}>
+          Register here
+        </a>
+      </div>
+
     </div>
   );
 }

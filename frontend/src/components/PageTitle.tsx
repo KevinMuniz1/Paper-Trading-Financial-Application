@@ -1,7 +1,6 @@
-function PageTitle()
-{
-return(
-<h1 id="title">MERN Stack Project</h1>
-);
+function PageTitle() {
+    return (
+        <h1 id="title">SimpliTrade: Stock & Crypto</h1>
+    );
 };
 export default PageTitle;
