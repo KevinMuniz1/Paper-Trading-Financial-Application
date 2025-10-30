@@ -1,6 +1,12 @@
 function PageTitle() {
     return (
-        <h1 id="title">SimpliTrade: Stock & Crypto</h1>
-    );
-};
+    
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">SimpliTrade</h1>
+        <p className="text-sm text-gray-500">STOCK & CRYPTO</p>
+      </div>
+
+  );
+}
+
 export default PageTitle;
