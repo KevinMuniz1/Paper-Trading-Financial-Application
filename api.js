@@ -40,18 +40,23 @@ exports.setApp = function (app, client) {
 
     // REGISTER USERS
     app.post('/api/register', async (req, res, next) => {
-        // incoming: firstName, lastName, login, password 
+        // incoming: firstName, lastName, email, login, password 
         // outgoing: id, error
         var error = '';
-        const { firstName, lastName, login, password } = req.body;
+        const { firstName, lastName, email, login, password } = req.body;
         
         try {
             const db = client.db('Finance-app');
             // Check if username already exists
             const existingUser = await db.collection('Users').find({ Login: login }).toArray();
+            
+            // Check if email already exists
+            const existingEmail = await db.collection('Users').find({ Email: email }).toArray();
 
             if (existingUser.length > 0) {
                 error = 'Username already exists';
+            } else if (existingEmail.length > 0) {
+                error = 'Email already exists';
             } else {
                 // Find the next available UserID
                 const lastUser = await db.collection('Users').find().sort({ UserID: -1 }).limit(1).toArray();
@@ -62,6 +67,7 @@ exports.setApp = function (app, client) {
                 UserID: nextId,
                 FirstName: firstName,
                 LastName: lastName,
+                Email: email,
                 Login: login,
                 Password: password,
                 createdAt: new Date()

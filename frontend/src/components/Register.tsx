@@ -6,6 +6,7 @@ function Register() {
   const [message, setMessage] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
 
@@ -14,12 +15,12 @@ function Register() {
   async function doRegister(event: any): Promise<void> {
     event.preventDefault();
 
-    if (!firstName || !lastName || !login || !password) {
+    if (!firstName || !lastName || !email || !login || !password) {
       setMessage('Please fill in all fields');
       return;
     }
 
-    const obj = { firstName, lastName, login, password };
+    const obj = { firstName, lastName, email, login, password };
     const js = JSON.stringify(obj);
 
     try {
@@ -74,6 +75,18 @@ function Register() {
             placeholder="Enter your last name"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="email">Email</label>
+          <input
+            type="email"
+            id="email"
+            placeholder="Enter your email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
           />
         </div>

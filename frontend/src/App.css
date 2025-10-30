@@ -428,9 +428,7 @@ html, body {
   text-align: center;
 }
 
-/* Form group styling for registerDiv */
 #registerDiv .form-group {
-  margin-bottom: 1.5rem;
   text-align: left;
 }
 
@@ -465,6 +463,7 @@ html, body {
 
 #firstName,
 #lastName,
+#email,
 #username,
 #password {
   width: 100%;
@@ -481,6 +480,7 @@ html, body {
 
 #firstName:focus,
 #lastName:focus,
+#email:focus,
 #username:focus,
 #password:focus {
   outline: none;
@@ -490,6 +490,7 @@ html, body {
 
 #firstName:hover,
 #lastName:hover,
+#email:hover,
 #username:hover,
 #password:hover {
   border-color: #26c93a;
@@ -525,6 +526,7 @@ html, body {
 /* Autofill styling for register inputs */
 #firstName:-webkit-autofill,
 #lastName:-webkit-autofill,
+#email:-webkit-autofill,
 #username:-webkit-autofill,
 #password:-webkit-autofill {
   -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
