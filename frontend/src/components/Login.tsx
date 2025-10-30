@@ -25,10 +25,10 @@ function Login() {
         headers: { 'Content-Type': 'application/json' }
       });
 
-      const res = JSON.parse(await response.text());
+      const res = await response.json();
 
       if (res.id <= 0) {
-        setMessage('User/Password combination incorrect');
+        setMessage(res.error || 'User/Password combination incorrect');
       } else {
         const user = {
           firstName: res.firstName,
@@ -40,7 +40,8 @@ function Login() {
         navigate('/dashboard');
       }
     } catch (error: any) {
-      alert(error.toString());
+      console.error('Login error:', error);
+      setMessage('Connection error. Please check if the server is running.');
     }
   }
 

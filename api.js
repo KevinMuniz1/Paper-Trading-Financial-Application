@@ -68,14 +68,16 @@ exports.setApp = function (app, client) {
                 };
                 
                 await db.collection('Users').insertOne(newUser);
-                id = nextId;
+                var ret = { id: nextId, error: error };
+                res.status(200).json(ret);
+                return;
             }
 
         }
         catch (e) {
             error = e.toString();
         }
-        var ret = { error: error };
+        var ret = { id: -1, error: error };
         res.status(200).json(ret);
     });
 
