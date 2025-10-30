@@ -1,13 +1,13 @@
 import PageTitle from '../components/PageTitle.tsx';
 import Login from '../components/Login.tsx';
-import CardUI from '../components/CardUI';
+import Footer from '../components/footer.tsx';
 
 const LoginPage = () => {
     return (
-        <div>
+        <div className="login-page-container">
             <PageTitle />
             <Login />
-            {/* remove for separate routing CardUI /*/}
+            <Footer/>
         </div>
     );
 };

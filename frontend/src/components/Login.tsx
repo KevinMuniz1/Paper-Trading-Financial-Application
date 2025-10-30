@@ -46,36 +46,48 @@ function Login() {
 
   return (
     <div id="loginDiv">
-      <span id="inner-title">PLEASE LOG IN</span><br />
-      <input
-        type="text"
-        id="loginName"
-        placeholder="Username"
-        onChange={(e) => setLoginName(e.target.value)}
-      /><br />
-      <input
-        type="password"
-        id="loginPassword"
-        placeholder="Password"
-        onChange={(e) => setPassword(e.target.value)}
-      /><br />
-      <input
-        type="submit"
-        id="loginButton"
-        className="buttons"
-        value="Do It"
-        onClick={doLogin}
-      /><br />
-      <span id="loginResult">{message}</span>
+      <h2 id="inner-title">Welcome Back</h2>
+      
+      {message && (
+        <div className="error-message">
+          {message}
+        </div>
+      )}
+      
+      <form onSubmit={doLogin}>
+        <div className="form-group">
+          <label htmlFor="loginName">Username</label>
+          <input
+            type="text"
+            id="loginName"
+            placeholder="Enter your username"
+            value={loginName}
+            onChange={(e) => setLoginName(e.target.value)}
+            required
+          />
+        </div>
+        
+        <div className="form-group">
+          <label htmlFor="loginPassword">Password</label>
+          <input
+            type="password"
+            id="loginPassword"
+            placeholder="Enter your password"
+            value={loginPassword}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        
+        <button type="submit" id="loginButton">
+          Sign In
+        </button>
+      </form>
 
-      {/*<p>Don't have an account? <a href="/register">Register here</a></p>*/}
-      <div style={{ marginTop: '20px', textAlign: 'center' }}>
+      <div className="form-footer">
         <span>Don't have an account? </span>
-        <a href="/register" style={{ color: '#007bff', textDecoration: 'underline' }}>
-          Register here
-        </a>
+        <a href="/register">Register here</a>
       </div>
-
     </div>
   );
 }
