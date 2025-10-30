@@ -1,14 +1,15 @@
+import Layout from '../components/Layout';
 import PageTitle from '../components/PageTitle';
 import LoggedInName from '../components/LoggedInName';
 import Portfolio from '../components/Portfolio';
 
 const DashboardPage = () => {
     return (
-        <div>
+        <Layout>
             <PageTitle />
             <LoggedInName />
             <Portfolio/>
-        </div>
+        </Layout>
     );
 }
 export default DashboardPage;
