@@ -6,6 +6,7 @@ function Register() {
   const [message, setMessage] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
 
@@ -14,12 +15,12 @@ function Register() {
   async function doRegister(event: any): Promise<void> {
     event.preventDefault();
 
-    if (!firstName || !lastName || !login || !password) {
+    if (!firstName || !lastName || !email || !login || !password) {
       setMessage('Please fill in all fields');
       return;
     }
 
-    const obj = { firstName, lastName, login, password };
+    const obj = { firstName, lastName, email, login, password };
     const js = JSON.stringify(obj);
 
     try {
@@ -45,34 +46,84 @@ function Register() {
 
   return (
     <div id="registerDiv">
-      <span id="inner-title">CREATE ACCOUNT</span><br />
-      <input
-        type="text"
-        placeholder="First Name"
-        onChange={(e) => setFirstName(e.target.value)}
-      /><br />
-      <input
-        type="text"
-        placeholder="Last Name"
-        onChange={(e) => setLastName(e.target.value)}
-      /><br />
-      <input
-        type="text"
-        placeholder="Username"
-        onChange={(e) => setLogin(e.target.value)}
-      /><br />
-      <input
-        type="password"
-        placeholder="Password"
-        onChange={(e) => setPassword(e.target.value)}
-      /><br />
-      <input
-        type="submit"
-        className="buttons"
-        value="Register"
-        onClick={doRegister}
-      /><br />
-      <span id="registerResult">{message}</span>
+      <h2 id="register-title">Create Account</h2>
+      
+      {message && (
+        <div className={message.includes('successful') ? 'success-message' : 'error-message'}>
+          {message}
+        </div>
+      )}
+      
+      <form onSubmit={doRegister}>
+        <div className="form-group">
+          <label htmlFor="firstName">First Name</label>
+          <input
+            type="text"
+            id="firstName"
+            placeholder="Enter your first name"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            required
+          />
+        </div>
+        
+        <div className="form-group">
+          <label htmlFor="lastName">Last Name</label>
+          <input
+            type="text"
+            id="lastName"
+            placeholder="Enter your last name"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="email">Email</label>
+          <input
+            type="email"
+            id="email"
+            placeholder="Enter your email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+        
+        <div className="form-group">
+          <label htmlFor="username">Username</label>
+          <input
+            type="text"
+            id="username"
+            placeholder="Choose a username"
+            value={login}
+            onChange={(e) => setLogin(e.target.value)}
+            required
+          />
+        </div>
+        
+        <div className="form-group">
+          <label htmlFor="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            placeholder="Create a password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        
+        <button type="submit" id="registerButton">
+          Create Account
+        </button>
+      </form>
+
+      <div className="form-footer">
+        <span>Already have an account? </span>
+        <a href="/">Sign in here</a>
+      </div>
     </div>
   );
 }

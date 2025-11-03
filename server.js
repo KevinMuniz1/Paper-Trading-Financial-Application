@@ -2,8 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { MongoClient } = require('mongodb'); 
-const { PORT, MONGODB_URL } = require('./config');
 require('dotenv').config(); 
+const { PORT, MONGODB_URL } = require('./config');
 
 const app = express();
 
@@ -15,7 +15,8 @@ app.use(cors({
 
 app.use(express.json());
 
-const url = process.env.MONGODB_URL;
+const url = MONGODB_URL || process.env.MONGODB_URL || 'mongodb://localhost:27017/Finance-app';
+console.log('Connecting to MongoDB at:', url);
 const client = new MongoClient(url);
 
 async function connectDB() {
