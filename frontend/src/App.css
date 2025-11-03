@@ -8,9 +8,9 @@ html, body {
 
 #root {
   width: 100vw;
-  height: 100vh;
+  min-height: 100vh;
   margin: 0;
-  padding: 2rem;
+  padding: 0.5rem;
   text-align: center;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 80%);
   display: flex;
@@ -18,19 +18,20 @@ html, body {
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
+  overflow-y: auto;
 }
 
 .page-title-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 0.5rem;
 }
 
 .logo-image {
-  width: 200px;
-  height: 200px;
-  margin-bottom: 1rem;
+  width: 80px;
+  height: 80px;
+  margin-bottom: 0.3rem;
   filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.3));
   transition: transform 0.3s ease;
   border-radius: 30%;
@@ -42,9 +43,9 @@ html, body {
 
 #title {
   color: #ffffff;
-  font-size: 3.5rem;
+  font-size: 1.8rem;
   font-weight: 700;
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.3rem 0;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
   letter-spacing: -1px;
 }
@@ -52,9 +53,9 @@ html, body {
 /* Subtitle styling */
 .subTitle {
   color: #e8e8e8;
-  font-size: 1.2rem;
+  font-size: 0.85rem;
   font-weight: 300;
-  margin: 0 0 2rem 0;
+  margin: 0 0 0.5rem 0;
   text-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
   opacity: 0.9;
 }
@@ -254,11 +255,11 @@ html, body {
   background: linear-gradient(145deg, #ffffff, #f8f9fa);
   border: 1px solid #e1e5e9;
   border-radius: 16px;
-  padding: 2.5rem;
+  padding: 1.2rem;
   width: 100%;
-  max-width: 400px;
+  max-width: 380px;
   margin: 0 auto;
-  box-shadow: 
+  box-shadow:
     0 10px 25px rgba(0, 0, 0, 0.1),
     0 4px 10px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
@@ -288,13 +289,13 @@ html, body {
 #inner-title {
   color: #2c3e50;
   font-weight: 600;
-  font-size: 1.5rem;
-  margin-bottom: 1.5rem;
+  font-size: 1.3rem;
+  margin-bottom: 0.8rem;
   display: block;
 }
 
 #loginDiv .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.8rem;
   text-align: left;
 }
 
@@ -389,11 +390,11 @@ html, body {
   background: linear-gradient(145deg, #ffffff, #f8f9fa);
   border: 1px solid #e1e5e9;
   border-radius: 16px;
-  padding: 2.5rem;
+  padding: 0.8rem;
   width: 100%;
-  max-width: 400px;
+  max-width: 380px;
   margin: 0 auto;
-  box-shadow: 
+  box-shadow:
     0 10px 25px rgba(0, 0, 0, 0.1),
     0 4px 10px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
@@ -423,41 +424,42 @@ html, body {
 #register-title {
   color: #2c3e50;
   font-weight: 600;
-  font-size: 1.5rem;
-  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
   text-align: center;
 }
 
 #registerDiv .form-group {
+  margin-bottom: 0.5rem;
   text-align: left;
 }
 
 #registerDiv .form-group label {
   display: block;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.2rem;
   color: #495057;
   font-weight: 500;
-  font-size: 0.9rem;
+  font-size: 0.75rem;
 }
 
 /* Error and success message styling for registerDiv */
 #registerDiv .error-message {
   background-color: #fee;
   color: #c33;
-  padding: 0.75rem;
+  padding: 0.5rem;
   border-radius: 6px;
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
   text-align: center;
 }
 
 #registerDiv .success-message {
   background-color: #efe;
   color: #363;
-  padding: 0.75rem;
+  padding: 0.5rem;
   border-radius: 6px;
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
   text-align: center;
 }
 
@@ -467,14 +469,14 @@ html, body {
 #username,
 #password {
   width: 100%;
-  padding: 0.875rem 1rem;
+  padding: 0.5rem 0.7rem;
   border: 2px solid #e1e5e9;
   border-radius: 8px;
-  font-size: 1rem;
+  font-size: 0.85rem;
   background-color: #ffffff;
   transition: all 0.3s ease;
   box-sizing: border-box;
-  margin-bottom: 1rem;
+  margin-bottom: 0;
   color: #333333;
 }
 
@@ -498,16 +500,16 @@ html, body {
 
 #registerButton {
   width: 100%;
-  padding: 0.875rem 1.5rem;
+  padding: 0.6rem 1.5rem;
   background: linear-gradient(135deg, #1a7221, #26c93a);
   color: white;
   border: none;
   border-radius: 8px;
-  font-size: 1rem;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  margin-top: 1rem;
+  margin-top: 0.5rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
