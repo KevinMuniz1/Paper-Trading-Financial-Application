@@ -6,6 +6,7 @@ import DashboardPage from './pages/DashboardPage';
 import NewViewPage from './pages/NewViewPage';
 import PortfolioPage from './pages/PortfolioPage';
 import TradePage from './pages/TradePage';
+import VerifyEmailPage from "./pages/VerifyEmailPage";
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
           <Route path="/" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
         </Routes>
       </BrowserRouter>
     </div></div>
