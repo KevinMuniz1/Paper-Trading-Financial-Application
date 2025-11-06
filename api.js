@@ -52,7 +52,7 @@ exports.setApp = function (app, client) {
         // incoming: firstName, lastName, email, login, password
         // outgoing: id, error
         var error = '';
-        const { firstName, lastName, email, login, password} = req.body;
+        const { firstName, lastName, email, login, password } = req.body;
 
         try {
             const db = client.db('Finance-app');
@@ -77,6 +77,8 @@ exports.setApp = function (app, client) {
                     Login: login,
                     Password: password,
                     isEmailVerified: false,
+                    emailVerificationToken: null,
+                    verificationTokenExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
                     createdAt: new Date()
                 };
 
@@ -102,7 +104,16 @@ exports.setApp = function (app, client) {
                     if (emailResult.success) {
                         //console.error('Failed to send verification email:', emailResult.error);
                         console.error('email success');
-                    }else{
+
+                        await db.collection('Users').updateOne(
+                            { UserID: newUser.userId },
+                            {
+                                $set: {
+                                    emailVerificationToken: verificationToken
+                                }
+                            }
+                        );
+                    } else {
                         console.error('Failed to send verification email:', emailResult.error);
                     }
                 } catch (emailError) {
@@ -194,17 +205,34 @@ exports.setApp = function (app, client) {
 
             const decoded = verifyEmailToken(token);
 
-            // Update user verification status in database
-            const db = client.db('Finance-app');
-            await db.collection('Users').updateOne(
-                { UserID: decoded.userId },
-                { $set: { isEmailVerified: true } }
-            );
 
-            res.status(200).json({
-                success: true,
-                message: 'Email verified successfully'
+            const db = client.db('Finance-app');
+
+            const user = await db.collection('Users').findOne({
+                emailVerificationToken: token
             });
+
+            if (!user) {
+                error = 'Invalid verification token';
+            } else {
+
+                // Update user verification status in database
+                await db.collection('Users').updateOne(
+                    { UserID: decoded.userId },
+                    {
+                        $set: {
+                            isEmailVerified: true,
+                            emailVerificationToken: null,
+                            verificationTokenExpires: null
+                        }
+                    }
+                );
+
+                res.status(200).json({
+                    success: true,
+                    message: 'Email verified successfully'
+                });
+            }
         } catch (error) {
             res.status(400).json({
                 success: false,
@@ -264,7 +292,7 @@ exports.setApp = function (app, client) {
             // hash the password
             await db.collection('Users').updateOne(
                 { UserID: decoded.userId },
-                { $set: { Password: newPassword } } 
+                { $set: { Password: newPassword } }
             );
 
             res.status(200).json({
