@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const MyApp());
@@ -308,7 +309,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
 }
 
 // Home Screen
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   final String firstName;
   final String lastName;
 
@@ -317,6 +318,113 @@ class HomeScreen extends StatelessWidget {
     required this.firstName,
     required this.lastName,
   });
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  double _buyingPower = 10000.0; // Default starting buying power
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBuyingPower();
+  }
+
+  Future<void> _testSharedPreferences() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('test', 'working');
+      final test = prefs.getString('test');
+      print('SharedPreferences test: $test');
+    } catch (e) {
+      print('SharedPreferences error: $e');
+    }
+  }
+
+  Future<void> _loadBuyingPower() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (mounted) {
+        setState(() {
+          _buyingPower = prefs.getDouble('buying_power') ?? 10000.0;
+        });
+      }
+    } catch (e) {
+      print('Error loading buying power: $e');
+      if (mounted) {
+        setState(() {
+          _buyingPower = 10000.0;
+        });
+      }
+    }
+  }
+
+  Future<void> _saveBuyingPower() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setDouble('buying_power', _buyingPower);
+    } catch (e) {
+      print('Error saving buying power: $e');
+    }
+  }
+
+  void _showAddFundsDialog() {
+    final TextEditingController amountController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Add Buying Power'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Current Balance: \$${_buyingPower.toStringAsFixed(2)}'),
+              const SizedBox(height: 15),
+              TextField(
+                controller: amountController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Amount to Add',
+                  prefixText: '\$',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final amount = double.tryParse(amountController.text);
+                if (amount != null && amount > 0) {
+                  setState(() {
+                    _buyingPower += amount;
+                  });
+                  _saveBuyingPower();
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Added \$${amount.toStringAsFixed(2)} to your buying power!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              },
+              child: const Text('Add Funds'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -331,43 +439,76 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Welcome Section
+            // Smaller Welcome Section
+            Text(
+              'Welcome ${widget.firstName} ${widget.lastName}',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 20),
+            
+            // Buying Power Section
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Colors.blue.shade400, Colors.blue.shade600],
+                  colors: [Colors.green.shade400, Colors.green.shade600],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.green.withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Welcome back,',
+                    'Buying Power',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 18,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 8),
                   Text(
-                    '$firstName $lastName',
+                    '\$${_buyingPower.toStringAsFixed(2)}',
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 28,
+                      fontSize: 32,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Ready to make some trades?',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 16,
+                  const SizedBox(height: 15),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _showAddFundsDialog,
+                      icon: const Icon(Icons.add, color: Colors.green),
+                      label: const Text(
+                        'Increase Buying Power',
+                        style: TextStyle(
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -393,14 +534,26 @@ class HomeScreen extends StatelessWidget {
                     'Portfolio',
                     Icons.pie_chart,
                     Colors.green,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const PortfolioPage()),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(width: 15),
                 Expanded(
                   child: _buildQuickActionCard(
-                    'Watchlist',
-                    Icons.visibility,
+                    'Stocks',
+                    Icons.trending_up,
                     Colors.orange,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const StocksPage()),
+                      );
+                    },
                   ),
                 ),
               ],
@@ -412,8 +565,9 @@ class HomeScreen extends StatelessWidget {
                 Expanded(
                   child: _buildQuickActionCard(
                     'Trade',
-                    Icons.trending_up,
+                    Icons.swap_horiz,
                     Colors.purple,
+                    () {},
                   ),
                 ),
                 const SizedBox(width: 15),
@@ -422,6 +576,7 @@ class HomeScreen extends StatelessWidget {
                     'Research',
                     Icons.search,
                     Colors.blue,
+                    () {},
                   ),
                 ),
               ],
@@ -432,31 +587,34 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickActionCard(String title, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Column(
-        children: [
-          Icon(
-            icon,
-            size: 40,
-            color: color,
-          ),
-          const SizedBox(height: 10),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
+  Widget _buildQuickActionCard(String title, IconData icon, Color color, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 40,
               color: color,
             ),
-          ),
-        ],
+            const SizedBox(height: 10),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -671,4 +829,1082 @@ class NewsScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+// Stock model
+class Stock {
+  final String symbol;
+  final String name;
+  final double price;
+  final double change;
+  final double changePercent;
+
+  Stock({
+    required this.symbol,
+    required this.name,
+    required this.price,
+    required this.change,
+    required this.changePercent,
+  });
+}
+
+// Portfolio holding model
+class PortfolioHolding {
+  final String symbol;
+  final String name;
+  final double shares;
+  final double averagePrice;
+  final double currentPrice;
+
+  PortfolioHolding({
+    required this.symbol,
+    required this.name,
+    required this.shares,
+    required this.averagePrice,
+    required this.currentPrice,
+  });
+
+  double get totalValue => shares * currentPrice;
+  double get totalCost => shares * averagePrice;
+  double get gainLoss => totalValue - totalCost;
+  double get gainLossPercent => totalCost > 0 ? (gainLoss / totalCost) * 100 : 0;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'symbol': symbol,
+      'name': name,
+      'shares': shares,
+      'averagePrice': averagePrice,
+      'currentPrice': currentPrice,
+    };
+  }
+
+  factory PortfolioHolding.fromJson(Map<String, dynamic> json) {
+    return PortfolioHolding(
+      symbol: json['symbol'],
+      name: json['name'],
+      shares: json['shares'],
+      averagePrice: json['averagePrice'],
+      currentPrice: json['currentPrice'],
+    );
+  }
+}
+
+// Portfolio Manager class
+class PortfolioManager {
+  static const String _portfolioKey = 'portfolio_holdings';
+  static const String _buyingPowerKey = 'buying_power';
+
+  static Future<List<PortfolioHolding>> getPortfolio() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final portfolioJson = prefs.getStringList(_portfolioKey) ?? [];
+      return portfolioJson
+          .map((json) => PortfolioHolding.fromJson(Map<String, dynamic>.from(jsonDecode(json))))
+          .toList();
+    } catch (e) {
+      print('Error loading portfolio: $e');
+      return [];
+    }
+  }
+
+  static Future<void> savePortfolio(List<PortfolioHolding> portfolio) async {
+    final prefs = await SharedPreferences.getInstance();
+    final portfolioJson = portfolio.map((holding) => jsonEncode(holding.toJson())).toList();
+    await prefs.setStringList(_portfolioKey, portfolioJson);
+  }
+
+  static Future<double> getBuyingPower() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getDouble(_buyingPowerKey) ?? 10000.0;
+    } catch (e) {
+      print('Error loading buying power: $e');
+      return 10000.0;
+    }
+  }
+
+  static Future<void> saveBuyingPower(double buyingPower) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_buyingPowerKey, buyingPower);
+  }
+
+  static Future<bool> buyStock(Stock stock, double dollarAmount) async {
+    final buyingPower = await getBuyingPower();
+    if (dollarAmount > buyingPower) {
+      return false; // Insufficient funds
+    }
+
+    final shares = dollarAmount / stock.price;
+    final portfolio = await getPortfolio();
+    
+    // Check if we already own this stock
+    final existingIndex = portfolio.indexWhere((holding) => holding.symbol == stock.symbol);
+    
+    if (existingIndex >= 0) {
+      // Update existing holding
+      final existing = portfolio[existingIndex];
+      final totalShares = existing.shares + shares;
+      final totalCost = (existing.shares * existing.averagePrice) + dollarAmount;
+      final newAveragePrice = totalCost / totalShares;
+      
+      portfolio[existingIndex] = PortfolioHolding(
+        symbol: stock.symbol,
+        name: stock.name,
+        shares: totalShares,
+        averagePrice: newAveragePrice,
+        currentPrice: stock.price,
+      );
+    } else {
+      // Add new holding
+      portfolio.add(PortfolioHolding(
+        symbol: stock.symbol,
+        name: stock.name,
+        shares: shares,
+        averagePrice: stock.price,
+        currentPrice: stock.price,
+      ));
+    }
+
+    await savePortfolio(portfolio);
+    await saveBuyingPower(buyingPower - dollarAmount);
+    return true;
+  }
+
+  static Future<bool> sellStock(Stock stock, double dollarAmount) async {
+    final portfolio = await getPortfolio();
+    final holdingIndex = portfolio.indexWhere((holding) => holding.symbol == stock.symbol);
+    
+    if (holdingIndex < 0) {
+      return false; // Don't own this stock
+    }
+
+    final holding = portfolio[holdingIndex];
+    final sharesToSell = dollarAmount / stock.price;
+    
+    if (sharesToSell > holding.shares) {
+      return false; // Don't have enough shares
+    }
+
+    final buyingPower = await getBuyingPower();
+    
+    if (sharesToSell >= holding.shares) {
+      // Sell all shares
+      portfolio.removeAt(holdingIndex);
+    } else {
+      // Sell partial shares
+      portfolio[holdingIndex] = PortfolioHolding(
+        symbol: holding.symbol,
+        name: holding.name,
+        shares: holding.shares - sharesToSell,
+        averagePrice: holding.averagePrice,
+        currentPrice: stock.price,
+      );
+    }
+
+    await savePortfolio(portfolio);
+    await saveBuyingPower(buyingPower + dollarAmount);
+    return true;
+  }
+}
+
+// Stocks Page
+class StocksPage extends StatefulWidget {
+  const StocksPage({super.key});
+
+  @override
+  State<StocksPage> createState() => _StocksPageState();
+}
+
+class _StocksPageState extends State<StocksPage> {
+  List<Stock> _stocks = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStocks();
+  }
+
+  void _loadStocks() {
+    // Simulated top 20 US stocks with sample data
+    _stocks = [
+      Stock(symbol: 'AAPL', name: 'Apple Inc.', price: 182.52, change: 2.34, changePercent: 1.30),
+      Stock(symbol: 'MSFT', name: 'Microsoft Corporation', price: 378.85, change: -1.22, changePercent: -0.32),
+      Stock(symbol: 'GOOGL', name: 'Alphabet Inc.', price: 141.80, change: 3.45, changePercent: 2.49),
+      Stock(symbol: 'AMZN', name: 'Amazon.com Inc.', price: 145.86, change: 0.92, changePercent: 0.63),
+      Stock(symbol: 'NVDA', name: 'NVIDIA Corporation', price: 875.28, change: 15.67, changePercent: 1.82),
+      Stock(symbol: 'TSLA', name: 'Tesla Inc.', price: 248.98, change: -4.32, changePercent: -1.71),
+      Stock(symbol: 'META', name: 'Meta Platforms Inc.', price: 325.16, change: 8.21, changePercent: 2.59),
+      Stock(symbol: 'BRK.B', name: 'Berkshire Hathaway Inc.', price: 442.75, change: 1.85, changePercent: 0.42),
+      Stock(symbol: 'JPM', name: 'JPMorgan Chase & Co.', price: 154.32, change: -0.98, changePercent: -0.63),
+      Stock(symbol: 'JNJ', name: 'Johnson & Johnson', price: 161.47, change: 0.34, changePercent: 0.21),
+      Stock(symbol: 'V', name: 'Visa Inc.', price: 267.89, change: 2.12, changePercent: 0.80),
+      Stock(symbol: 'PG', name: 'Procter & Gamble Co.', price: 155.23, change: -0.45, changePercent: -0.29),
+      Stock(symbol: 'UNH', name: 'UnitedHealth Group Inc.', price: 502.15, change: 6.78, changePercent: 1.37),
+      Stock(symbol: 'HD', name: 'Home Depot Inc.', price: 345.67, change: -2.34, changePercent: -0.67),
+      Stock(symbol: 'DIS', name: 'Walt Disney Co.', price: 95.32, change: 1.67, changePercent: 1.78),
+      Stock(symbol: 'MA', name: 'Mastercard Inc.', price: 412.89, change: 3.45, changePercent: 0.84),
+      Stock(symbol: 'BAC', name: 'Bank of America Corp.', price: 37.25, change: -0.12, changePercent: -0.32),
+      Stock(symbol: 'XOM', name: 'Exxon Mobil Corporation', price: 108.65, change: 2.87, changePercent: 2.71),
+      Stock(symbol: 'NFLX', name: 'Netflix Inc.', price: 445.23, change: -7.89, changePercent: -1.74),
+      Stock(symbol: 'CRM', name: 'Salesforce Inc.', price: 287.46, change: 4.23, changePercent: 1.49),
+    ];
+    
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Stocks'),
+        backgroundColor: Colors.blue,
+        centerTitle: true,
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: _stocks.length,
+              itemBuilder: (context, index) {
+                final stock = _stocks[index];
+                return _buildStockCard(stock);
+              },
+            ),
+    );
+  }
+
+  Widget _buildStockCard(Stock stock) {
+    final isPositive = stock.change >= 0;
+    final color = isPositive ? Colors.green : Colors.red;
+    
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            color: Colors.blue.shade50,
+            borderRadius: BorderRadius.circular(25),
+          ),
+          child: Center(
+            child: Text(
+              stock.symbol.length >= 2 ? stock.symbol.substring(0, 2) : stock.symbol,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.blue.shade700,
+              ),
+            ),
+          ),
+        ),
+        title: Text(
+          stock.symbol,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+        subtitle: Text(
+          stock.name,
+          style: TextStyle(
+            color: Colors.grey.shade600,
+            fontSize: 12,
+          ),
+        ),
+        trailing: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              '\$${stock.price.toStringAsFixed(2)}',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isPositive ? Icons.arrow_upward : Icons.arrow_downward,
+                  color: color,
+                  size: 16,
+                ),
+                Text(
+                  '${isPositive ? '+' : ''}${stock.change.toStringAsFixed(2)} (${isPositive ? '+' : ''}${stock.changePercent.toStringAsFixed(2)}%)',
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => StockDetailPage(stock: stock),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// Stock Detail Page with Chart
+class StockDetailPage extends StatefulWidget {
+  final Stock stock;
+
+  const StockDetailPage({super.key, required this.stock});
+
+  @override
+  State<StockDetailPage> createState() => _StockDetailPageState();
+}
+
+class _StockDetailPageState extends State<StockDetailPage> {
+  void _showBuyDialog(BuildContext context) {
+    final TextEditingController amountController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Buy ${widget.stock.symbol}'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Current Price: \$${widget.stock.price.toStringAsFixed(2)}'),
+              const SizedBox(height: 15),
+              TextField(
+                controller: amountController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Dollar Amount to Invest',
+                  prefixText: '\$',
+                  border: OutlineInputBorder(),
+                  helperText: 'Enter the amount you want to invest',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final amount = double.tryParse(amountController.text);
+                if (amount != null && amount > 0) {
+                  final success = await PortfolioManager.buyStock(widget.stock, amount);
+                  Navigator.of(context).pop();
+                  
+                  if (success) {
+                    final shares = amount / widget.stock.price;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Successfully bought ${shares.toStringAsFixed(4)} shares of ${widget.stock.symbol} for \$${amount.toStringAsFixed(2)}'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Insufficient buying power'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              child: const Text('Buy', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showSellDialog(BuildContext context) {
+    final TextEditingController amountController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Sell ${widget.stock.symbol}'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Current Price: \$${widget.stock.price.toStringAsFixed(2)}'),
+              const SizedBox(height: 15),
+              TextField(
+                controller: amountController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Dollar Amount to Sell',
+                  prefixText: '\$',
+                  border: OutlineInputBorder(),
+                  helperText: 'Enter the amount you want to sell',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final amount = double.tryParse(amountController.text);
+                if (amount != null && amount > 0) {
+                  final success = await PortfolioManager.sellStock(widget.stock, amount);
+                  Navigator.of(context).pop();
+                  
+                  if (success) {
+                    final shares = amount / widget.stock.price;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Successfully sold ${shares.toStringAsFixed(4)} shares of ${widget.stock.symbol} for \$${amount.toStringAsFixed(2)}'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Insufficient shares to sell'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('Sell', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isPositive = widget.stock.change >= 0;
+    final color = isPositive ? Colors.green : Colors.red;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.stock.symbol),
+        backgroundColor: Colors.blue,
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Stock Header
+            Card(
+              elevation: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.stock.symbol,
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      widget.stock.name,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    Text(
+                      '\$${widget.stock.price.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Icon(
+                          isPositive ? Icons.arrow_upward : Icons.arrow_downward,
+                          color: color,
+                          size: 20,
+                        ),
+                        Text(
+                          '${isPositive ? '+' : ''}${widget.stock.change.toStringAsFixed(2)} (${isPositive ? '+' : ''}${widget.stock.changePercent.toStringAsFixed(2)}%)',
+                          style: TextStyle(
+                            color: color,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            
+            // Simulated Chart
+            Card(
+              elevation: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Chart (1D)',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    Container(
+                      height: 200,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Stack(
+                          children: [
+                            // Chart background grid
+                            CustomPaint(
+                              size: const Size(double.infinity, 200),
+                              painter: GridPainter(),
+                            ),
+                            // Simulated chart line
+                            CustomPaint(
+                              size: const Size(double.infinity, 200),
+                              painter: SimpleChartPainter(isPositive: isPositive),
+                            ),
+                            // Chart info overlay
+                            Positioned(
+                              top: 10,
+                              left: 10,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.8),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  '1D Chart',
+                                  style: TextStyle(
+                                    color: Colors.grey.shade700,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            
+            // Action Buttons
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showBuyDialog(context),
+                    icon: const Icon(Icons.add_shopping_cart),
+                    label: const Text('Buy'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showSellDialog(context),
+                    icon: const Icon(Icons.sell),
+                    label: const Text('Sell'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Simple Chart Painter for visualization
+class SimpleChartPainter extends CustomPainter {
+  final bool isPositive;
+
+  SimpleChartPainter({required this.isPositive});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.width <= 0 || size.height <= 0) return;
+    
+    final paint = Paint()
+      ..color = isPositive ? Colors.green.withOpacity(0.7) : Colors.red.withOpacity(0.7)
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+
+    final path = Path();
+    
+    // Create a more realistic stock chart pattern
+    final points = <Offset>[];
+    final numPoints = 20;
+    
+    for (int i = 0; i < numPoints; i++) {
+      final x = (size.width / (numPoints - 1)) * i;
+      final baseY = size.height * 0.5;
+      
+      // Create more realistic price movement
+      final noise = (i * 37) % 40 - 20; // Pseudo-random noise
+      final trend = isPositive ? -i * 2 : i * 2; // Overall trend
+      final y = (baseY + noise + trend).clamp(size.height * 0.1, size.height * 0.9);
+      
+      points.add(Offset(x, y));
+    }
+
+    if (points.length >= 2) {
+      path.moveTo(points.first.dx, points.first.dy);
+      
+      // Create smooth curves between points
+      for (int i = 1; i < points.length; i++) {
+        if (i == 1) {
+          path.lineTo(points[i].dx, points[i].dy);
+        } else {
+          final previousPoint = points[i - 1];
+          final currentPoint = points[i];
+          final controlPoint1 = Offset(
+            previousPoint.dx + (currentPoint.dx - previousPoint.dx) * 0.3,
+            previousPoint.dy,
+          );
+          final controlPoint2 = Offset(
+            previousPoint.dx + (currentPoint.dx - previousPoint.dx) * 0.7,
+            currentPoint.dy,
+          );
+          path.cubicTo(
+            controlPoint1.dx, controlPoint1.dy,
+            controlPoint2.dx, controlPoint2.dy,
+            currentPoint.dx, currentPoint.dy,
+          );
+        }
+      }
+      
+      canvas.drawPath(path, paint);
+      
+      // Draw fill area under the line
+      final fillPath = Path.from(path);
+      fillPath.lineTo(size.width, size.height);
+      fillPath.lineTo(0, size.height);
+      fillPath.close();
+      
+      final fillPaint = Paint()
+        ..color = (isPositive ? Colors.green : Colors.red).withOpacity(0.1)
+        ..style = PaintingStyle.fill;
+      
+      canvas.drawPath(fillPath, fillPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// Portfolio Page
+class PortfolioPage extends StatefulWidget {
+  const PortfolioPage({super.key});
+
+  @override
+  State<PortfolioPage> createState() => _PortfolioPageState();
+}
+
+class _PortfolioPageState extends State<PortfolioPage> {
+  List<PortfolioHolding> _portfolio = [];
+  double _buyingPower = 0.0;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPortfolio();
+  }
+
+  Future<void> _loadPortfolio() async {
+    try {
+      final portfolio = await PortfolioManager.getPortfolio();
+      final buyingPower = await PortfolioManager.getBuyingPower();
+      
+      if (mounted) {
+        setState(() {
+          _portfolio = portfolio;
+          _buyingPower = buyingPower;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading portfolio page: $e');
+      if (mounted) {
+        setState(() {
+          _portfolio = [];
+          _buyingPower = 10000.0;
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error loading portfolio. Using default values.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    }
+  }
+
+  double get _totalPortfolioValue {
+    return _portfolio.fold(0.0, (sum, holding) => sum + holding.totalValue);
+  }
+
+  double get _totalGainLoss {
+    return _portfolio.fold(0.0, (sum, holding) => sum + holding.gainLoss);
+  }
+
+  double get _totalGainLossPercent {
+    final totalCost = _portfolio.fold(0.0, (sum, holding) => sum + holding.totalCost);
+    return totalCost > 0 ? (_totalGainLoss / totalCost) * 100 : 0;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Portfolio'),
+        backgroundColor: Colors.blue,
+        centerTitle: true,
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: _loadPortfolio,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Portfolio Summary
+                    Card(
+                      elevation: 4,
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Portfolio Summary',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 15),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Total Value',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                    Text(
+                                      '\$${_totalPortfolioValue.toStringAsFixed(2)}',
+                                      style: const TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    const Text(
+                                      'Total Gain/Loss',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${_totalGainLoss >= 0 ? '+' : ''}\$${_totalGainLoss.toStringAsFixed(2)} (${_totalGainLossPercent >= 0 ? '+' : ''}${_totalGainLossPercent.toStringAsFixed(2)}%)',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: _totalGainLoss >= 0 ? Colors.green : Colors.red,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 15),
+                            Row(
+                              children: [
+                                const Text(
+                                  'Buying Power: ',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                Text(
+                                  '\$${_buyingPower.toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    
+                    // Holdings
+                    const Text(
+                      'Your Holdings',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    
+                    if (_portfolio.isEmpty)
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(40),
+                          child: Center(
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.pie_chart_outline,
+                                  size: 60,
+                                  color: Colors.grey.shade400,
+                                ),
+                                const SizedBox(height: 15),
+                                Text(
+                                  'No stocks in your portfolio yet',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                const Text(
+                                  'Start investing by buying stocks!',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _portfolio.length,
+                        itemBuilder: (context, index) {
+                          final holding = _portfolio[index];
+                          return _buildHoldingCard(holding);
+                        },
+                      ),
+                  ],
+                ),
+              ),
+            ),
+    );
+  }
+
+  Widget _buildHoldingCard(PortfolioHolding holding) {
+    final isPositive = holding.gainLoss >= 0;
+    final color = isPositive ? Colors.green : Colors.red;
+    
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      holding.symbol,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      holding.name,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '\$${holding.totalValue.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isPositive ? Icons.arrow_upward : Icons.arrow_downward,
+                          color: color,
+                          size: 16,
+                        ),
+                        Text(
+                          '${isPositive ? '+' : ''}\$${holding.gainLoss.toStringAsFixed(2)} (${isPositive ? '+' : ''}${holding.gainLossPercent.toStringAsFixed(2)}%)',
+                          style: TextStyle(
+                            color: color,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Shares: ${holding.shares.toStringAsFixed(4)}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+                Text(
+                  'Avg Cost: \$${holding.averagePrice.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+                Text(
+                  'Current: \$${holding.currentPrice.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Grid Painter for chart background
+class GridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.width <= 0 || size.height <= 0) return;
+    
+    final paint = Paint()
+      ..color = Colors.grey.shade300
+      ..strokeWidth = 0.5
+      ..style = PaintingStyle.stroke;
+
+    // Draw horizontal grid lines
+    for (int i = 1; i < 5; i++) {
+      final y = (size.height / 5) * i;
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+
+    // Draw vertical grid lines
+    for (int i = 1; i < 8; i++) {
+      final x = (size.width / 8) * i;
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
