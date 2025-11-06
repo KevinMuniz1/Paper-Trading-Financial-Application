@@ -1,14 +1,17 @@
 import { useState } from "react";
+import { Router, useNavigate } from "react-router-dom";
 
 function PasswordReset() {
     const [message, setMessage] = useState('');
 
     async function resetPassword(event: React.MouseEvent<HTMLButtonElement>) {
         event.preventDefault();
+         const navigate = useNavigate();
         // Implement password reset logic here
 
         //set success message
         setMessage('If this email is registered, a password reset link will be sent.');
+        setTimeout(() => navigate('/'), 3000);
     }
 
     return (

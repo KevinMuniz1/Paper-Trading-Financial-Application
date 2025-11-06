@@ -617,6 +617,29 @@ html, body {
   border-color: #26c93a;
 }
 
+#passwordResetDiv input[type="password"] {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 1rem;
+  background-color: #ffffff;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  margin-bottom: 1rem;
+  color: #333333;
+}
+
+#passwordResetDiv input[type="password"]:focus {
+  outline: none;
+  border-color: #1a7221;
+  box-shadow: 0 0 0 3px rgba(26, 114, 33, 0.1);
+}
+
+#passwordResetDiv input[type="password"]:hover {
+  border-color: #26c93a;
+}
+
 #resetButton {
   width: 100%;
   padding: 0.875rem 1.5rem;
@@ -663,8 +686,9 @@ html, body {
   text-align: center;
 }
 
-/* Autofill styling for password reset email input */
-#passwordResetDiv input[type="email"]:-webkit-autofill {
+/* Autofill styling for password reset inputs */
+#passwordResetDiv input[type="email"]:-webkit-autofill,
+#passwordResetDiv input[type="password"]:-webkit-autofill {
   -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
   -webkit-text-fill-color: #333333 !important; 
   border: 2px solid #e1e5e9 !important; 
