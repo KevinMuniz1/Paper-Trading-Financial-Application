@@ -89,6 +89,10 @@ function Login() {
         <span>Don't have an account? </span>
         <a href="/register">Register here</a>
       </div>
+      <div className="form-footer">
+        <span>Forgot Password? </span>
+        <a href="/forgot-password">Reset it here</a>
+      </div>
     </div>
   );
 }
