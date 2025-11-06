@@ -220,6 +220,364 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
+            
+            const SizedBox(height: 24),
+            
+            // Create Account Button
+            OutlinedButton(
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const RegistrationScreen()),
+                );
+              },
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.blue),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                'Create New Account',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Registration Screen
+class RegistrationScreen extends StatefulWidget {
+  const RegistrationScreen({super.key});
+
+  @override
+  State<RegistrationScreen> createState() => _RegistrationScreenState();
+}
+
+class _RegistrationScreenState extends State<RegistrationScreen> {
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  String _message = '';
+
+  Future<void> _handleRegistration() async {
+    String firstName = _firstNameController.text.trim();
+    String lastName = _lastNameController.text.trim();
+    String email = _emailController.text.trim();
+    String username = _usernameController.text.trim();
+    String password = _passwordController.text;
+    String confirmPassword = _confirmPasswordController.text;
+
+    if (firstName.isEmpty || lastName.isEmpty || email.isEmpty || username.isEmpty || password.isEmpty) {
+      setState(() {
+        _message = 'Please fill in all fields';
+      });
+      return;
+    }
+
+    // Basic email validation
+    if (!email.contains('@') || !email.contains('.')) {
+      setState(() {
+        _message = 'Please enter a valid email address';
+      });
+      return;
+    }
+
+    if (password != confirmPassword) {
+      setState(() {
+        _message = 'Passwords do not match';
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      setState(() {
+        _message = 'Password must be at least 6 characters';
+      });
+      return;
+    }
+
+    setState(() {
+      _message = 'Creating account...';
+    });
+
+    try {
+      const String apiBaseUrl = 'http://10.0.2.2:5000/api';
+      const String registerEndpoint = '$apiBaseUrl/register';
+
+      final Map<String, dynamic> requestBody = {
+        'firstName': firstName,
+        'lastName': lastName,
+        'email': email,
+        'login': username,
+        'password': password,
+      };
+
+      final response = await http.post(
+        Uri.parse(registerEndpoint),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        
+        if (responseData['error'] == null || responseData['error'].isEmpty) {
+          // Registration successful
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const LoginScreen(),
+            ),
+          );
+          
+          // Show success message on login screen
+          Future.delayed(const Duration(milliseconds: 500), () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Account created successfully! Please log in.'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          });
+        } else {
+          // Registration failed
+          setState(() {
+            _message = responseData['error'];
+          });
+        }
+      } else {
+        setState(() {
+          _message = 'Server error: ${response.statusCode}';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _message = 'Network error: ${e.toString()}';
+      });
+      print('Registration error: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _usernameController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Create Account'),
+        backgroundColor: Colors.blue,
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginScreen()),
+            );
+          },
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // App Icon and Welcome
+            const Icon(
+              Icons.person_add,
+              size: 80,
+              color: Colors.blue,
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Join Paper Trading',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Create your account to start trading',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 40),
+            
+            // First Name Field
+            TextField(
+              controller: _firstNameController,
+              decoration: const InputDecoration(
+                labelText: 'First Name',
+                prefixIcon: Icon(Icons.person),
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+              textInputAction: TextInputAction.next,
+              textCapitalization: TextCapitalization.words,
+            ),
+            const SizedBox(height: 16),
+            
+            // Last Name Field
+            TextField(
+              controller: _lastNameController,
+              decoration: const InputDecoration(
+                labelText: 'Last Name',
+                prefixIcon: Icon(Icons.person_outline),
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+              textInputAction: TextInputAction.next,
+              textCapitalization: TextCapitalization.words,
+            ),
+            const SizedBox(height: 16),
+            
+            // Email Field
+            TextField(
+              controller: _emailController,
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                prefixIcon: Icon(Icons.email),
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                helperText: 'We\'ll use this for account verification',
+              ),
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.next,
+            ),
+            const SizedBox(height: 16),
+            
+            // Username Field
+            TextField(
+              controller: _usernameController,
+              decoration: const InputDecoration(
+                labelText: 'Username',
+                prefixIcon: Icon(Icons.account_circle),
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                helperText: 'This will be your login username',
+              ),
+              textInputAction: TextInputAction.next,
+            ),
+            const SizedBox(height: 16),
+            
+            // Password Field
+            TextField(
+              controller: _passwordController,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Password',
+                prefixIcon: Icon(Icons.lock),
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                helperText: 'At least 6 characters',
+              ),
+              textInputAction: TextInputAction.next,
+            ),
+            const SizedBox(height: 16),
+            
+            // Confirm Password Field
+            TextField(
+              controller: _confirmPasswordController,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Confirm Password',
+                prefixIcon: Icon(Icons.lock_outline),
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _handleRegistration(),
+            ),
+            const SizedBox(height: 24),
+            
+            // Register Button
+            ElevatedButton(
+              onPressed: _handleRegistration,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                elevation: 2,
+              ),
+              child: const Text(
+                'Create Account',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            
+            // Message Display
+            if (_message.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: _message.contains('Creating') ? Colors.blue.shade50 : Colors.orange.shade50,
+                  border: Border.all(color: _message.contains('Creating') ? Colors.blue.shade200 : Colors.orange.shade200),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  _message,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: _message.contains('Creating') ? Colors.blue.shade800 : Colors.orange.shade800,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            
+            const SizedBox(height: 24),
+            
+            // Back to Login
+            TextButton(
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                );
+              },
+              child: const Text(
+                'Already have an account? Sign In',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.blue,
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -267,16 +625,20 @@ class _MainAppScreenState extends State<MainAppScreen> {
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.account_circle),
-            label: 'Account',
+            icon: Icon(Icons.pie_chart),
+            label: 'Portfolio',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
-            label: 'Notifications',
+            icon: Icon(Icons.swap_horiz),
+            label: 'Trade',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.article),
             label: 'News',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_circle),
+            label: 'Account',
           ),
         ],
       ),
@@ -291,14 +653,16 @@ class _MainAppScreenState extends State<MainAppScreen> {
           lastName: widget.lastName,
         );
       case 1:
+        return const PortfolioPage();
+      case 2:
+        return const TradePage();
+      case 3:
+        return const NewsScreen();
+      case 4:
         return AccountScreen(
           firstName: widget.firstName,
           lastName: widget.lastName,
         );
-      case 2:
-        return const NotificationsScreen();
-      case 3:
-        return const NewsScreen();
       default:
         return HomeScreen(
           firstName: widget.firstName,
@@ -330,17 +694,6 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadBuyingPower();
-  }
-
-  Future<void> _testSharedPreferences() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('test', 'working');
-      final test = prefs.getString('test');
-      print('SharedPreferences test: $test');
-    } catch (e) {
-      print('SharedPreferences error: $e');
-    }
   }
 
   Future<void> _loadBuyingPower() async {
@@ -531,20 +884,6 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Expanded(
                   child: _buildQuickActionCard(
-                    'Portfolio',
-                    Icons.pie_chart,
-                    Colors.green,
-                    () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const PortfolioPage()),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: _buildQuickActionCard(
                     'Stocks',
                     Icons.trending_up,
                     Colors.orange,
@@ -554,20 +893,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         MaterialPageRoute(builder: (context) => const StocksPage()),
                       );
                     },
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 15),
-            
-            Row(
-              children: [
-                Expanded(
-                  child: _buildQuickActionCard(
-                    'Trade',
-                    Icons.swap_horiz,
-                    Colors.purple,
-                    () {},
                   ),
                 ),
                 const SizedBox(width: 15),
@@ -785,6 +1110,50 @@ class NotificationsScreen extends StatelessWidget {
               'No notifications yet',
               style: TextStyle(
                 fontSize: 18,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Trade Screen
+class TradePage extends StatelessWidget {
+  const TradePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Trade'),
+        backgroundColor: Colors.blue,
+        centerTitle: true,
+      ),
+      body: const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.swap_horiz,
+              size: 80,
+              color: Colors.grey,
+            ),
+            SizedBox(height: 20),
+            Text(
+              'Trading features coming soon',
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey,
+              ),
+            ),
+            SizedBox(height: 10),
+            Text(
+              'Visit the Stocks page to buy/sell stocks',
+              style: TextStyle(
+                fontSize: 14,
                 color: Colors.grey,
               ),
             ),

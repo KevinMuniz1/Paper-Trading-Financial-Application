@@ -28,6 +28,60 @@ var ret = { id:id, firstName:fn, lastName:ln, error:''};
 res.status(200).json(ret);
 });
 
+app.post('/api/register', async (req, res, next) =>
+{
+// incoming: firstName, lastName, email, login, password
+// outgoing: error
+var error = '';
+console.log('Registration request body:', req.body);
+const { firstName, lastName, email, login, password } = req.body;
+console.log('Extracted fields:', { firstName, lastName, email, login, password });
+
+try
+{
+const db = client.db('Finance-app');
+
+// Check if username already exists
+const existingUser = await db.collection('Users').findOne({Login: login});
+if (existingUser) {
+error = 'Username already exists';
+} else {
+// Check if email already exists
+const existingEmail = await db.collection('Users').findOne({Email: email});
+if (existingEmail) {
+error = 'Email already exists';
+} else {
+// Get the highest UserID to generate the next one
+const lastUser = await db.collection('Users').findOne({}, {sort: {UserID: -1}});
+const nextUserID = lastUser ? lastUser.UserID + 1 : 1;
+
+// Create new user with all required fields
+const newUser = {
+UserID: nextUserID,
+FirstName: firstName,
+LastName: lastName,
+Email: email,
+Login: login,
+Password: password,
+IsEmailVerified: false,
+emailVerificationToken: null,
+verificationTokenExpires: null,
+createdAt: new Date()
+};
+
+await db.collection('Users').insertOne(newUser);
+}
+}
+}
+catch(e)
+{
+error = e.toString();
+}
+
+var ret = { error: error };
+res.status(200).json(ret);
+});
+
 app.post('/api/addcard', async (req, res, next) =>
 {
 // incoming: userId, color
