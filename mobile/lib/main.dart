@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -787,7 +788,7 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: Colors.blue,
         centerTitle: true,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -867,6 +868,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
+            const SizedBox(height: 30),
+            
+            // Portfolio Chart
+            const PortfolioChart(),
             const SizedBox(height: 30),
             
             // Quick Actions
@@ -1121,8 +1126,299 @@ class NotificationsScreen extends StatelessWidget {
 }
 
 // Trade Screen
-class TradePage extends StatelessWidget {
+class TradePage extends StatefulWidget {
   const TradePage({super.key});
+
+  @override
+  State<TradePage> createState() => _TradePageState();
+}
+
+class _TradePageState extends State<TradePage> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  double _buyingPower = 0.0;
+  List<PortfolioHolding> _portfolio = [];
+  List<Stock> _popularStocks = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _loadData();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadData() async {
+    final buyingPower = await PortfolioManager.getBuyingPower();
+    final portfolio = await PortfolioManager.getPortfolio();
+    
+    // Load popular stocks for quick trading
+    final popularStocks = [
+      Stock(symbol: 'AAPL', name: 'Apple Inc.', price: 175.43, change: 2.15, changePercent: 1.24),
+      Stock(symbol: 'MSFT', name: 'Microsoft Corporation', price: 337.89, change: -1.23, changePercent: -0.36),
+      Stock(symbol: 'GOOGL', name: 'Alphabet Inc.', price: 125.30, change: 0.85, changePercent: 0.68),
+      Stock(symbol: 'AMZN', name: 'Amazon.com Inc.', price: 133.13, change: 1.45, changePercent: 1.10),
+      Stock(symbol: 'TSLA', name: 'Tesla Inc.', price: 242.65, change: -3.21, changePercent: -1.31),
+      Stock(symbol: 'META', name: 'Meta Platforms Inc.', price: 273.37, change: 2.87, changePercent: 1.06),
+      Stock(symbol: 'NVDA', name: 'NVIDIA Corporation', price: 455.72, change: 12.34, changePercent: 2.78),
+      Stock(symbol: 'NFLX', name: 'Netflix Inc.', price: 378.96, change: -0.67, changePercent: -0.18),
+    ];
+
+    setState(() {
+      _buyingPower = buyingPower;
+      _portfolio = portfolio;
+      _popularStocks = popularStocks;
+    });
+  }
+
+  void _showQuickTradeDialog(Stock stock, bool isBuy) {
+    final TextEditingController amountController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('${isBuy ? 'Buy' : 'Sell'} ${stock.symbol}'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Current Price: \$${stock.price.toStringAsFixed(2)}'),
+              if (isBuy) Text('Available Cash: \$${_buyingPower.toStringAsFixed(2)}'),
+              if (!isBuy) _buildCurrentHoldingInfo(stock),
+              const SizedBox(height: 15),
+              TextField(
+                controller: amountController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Dollar Amount to ${isBuy ? 'Buy' : 'Sell'}',
+                  prefixText: '\$',
+                  border: const OutlineInputBorder(),
+                  helperText: 'Enter the amount you want to ${isBuy ? 'invest' : 'sell'}',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => _executeTrade(stock, amountController.text, isBuy),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isBuy ? Colors.green : Colors.red,
+              ),
+              child: Text(
+                isBuy ? 'Buy' : 'Sell',
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildCurrentHoldingInfo(Stock stock) {
+    final holding = _portfolio.firstWhere(
+      (h) => h.symbol == stock.symbol,
+      orElse: () => PortfolioHolding(
+        symbol: stock.symbol,
+        name: stock.name,
+        shares: 0,
+        averagePrice: 0,
+        currentPrice: stock.price,
+      ),
+    );
+    
+    if (holding.shares == 0) {
+      return const Text('You don\'t own this stock');
+    }
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Shares Owned: ${holding.shares.toStringAsFixed(4)}'),
+        Text('Value: \$${(holding.shares * stock.price).toStringAsFixed(2)}'),
+      ],
+    );
+  }
+
+  Future<void> _executeTrade(Stock stock, String amountText, bool isBuy) async {
+    final amount = double.tryParse(amountText);
+    if (amount == null || amount <= 0) {
+      Navigator.of(context).pop();
+      _showMessage('Please enter a valid amount', Colors.red);
+      return;
+    }
+
+    Navigator.of(context).pop();
+
+    bool success;
+    if (isBuy) {
+      success = await PortfolioManager.buyStock(stock, amount);
+    } else {
+      success = await PortfolioManager.sellStock(stock, amount);
+    }
+
+    if (success) {
+      final shares = amount / stock.price;
+      _showMessage(
+        'Successfully ${isBuy ? 'bought' : 'sold'} ${shares.toStringAsFixed(4)} shares of ${stock.symbol} for \$${amount.toStringAsFixed(2)}',
+        Colors.green,
+      );
+      _loadData(); // Refresh data
+    } else {
+      _showMessage(
+        isBuy ? 'Insufficient buying power' : 'Insufficient shares to sell',
+        Colors.red,
+      );
+    }
+  }
+
+  void _showMessage(String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: color,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  void _showSwapDialog() {
+    Stock? fromStock;
+    Stock? toStock;
+    final TextEditingController amountController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Swap Stocks'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Sell from:', style: TextStyle(fontWeight: FontWeight.bold)),
+                    DropdownButton<Stock>(
+                      value: fromStock,
+                      hint: const Text('Select stock to sell'),
+                      isExpanded: true,
+                      items: _portfolio.map((holding) {
+                        final stock = _popularStocks.firstWhere(
+                          (s) => s.symbol == holding.symbol,
+                          orElse: () => Stock(
+                            symbol: holding.symbol, 
+                            name: holding.name, 
+                            price: holding.currentPrice, 
+                            change: 0, 
+                            changePercent: 0
+                          ),
+                        );
+                        return DropdownMenuItem<Stock>(
+                          value: stock,
+                          child: Text('${stock.symbol} - ${holding.shares.toStringAsFixed(2)} shares'),
+                        );
+                      }).toList(),
+                      onChanged: (Stock? value) {
+                        setDialogState(() {
+                          fromStock = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    const Text('Buy into:', style: TextStyle(fontWeight: FontWeight.bold)),
+                    DropdownButton<Stock>(
+                      value: toStock,
+                      hint: const Text('Select stock to buy'),
+                      isExpanded: true,
+                      items: _popularStocks.map((stock) {
+                        return DropdownMenuItem<Stock>(
+                          value: stock,
+                          child: Text('${stock.symbol} - \$${stock.price.toStringAsFixed(2)}'),
+                        );
+                      }).toList(),
+                      onChanged: (Stock? value) {
+                        setDialogState(() {
+                          toStock = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: amountController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Dollar Amount to Swap',
+                        prefixText: '\$',
+                        border: OutlineInputBorder(),
+                        helperText: 'Amount to sell from first stock and buy into second',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: fromStock != null && toStock != null
+                      ? () => _executeSwap(fromStock!, toStock!, amountController.text)
+                      : null,
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                  child: const Text('Swap', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _executeSwap(Stock fromStock, Stock toStock, String amountText) async {
+    final amount = double.tryParse(amountText);
+    if (amount == null || amount <= 0) {
+      Navigator.of(context).pop();
+      _showMessage('Please enter a valid amount', Colors.red);
+      return;
+    }
+
+    Navigator.of(context).pop();
+
+    // First sell the from stock
+    final sellSuccess = await PortfolioManager.sellStock(fromStock, amount);
+    if (!sellSuccess) {
+      _showMessage('Failed to sell ${fromStock.symbol} - insufficient shares', Colors.red);
+      return;
+    }
+
+    // Then buy the to stock
+    final buySuccess = await PortfolioManager.buyStock(toStock, amount);
+    if (!buySuccess) {
+      // If buy fails, we need to buy back the original stock
+      await PortfolioManager.buyStock(fromStock, amount);
+      _showMessage('Failed to complete swap - insufficient funds', Colors.red);
+      return;
+    }
+
+    _showMessage(
+      'Successfully swapped \$${amount.toStringAsFixed(2)} from ${fromStock.symbol} to ${toStock.symbol}',
+      Colors.green,
+    );
+    _loadData(); // Refresh data
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1131,35 +1427,313 @@ class TradePage extends StatelessWidget {
         title: const Text('Trade'),
         backgroundColor: Colors.blue,
         centerTitle: true,
-      ),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.swap_horiz,
-              size: 80,
-              color: Colors.grey,
-            ),
-            SizedBox(height: 20),
-            Text(
-              'Trading features coming soon',
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.grey,
-              ),
-            ),
-            SizedBox(height: 10),
-            Text(
-              'Visit the Stocks page to buy/sell stocks',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
-              ),
-            ),
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(text: 'Quick Trade'),
+            Tab(text: 'Swap'),
+            Tab(text: 'Portfolio'),
           ],
         ),
       ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildQuickTradeTab(),
+          _buildSwapTab(),
+          _buildPortfolioTab(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickTradeTab() {
+    return Column(
+      children: [
+        // Buying Power Display
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          color: Colors.blue.shade50,
+          child: Column(
+            children: [
+              const Text('Available Cash', style: TextStyle(fontSize: 16)),
+              Text(
+                '\$${_buyingPower.toStringAsFixed(2)}',
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ),
+        // Popular Stocks List
+        Expanded(
+          child: ListView.builder(
+            itemCount: _popularStocks.length,
+            itemBuilder: (context, index) {
+              final stock = _popularStocks[index];
+              final isPositive = stock.change >= 0;
+              final color = isPositive ? Colors.green : Colors.red;
+
+              return Card(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: color.withOpacity(0.1),
+                    child: Text(
+                      stock.symbol.substring(0, 2),
+                      style: TextStyle(color: color, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  title: Text(stock.symbol, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text(stock.name),
+                  trailing: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '\$${stock.price.toStringAsFixed(2)}',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isPositive ? Icons.arrow_upward : Icons.arrow_downward,
+                            color: color,
+                            size: 16,
+                          ),
+                          Text(
+                            '${isPositive ? '+' : ''}\$${stock.change.toStringAsFixed(2)}',
+                            style: TextStyle(color: color, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  onTap: () => _showQuickTradeOptions(stock),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showQuickTradeOptions(Stock stock) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                stock.symbol,
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              Text(stock.name),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _showQuickTradeDialog(stock, true);
+                      },
+                      icon: const Icon(Icons.trending_up),
+                      label: const Text('Buy'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _showQuickTradeDialog(stock, false);
+                      },
+                      icon: const Icon(Icons.trending_down),
+                      label: const Text('Sell'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSwapTab() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.swap_horiz, size: 80, color: Colors.blue),
+          const SizedBox(height: 20),
+          const Text(
+            'Stock Swapping',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Quickly swap between different stocks',
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 30),
+          ElevatedButton.icon(
+            onPressed: _portfolio.isNotEmpty ? _showSwapDialog : null,
+            icon: const Icon(Icons.swap_horiz),
+            label: const Text('Start Swap'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+            ),
+          ),
+          if (_portfolio.isEmpty)
+            const Padding(
+              padding: EdgeInsets.only(top: 16),
+              child: Text(
+                'You need to own stocks to swap',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPortfolioTab() {
+    if (_portfolio.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.account_balance_wallet_outlined, size: 80, color: Colors.grey),
+            SizedBox(height: 20),
+            Text('No holdings yet', style: TextStyle(fontSize: 18, color: Colors.grey)),
+            Text('Start trading to build your portfolio', style: TextStyle(color: Colors.grey)),
+          ],
+        ),
+      );
+    }
+
+    final totalValue = _portfolio.fold(
+      0.0,
+      (sum, holding) => sum + (holding.shares * holding.currentPrice),
+    );
+
+    return Column(
+      children: [
+        // Portfolio Summary
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          color: Colors.green.shade50,
+          child: Column(
+            children: [
+              const Text('Portfolio Value', style: TextStyle(fontSize: 16)),
+              Text(
+                '\$${totalValue.toStringAsFixed(2)}',
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              Text('+ Cash: \$${_buyingPower.toStringAsFixed(2)}'),
+              const Divider(),
+              Text(
+                'Total: \$${(totalValue + _buyingPower).toStringAsFixed(2)}',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ),
+        // Holdings List
+        Expanded(
+          child: ListView.builder(
+            itemCount: _portfolio.length,
+            itemBuilder: (context, index) {
+              final holding = _portfolio[index];
+              final currentValue = holding.shares * holding.currentPrice;
+              final gainLoss = currentValue - (holding.shares * holding.averagePrice);
+              final gainLossPercent = ((holding.currentPrice - holding.averagePrice) / holding.averagePrice) * 100;
+              final isPositive = gainLoss >= 0;
+
+              return Card(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: isPositive ? Colors.green.shade100 : Colors.red.shade100,
+                    child: Text(
+                      holding.symbol.substring(0, 2),
+                      style: TextStyle(
+                        color: isPositive ? Colors.green : Colors.red,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  title: Text(holding.symbol, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('${holding.shares.toStringAsFixed(4)} shares'),
+                      Text('Avg: \$${holding.averagePrice.toStringAsFixed(2)}'),
+                    ],
+                  ),
+                  trailing: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '\$${currentValue.toStringAsFixed(2)}',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        '${isPositive ? '+' : ''}\$${gainLoss.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          color: isPositive ? Colors.green : Colors.red,
+                          fontSize: 12,
+                        ),
+                      ),
+                      Text(
+                        '${isPositive ? '+' : ''}${gainLossPercent.toStringAsFixed(1)}%',
+                        style: TextStyle(
+                          color: isPositive ? Colors.green : Colors.red,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                  onTap: () {
+                    final stock = _popularStocks.firstWhere(
+                      (s) => s.symbol == holding.symbol,
+                      orElse: () => Stock(
+                        symbol: holding.symbol, 
+                        name: holding.name, 
+                        price: holding.currentPrice, 
+                        change: 0, 
+                        changePercent: 0
+                      ),
+                    );
+                    _showQuickTradeOptions(stock);
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
@@ -1259,6 +1833,357 @@ class PortfolioHolding {
   }
 }
 
+// Portfolio Value History Point
+class PortfolioValuePoint {
+  final DateTime timestamp;
+  final double totalValue;
+  final double buyingPower;
+
+  PortfolioValuePoint({
+    required this.timestamp,
+    required this.totalValue,
+    required this.buyingPower,
+  });
+
+  double get combinedValue => totalValue + buyingPower;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'timestamp': timestamp.millisecondsSinceEpoch,
+      'totalValue': totalValue,
+      'buyingPower': buyingPower,
+    };
+  }
+
+  factory PortfolioValuePoint.fromJson(Map<String, dynamic> json) {
+    return PortfolioValuePoint(
+      timestamp: DateTime.fromMillisecondsSinceEpoch(json['timestamp']),
+      totalValue: json['totalValue'],
+      buyingPower: json['buyingPower'],
+    );
+  }
+}
+
+// Portfolio Chart Painter
+class PortfolioChartPainter extends CustomPainter {
+  final List<PortfolioValuePoint> points;
+  final double maxValue;
+  final double minValue;
+
+  PortfolioChartPainter({
+    required this.points,
+    required this.maxValue,
+    required this.minValue,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (points.isEmpty) return;
+
+    final paint = Paint()
+      ..color = Colors.blue
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke;
+
+    final fillPaint = Paint()
+      ..color = Colors.blue.withOpacity(0.1)
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+    final fillPath = Path();
+
+    for (int i = 0; i < points.length; i++) {
+      final x = (i / (points.length - 1)) * size.width;
+      final normalizedValue = (points[i].combinedValue - minValue) / (maxValue - minValue);
+      final y = size.height - (normalizedValue * size.height);
+
+      if (i == 0) {
+        path.moveTo(x, y);
+        fillPath.moveTo(x, size.height);
+        fillPath.lineTo(x, y);
+      } else {
+        path.lineTo(x, y);
+        fillPath.lineTo(x, y);
+      }
+    }
+
+    // Complete the fill path
+    fillPath.lineTo(size.width, size.height);
+    fillPath.close();
+
+    // Draw the filled area
+    canvas.drawPath(fillPath, fillPaint);
+    
+    // Draw the line
+    canvas.drawPath(path, paint);
+
+    // Draw points
+    final pointPaint = Paint()
+      ..color = Colors.blue
+      ..style = PaintingStyle.fill;
+
+    for (int i = 0; i < points.length; i++) {
+      final x = (i / (points.length - 1)) * size.width;
+      final normalizedValue = (points[i].combinedValue - minValue) / (maxValue - minValue);
+      final y = size.height - (normalizedValue * size.height);
+      canvas.drawCircle(Offset(x, y), 3, pointPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+// Portfolio Chart Widget
+class PortfolioChart extends StatefulWidget {
+  const PortfolioChart({super.key});
+
+  @override
+  State<PortfolioChart> createState() => _PortfolioChartState();
+}
+
+class _PortfolioChartState extends State<PortfolioChart> {
+  List<PortfolioValuePoint> _history = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadChartData();
+  }
+
+  Future<void> _loadChartData() async {
+    // Update current prices first
+    await _updateCurrentPrices();
+    
+    final history = await PortfolioManager.getPortfolioHistory();
+    
+    // If no history exists, create initial point
+    if (history.isEmpty) {
+      final portfolio = await PortfolioManager.getPortfolio();
+      final buyingPower = await PortfolioManager.getBuyingPower();
+      final totalValue = portfolio.fold(0.0, (sum, holding) => sum + holding.totalValue);
+      
+      final initialPoint = PortfolioValuePoint(
+        timestamp: DateTime.now(),
+        totalValue: totalValue,
+        buyingPower: buyingPower,
+      );
+      
+      history.add(initialPoint);
+      await PortfolioManager._savePortfolioHistory(history);
+    }
+
+    setState(() {
+      _history = history;
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _updateCurrentPrices() async {
+    // Simulate price updates with sample stocks
+    final sampleStocks = [
+      Stock(symbol: 'AAPL', name: 'Apple Inc.', price: 175.43 + (math.Random().nextDouble() - 0.5) * 10, change: 0, changePercent: 0),
+      Stock(symbol: 'MSFT', name: 'Microsoft Corporation', price: 337.89 + (math.Random().nextDouble() - 0.5) * 15, change: 0, changePercent: 0),
+      Stock(symbol: 'GOOGL', name: 'Alphabet Inc.', price: 125.30 + (math.Random().nextDouble() - 0.5) * 8, change: 0, changePercent: 0),
+      Stock(symbol: 'AMZN', name: 'Amazon.com Inc.', price: 133.13 + (math.Random().nextDouble() - 0.5) * 12, change: 0, changePercent: 0),
+      Stock(symbol: 'TSLA', name: 'Tesla Inc.', price: 242.65 + (math.Random().nextDouble() - 0.5) * 20, change: 0, changePercent: 0),
+      Stock(symbol: 'META', name: 'Meta Platforms Inc.', price: 273.37 + (math.Random().nextDouble() - 0.5) * 18, change: 0, changePercent: 0),
+      Stock(symbol: 'NVDA', name: 'NVIDIA Corporation', price: 455.72 + (math.Random().nextDouble() - 0.5) * 25, change: 0, changePercent: 0),
+      Stock(symbol: 'NFLX', name: 'Netflix Inc.', price: 378.96 + (math.Random().nextDouble() - 0.5) * 22, change: 0, changePercent: 0),
+    ];
+    
+    await PortfolioManager.updatePortfolioCurrentPrices(sampleStocks);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Container(
+        height: 200,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (_history.isEmpty) {
+      return Container(
+        height: 200,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.show_chart, size: 50, color: Colors.grey),
+              SizedBox(height: 10),
+              Text(
+                'Start trading to see your portfolio chart',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final maxValue = _history.map((p) => p.combinedValue).reduce(math.max);
+    final minValue = _history.map((p) => p.combinedValue).reduce(math.min);
+    final currentValue = _history.last.combinedValue;
+    final previousValue = _history.length > 1 ? _history[_history.length - 2].combinedValue : currentValue;
+    final change = currentValue - previousValue;
+    final changePercent = previousValue > 0 ? (change / previousValue) * 100 : 0;
+    final isPositive = change >= 0;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Total Portfolio Value',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    '\$${currentValue.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        isPositive ? Icons.trending_up : Icons.trending_down,
+                        color: isPositive ? Colors.green : Colors.red,
+                        size: 20,
+                      ),
+                      Text(
+                        '${isPositive ? '+' : ''}\$${change.abs().toStringAsFixed(2)}',
+                        style: TextStyle(
+                          color: isPositive ? Colors.green : Colors.red,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    '${isPositive ? '+' : ''}${changePercent.toStringAsFixed(2)}%',
+                    style: TextStyle(
+                      color: isPositive ? Colors.green : Colors.red,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            height: 120,
+            child: CustomPaint(
+              size: Size.infinite,
+              painter: PortfolioChartPainter(
+                points: _history,
+                maxValue: maxValue,
+                minValue: minValue,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                _history.length > 1 
+                    ? _formatDate(_history.first.timestamp)
+                    : 'Today',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                ),
+              ),
+              Text(
+                'Now',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date).inDays;
+    
+    if (difference == 0) {
+      return 'Today';
+    } else if (difference == 1) {
+      return 'Yesterday';
+    } else if (difference < 7) {
+      return '${difference}d ago';
+    } else {
+      return '${(difference / 7).round()}w ago';
+    }
+  }
+}
+
 // Portfolio Manager class
 class PortfolioManager {
   static const String _portfolioKey = 'portfolio_holdings';
@@ -1337,6 +2262,7 @@ class PortfolioManager {
 
     await savePortfolio(portfolio);
     await saveBuyingPower(buyingPower - dollarAmount);
+    await _recordPortfolioValue(); // Record portfolio value after trade
     return true;
   }
 
@@ -1373,7 +2299,87 @@ class PortfolioManager {
 
     await savePortfolio(portfolio);
     await saveBuyingPower(buyingPower + dollarAmount);
+    await _recordPortfolioValue(); // Record portfolio value after trade
     return true;
+  }
+
+  // Portfolio Value History Tracking
+  static const String _portfolioHistoryKey = 'portfolio_value_history';
+
+  static Future<List<PortfolioValuePoint>> getPortfolioHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final historyJson = prefs.getStringList(_portfolioHistoryKey) ?? [];
+      return historyJson
+          .map((json) => PortfolioValuePoint.fromJson(Map<String, dynamic>.from(jsonDecode(json))))
+          .toList();
+    } catch (e) {
+      print('Error loading portfolio history: $e');
+      return [];
+    }
+  }
+
+  static Future<void> _savePortfolioHistory(List<PortfolioValuePoint> history) async {
+    final prefs = await SharedPreferences.getInstance();
+    final historyJson = history.map((point) => jsonEncode(point.toJson())).toList();
+    await prefs.setStringList(_portfolioHistoryKey, historyJson);
+  }
+
+  static Future<void> _recordPortfolioValue() async {
+    final portfolio = await getPortfolio();
+    final buyingPower = await getBuyingPower();
+    final totalPortfolioValue = portfolio.fold(0.0, (sum, holding) => sum + holding.totalValue);
+    
+    final history = await getPortfolioHistory();
+    final newPoint = PortfolioValuePoint(
+      timestamp: DateTime.now(),
+      totalValue: totalPortfolioValue,
+      buyingPower: buyingPower,
+    );
+
+    history.add(newPoint);
+
+    // Keep only the last 100 points to avoid storage bloat
+    if (history.length > 100) {
+      history.removeRange(0, history.length - 100);
+    }
+
+    await _savePortfolioHistory(history);
+  }
+
+  static Future<void> updatePortfolioCurrentPrices(List<Stock> currentStocks) async {
+    final portfolio = await getPortfolio();
+    bool hasChanges = false;
+
+    for (int i = 0; i < portfolio.length; i++) {
+      final holding = portfolio[i];
+      final stock = currentStocks.firstWhere(
+        (s) => s.symbol == holding.symbol,
+        orElse: () => Stock(
+          symbol: holding.symbol,
+          name: holding.name,
+          price: holding.currentPrice,
+          change: 0,
+          changePercent: 0,
+        ),
+      );
+
+      if (stock.price != holding.currentPrice) {
+        portfolio[i] = PortfolioHolding(
+          symbol: holding.symbol,
+          name: holding.name,
+          shares: holding.shares,
+          averagePrice: holding.averagePrice,
+          currentPrice: stock.price,
+        );
+        hasChanges = true;
+      }
+    }
+
+    if (hasChanges) {
+      await savePortfolio(portfolio);
+      await _recordPortfolioValue(); // Record new portfolio value
+    }
   }
 }
 
