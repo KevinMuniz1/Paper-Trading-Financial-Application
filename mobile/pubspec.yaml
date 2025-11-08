@@ -40,6 +40,7 @@ dependencies:
   
   # Local storage for user preferences
   shared_preferences: ^2.2.2
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:

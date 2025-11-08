@@ -7,16 +7,17 @@ require('dotenv').config();
 
 const app = express();
 
+// Temporarily Set CORS to Allow All Origins for Testing
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://paper-trade-app.com', 'http://www.paper-trade-app.com'],
+  //origin: ['http://localhost:5173', 'http://paper-trade-app.com', 'http://www.paper-trade-app.com'],
+  origin: '*',
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 app.use(express.json());
 
-const url = process.env.MONGODB_URL;
-const client = new MongoClient(url);
+const client = new MongoClient(MONGODB_URL);
 
 async function connectDB() {
   try {

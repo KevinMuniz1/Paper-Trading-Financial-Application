@@ -2,9 +2,14 @@ require('express');
 require('mongodb');
 require('dotenv').config(); 
 const { PORT, MONGODB_URL } = require('./config');
+const newsService = require('./services/newsService');
 
 exports.setApp = function ( app, client )
 {
+
+// Initialize NewsService with DB instance
+const db = client.db('Finance-app');
+newsService.setDb(db);
 
 app.post('/api/login', async (req, res, next) =>
 {
@@ -118,5 +123,16 @@ _ret.push( results[i].User);
 }
 var ret = {results:_ret, error:error};
 res.status(200).json(ret);
+});
+
+// Financial News endpoint 
+app.get('/api/news', async (req, res) => {
+  try {
+    const articles = await newsService.getMarketNews();
+    res.status(200).json({ articles });
+  } catch (e) {
+    console.error('GET /api/news error:', e);
+    res.status(200).json({ articles: [], error: 'unavailable' });
+  }
 });
 }

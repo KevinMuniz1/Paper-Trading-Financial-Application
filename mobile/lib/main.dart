@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'api_host.dart';
+import 'pages/news_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -51,9 +53,9 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      // API configuration for Android emulator (10.0.2.2 maps to host's localhost)
-      const String apiBaseUrl = 'http://10.0.2.2:5000/api';
-      const String loginEndpoint = '$apiBaseUrl/login';
+  // Compute API base URL appropriate for the current platform.
+  final String apiBaseUrl = ApiHost.getBaseUrl(5050);
+  final String loginEndpoint = '$apiBaseUrl/login';
 
       // Prepare request body - matches frontend format
       final Map<String, dynamic> requestBody = {
@@ -70,6 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
         body: jsonEncode(requestBody),
       );
 
+      if (!mounted) return;
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
         
@@ -88,16 +91,19 @@ class _LoginScreenState extends State<LoginScreen> {
           
         } else {
           // Invalid credentials
+          if (!mounted) return;
           setState(() {
             _message = 'Invalid username or password';
           });
         }
       } else {
+        if (!mounted) return;
         setState(() {
           _message = 'Server error: ${response.statusCode}';
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _message = 'Network error: ${e.toString()}';
       });
@@ -314,8 +320,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     });
 
     try {
-      const String apiBaseUrl = 'http://10.0.2.2:5000/api';
-      const String registerEndpoint = '$apiBaseUrl/register';
+      final String apiBaseUrl = ApiHost.getBaseUrl(5050);
+      final String registerEndpoint = '$apiBaseUrl/register';
 
       final Map<String, dynamic> requestBody = {
         'firstName': firstName,
@@ -333,7 +339,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         body: jsonEncode(requestBody),
       );
 
-      if (response.statusCode == 200) {
+  if (!mounted) return;
+  if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
         
         if (responseData['error'] == null || responseData['error'].isEmpty) {
@@ -347,6 +354,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           
           // Show success message on login screen
           Future.delayed(const Duration(milliseconds: 500), () {
+            if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Account created successfully! Please log in.'),
@@ -356,16 +364,19 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           });
         } else {
           // Registration failed
+          if (!mounted) return;
           setState(() {
             _message = responseData['error'];
           });
         }
       } else {
+        if (!mounted) return;
         setState(() {
           _message = 'Server error: ${response.statusCode}';
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _message = 'Network error: ${e.toString()}';
       });
@@ -658,7 +669,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
       case 2:
         return const TradePage();
       case 3:
-        return const NewsScreen();
+        return const NewsPage();
       case 4:
         return AccountScreen(
           firstName: widget.firstName,
