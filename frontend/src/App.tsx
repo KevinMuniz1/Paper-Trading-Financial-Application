@@ -6,6 +6,7 @@ import DashboardPage from './pages/DashboardPage';
 import NewViewPage from './pages/NewViewPage';
 import PortfolioPage from './pages/PortfolioPage';
 import TradePage from './pages/TradePage';
+import VerifyEmailPage from "./pages/VerifyEmailPage";
 import ForgotPasswordPage from './pages/forgot-password';
 import ResetPasswordPage from './pages/resetPassword';
 
@@ -20,6 +21,7 @@ function App() {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
         </Routes>
       </BrowserRouter>
     </div></div>
