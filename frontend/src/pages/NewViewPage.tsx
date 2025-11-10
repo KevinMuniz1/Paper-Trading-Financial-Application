@@ -1,12 +1,10 @@
 import Layout from '../components/Layout';
+import News from '../components/News';
 
 const NewViewPage = () => {
     return (
         <Layout>
-            <h1>New View</h1>
-            <p>
-                This is the New View page. Add your content here.
-            </p>
+            <News />
         </Layout>
     );
 };
