@@ -9,6 +9,7 @@ interface Article {
     urlToImage: string;
     publishedAt: string;
     source: string;
+    tickers: string[];
 }
 
 const News = () => {
@@ -98,7 +99,16 @@ const News = () => {
                                 </div>
                             )}
                             <div className="article-content">
-                                <div className="article-source">{article.source}</div>
+                                <div className="article-header">
+                                    <div className="article-source">{article.source}</div>
+                                    {article.tickers && article.tickers.length > 0 && (
+                                        <div className="ticker-tags">
+                                            {article.tickers.map((ticker, idx) => (
+                                                <span key={idx} className="ticker-tag">${ticker}</span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                                 <h3 className="article-title">{article.title}</h3>
                                 <p className="article-description">{article.description}</p>
                                 <div className="article-date">{formatDate(article.publishedAt)}</div>
