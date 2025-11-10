@@ -142,6 +142,49 @@ exports.setApp = function (app, client) {
         res.status(200).json(ret);
     });
 
+    // Function to extract stock tickers from text
+    function extractTickers(text) {
+        if (!text) return [];
+
+        const tickers = new Set();
+
+        // Common stock ticker patterns
+        const tickerPatterns = [
+            /\$([A-Z]{1,5})\b/g,  // $AAPL format
+            /\b([A-Z]{1,5})(?:\s+stock|\s+shares|\s+Inc|\s+Corp|\s+ticker)/gi,  // AAPL stock format
+        ];
+
+        // Popular stock tickers to look for (most common S&P 500 stocks)
+        const popularTickers = [
+            'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'TSLA', 'BRK.B', 'JPM', 'JNJ',
+            'V', 'PG', 'XOM', 'UNH', 'MA', 'HD', 'CVX', 'MRK', 'PFE', 'ABBV',
+            'KO', 'PEP', 'COST', 'WMT', 'DIS', 'CSCO', 'NFLX', 'ADBE', 'CRM', 'NKE',
+            'TMO', 'ABT', 'ACN', 'MCD', 'AVGO', 'DHR', 'VZ', 'TXN', 'NEE', 'INTC',
+            'CMCSA', 'LIN', 'PM', 'UPS', 'RTX', 'QCOM', 'HON', 'WFC', 'SBUX', 'AMD'
+        ];
+
+        // Check for ticker patterns
+        tickerPatterns.forEach(pattern => {
+            let match;
+            while ((match = pattern.exec(text)) !== null) {
+                const ticker = match[1].toUpperCase();
+                if (ticker.length >= 1 && ticker.length <= 5) {
+                    tickers.add(ticker);
+                }
+            }
+        });
+
+        // Check for popular tickers mentioned in text
+        popularTickers.forEach(ticker => {
+            const regex = new RegExp(`\\b${ticker}\\b`, 'i');
+            if (regex.test(text)) {
+                tickers.add(ticker);
+            }
+        });
+
+        return Array.from(tickers).slice(0, 3); // Limit to 3 tickers per article
+    }
+
     // GET NEWS
     app.get('/api/news', async (req, res, next) => {
         // outgoing: articles[], error
@@ -157,22 +200,28 @@ exports.setApp = function (app, client) {
                 });
             }
 
-            // Fetch news from NewsAPI
+            // Fetch stock market specific news from NewsAPI using /everything endpoint
             const response = await fetch(
-                `https://newsapi.org/v2/top-headlines?category=business&country=us&pageSize=20&apiKey=${newsApiKey}`
+                `https://newsapi.org/v2/everything?q=(stock market OR stocks OR trading OR NYSE OR NASDAQ OR S%26P 500 OR Dow Jones OR Wall Street) AND (shares OR investors OR earnings)&language=en&sortBy=publishedAt&pageSize=20&apiKey=${newsApiKey}`
             );
 
             const data = await response.json();
 
             if (data.status === 'ok') {
-                const articles = data.articles.map(article => ({
-                    title: article.title,
-                    description: article.description,
-                    url: article.url,
-                    urlToImage: article.urlToImage,
-                    publishedAt: article.publishedAt,
-                    source: article.source.name
-                }));
+                const articles = data.articles.map(article => {
+                    const fullText = `${article.title} ${article.description || ''} ${article.content || ''}`;
+                    const tickers = extractTickers(fullText);
+
+                    return {
+                        title: article.title,
+                        description: article.description,
+                        url: article.url,
+                        urlToImage: article.urlToImage,
+                        publishedAt: article.publishedAt,
+                        source: article.source.name,
+                        tickers: tickers
+                    };
+                });
 
                 res.status(200).json({ articles: articles, error: '' });
             } else {
