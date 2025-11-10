@@ -141,4 +141,47 @@ exports.setApp = function (app, client) {
         var ret = { results: _ret, error: error };
         res.status(200).json(ret);
     });
+
+    // GET NEWS
+    app.get('/api/news', async (req, res, next) => {
+        // outgoing: articles[], error
+        var error = '';
+
+        try {
+            const newsApiKey = process.env.NEWS_API_KEY;
+
+            if (!newsApiKey || newsApiKey === 'YOUR_API_KEY_HERE') {
+                return res.status(200).json({
+                    articles: [],
+                    error: 'NewsAPI key not configured. Please add your API key to the .env file.'
+                });
+            }
+
+            // Fetch news from NewsAPI
+            const response = await fetch(
+                `https://newsapi.org/v2/top-headlines?category=business&country=us&pageSize=20&apiKey=${newsApiKey}`
+            );
+
+            const data = await response.json();
+
+            if (data.status === 'ok') {
+                const articles = data.articles.map(article => ({
+                    title: article.title,
+                    description: article.description,
+                    url: article.url,
+                    urlToImage: article.urlToImage,
+                    publishedAt: article.publishedAt,
+                    source: article.source.name
+                }));
+
+                res.status(200).json({ articles: articles, error: '' });
+            } else {
+                error = data.message || 'Failed to fetch news';
+                res.status(200).json({ articles: [], error: error });
+            }
+        } catch (e) {
+            error = e.toString();
+            res.status(200).json({ articles: [], error: error });
+        }
+    });
 }
