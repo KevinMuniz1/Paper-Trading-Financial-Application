@@ -124,13 +124,45 @@
     flex-grow: 1;
 }
 
+.article-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+}
+
 .article-source {
     font-size: 0.75rem;
     font-weight: 600;
     color: #1a7221;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 0.5rem;
+}
+
+.ticker-tags {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.ticker-tag {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #ffffff;
+    background: linear-gradient(135deg, #1a7221, #26c93a);
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 4px rgba(26, 114, 33, 0.2);
+    transition: all 0.2s ease;
+}
+
+.ticker-tag:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(26, 114, 33, 0.3);
 }
 
 .article-title {
