@@ -16,25 +16,12 @@ function App() {
           <Route path="/" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/new-view" element={<NewViewPage />} />
+          <Route path="/portfolio" element={<PortfolioPage />} />
+          <Route path="/trade" element={<TradePage />} />
         </Routes>
       </BrowserRouter>
     </div></div>
   );
 }
-
-/*
-function App() {
-    return (
-        <BrowserRouter>
-            <Routes>
-                <Route path="/" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/new-view" element={<NewViewPage />} />
-                <Route path="/portfolio" element={<PortfolioPage />} />
-                <Route path="/trade" element={<TradePage />} />
-            </Routes>
-        </BrowserRouter>
-    );
-}*/
 export default App;
