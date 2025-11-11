@@ -1,15 +1,14 @@
 import PageTitle from '../components/PageTitle.tsx';
 import Login from '../components/Login.tsx';
-import CardUI from '../components/CardUI';
+import Footer from '../components/footer.tsx';
 
-const LoginPage = () =>
-{
-return(
-<div>
-<PageTitle />
-<Login />
-<CardUI />
-</div>
-);
+const LoginPage = () => {
+    return (
+        <div className="login-page-container">
+            <PageTitle />
+            <Login />
+            <Footer/>
+        </div>
+    );
 };
 export default LoginPage;
