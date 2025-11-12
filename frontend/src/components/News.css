@@ -1,6 +1,7 @@
 .news-page {
     width: 100%;
-    display: block;
+    display: flex;
+    flex-direction: column;
     background: transparent;
     margin: 0;
     min-height: 100vh;
@@ -10,22 +11,23 @@
 .page-heading {
     font-size: 2rem;
     font-weight: 700;
-    color: #ffffff;
+    color: #0a2541;
     margin: 0;
     padding: 2rem 2rem 1rem 2rem;
     text-align: left;
-    background: rgba(102, 126, 234, 0.3);
-    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
+    background: #f8f9fa;
+    border-bottom: 2px solid #e1e5e9;
+    box-sizing: border-box;
 }
 
 .news-container {
     width: 100%;
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 1.5rem 2rem 2rem 2rem;
+    padding: 1.5rem 0 2rem 0;
     background: transparent;
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .news-header {
@@ -79,9 +81,8 @@
     gap: 1.2rem;
     margin-top: 0;
     max-width: 1000px;
-    margin-left: auto;
-    margin-right: auto;
     width: 100%;
+    padding: 0 2rem;
     box-sizing: border-box;
 }
 
