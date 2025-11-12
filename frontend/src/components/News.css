@@ -8,6 +8,21 @@
     box-sizing: border-box;
 }
 
+/* Hide scrollbar for news section only */
+.news-page ~ * {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+.main-content:has(.news-page) {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+.main-content:has(.news-page)::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
 .page-heading {
     font-size: 2rem;
     font-weight: 700;
