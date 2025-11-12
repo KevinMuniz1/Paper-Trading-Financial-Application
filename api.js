@@ -200,28 +200,34 @@ exports.setApp = function (app, client) {
                 });
             }
 
-            // Fetch stock market specific news from NewsAPI using /everything endpoint
+            // Fetch stock-specific news from top financial news sources
+            // Including Yahoo Finance, Bloomberg, CNBC, Financial Times, Reuters, WSJ
+            const query = encodeURIComponent('(stocks OR "stock market" OR trading OR NYSE OR NASDAQ OR "S&P 500" OR "Dow Jones" OR earnings OR IPO OR shares)');
+            const domains = 'finance.yahoo.com,bloomberg.com,cnbc.com,ft.com,reuters.com,wsj.com,marketwatch.com,businessinsider.com,forbes.com';
+
             const response = await fetch(
-                `https://newsapi.org/v2/everything?q=(stock market OR stocks OR trading OR NYSE OR NASDAQ OR S%26P 500 OR Dow Jones OR Wall Street) AND (shares OR investors OR earnings)&language=en&sortBy=publishedAt&pageSize=20&apiKey=${newsApiKey}`
+                `https://newsapi.org/v2/everything?q=${query}&domains=${domains}&language=en&sortBy=publishedAt&pageSize=30&apiKey=${newsApiKey}`
             );
 
             const data = await response.json();
 
             if (data.status === 'ok') {
-                const articles = data.articles.map(article => {
-                    const fullText = `${article.title} ${article.description || ''} ${article.content || ''}`;
-                    const tickers = extractTickers(fullText);
+                const articles = data.articles
+                    .filter(article => article.title && article.description) // Filter out articles without title or description
+                    .map(article => {
+                        const fullText = `${article.title} ${article.description || ''} ${article.content || ''}`;
+                        const tickers = extractTickers(fullText);
 
-                    return {
-                        title: article.title,
-                        description: article.description,
-                        url: article.url,
-                        urlToImage: article.urlToImage,
-                        publishedAt: article.publishedAt,
-                        source: article.source.name,
-                        tickers: tickers
-                    };
-                });
+                        return {
+                            title: article.title,
+                            description: article.description,
+                            url: article.url,
+                            urlToImage: article.urlToImage,
+                            publishedAt: article.publishedAt,
+                            source: article.source.name,
+                            tickers: tickers
+                        };
+                    });
 
                 res.status(200).json({ articles: articles, error: '' });
             } else {
