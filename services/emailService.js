@@ -121,6 +121,8 @@ const sendPasswordResetEmail = async (email, resetToken) => {
                     
                     <p>Or copy and paste this link into your browser:</p>
                     <div class="code">${resetLink}</div>
+
+                    <!---FOR TESTING: <p>Or use this token manually: ${resetToken}</p>--->
                     
                     <div class="warning">
                         <p><strong>Important:</strong> This link will expire in 1 hour for security reasons.</p>

@@ -69,6 +69,13 @@ exports.setApp = function (app, client) {
                 const lastUser = await db.collection('Users').find().sort({ UserID: -1 }).limit(1).toArray();
                 const nextId = lastUser.length > 0 ? lastUser[0].UserID + 1 : 1;
 
+                console.log('Starting email verification process...');
+                console.log('Generating token for user:', nextId, 'email:', email);
+
+                //const testEmail = 'simplitrade.25@gmail.com';
+                const verificationToken = generateEmailVerificationToken(nextId, email);
+                console.log('Token generated', verificationToken);
+
                 const newUser = {
                     UserID: nextId,
                     FirstName: firstName,
@@ -77,7 +84,7 @@ exports.setApp = function (app, client) {
                     Login: login,
                     Password: password,
                     isEmailVerified: false,
-                    emailVerificationToken: null,
+                    emailVerificationToken: verificationToken,
                     verificationTokenExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
                     createdAt: new Date()
                 };
@@ -88,13 +95,6 @@ exports.setApp = function (app, client) {
                 // AUTO-SEND VERIFICATION EMAIL
                 try {
 
-                    console.log('Starting email verification process...');
-                    console.log('Generating token for user:', nextId, 'email:', email);
-
-                    //const testEmail = 'simplitrade.25@gmail.com';
-                    const verificationToken = generateEmailVerificationToken(nextId, email);
-                    console.log('Token generated');
-
                     console.log('Calling sendVerificationEmail...');
                     const emailResult = await sendVerificationEmail(email, verificationToken);
                     //const emailResult = await sendVerificationEmail(testEmail, verificationToken);
@@ -104,15 +104,6 @@ exports.setApp = function (app, client) {
                     if (emailResult.success) {
                         //console.error('Failed to send verification email:', emailResult.error);
                         console.error('email success');
-
-                        await db.collection('Users').updateOne(
-                            { UserID: newUser.userId },
-                            {
-                                $set: {
-                                    emailVerificationToken: verificationToken
-                                }
-                            }
-                        );
                     } else {
                         console.error('Failed to send verification email:', emailResult.error);
                     }
@@ -138,6 +129,130 @@ exports.setApp = function (app, client) {
         var ret = { id: -1, error: error };
         res.status(200).json(ret);
     });
+
+    // Verify Email 
+    app.post('/api/verify-email', async (req, res) => {
+        // incoming: token
+        // outgoing: success, error
+        var error = '';
+
+        try {
+            const { token } = req.body;
+
+            const decoded = verifyEmailToken(token);
+
+
+            const db = client.db('Finance-app');
+
+            const user = await db.collection('Users').findOne({
+                emailVerificationToken: token
+            });
+
+            if (!user) {
+                error = 'Invalid verification token';
+            } else {
+
+                // Update user verification status in database
+                await db.collection('Users').updateOne(
+                    { UserID: user.UserID },
+                    {
+                        $set: {
+                            isEmailVerified: true,
+                            emailVerificationToken: null,
+                            verificationTokenExpires: null
+                        }
+                    }
+                );
+
+                res.status(200).json({
+                    success: true,
+                    message: 'Email verified successfully'
+                });
+            }
+        } catch (e) {
+            res.status(200).json({
+                success: false,
+                error: error
+            });
+        }
+    });
+
+    // Request Password Reset
+    app.post('/api/forgot-password', async (req, res) => {
+        try {
+            const { email } = req.body;
+
+            // Find user by email
+            const db = client.db('Finance-app');
+            const user = await db.collection('Users').findOne({ Email: email });
+
+            if (!user) {
+                // doesnt reveal if email exists or not
+                return res.status(200).json({
+                    success: true,
+                    message: 'If the email exists, a reset link has been sent'
+                });
+            }
+
+            const resetToken = generatePasswordResetToken(user.UserID, user.Email);
+            console.log('🔑 PASSWORD RESET TOKEN:', resetToken);
+            console.log('🔗 Reset URL:', `http://localhost:5173/reset-password?token=${resetToken}`);
+            const result = await sendPasswordResetEmail(email, resetToken);
+
+            if (result.success) {
+                res.status(200).json({
+                    success: true,
+                    message: 'If the email exists, a reset link has been sent'
+                });
+            } else {
+                res.status(500).json({
+                    success: false,
+                    error: 'Failed to send reset email'
+                });
+            }
+        } catch (error) {
+            console.error('Error in forgot password:', error);
+            res.status(500).json({
+                success: false,
+                error: 'Internal server error'
+            });
+        }
+    });
+
+    // Reset Password
+    app.post('/api/reset-password', async (req, res) => {
+        try {
+            const { token, newPassword } = req.body;
+
+            const decoded = verifyPasswordResetToken(token);
+
+            const db = client.db('Finance-app');
+            // hash the password
+            const result = await db.collection('Users').updateOne(
+                { UserID: decoded.userId },
+                { $set: { Password: newPassword } }
+            );
+
+            if (result.modifiedCount === 0) {
+                console.log('❌ No user found with UserID:', decoded.userId);
+                return res.status(400).json({
+                    success: false,
+                    error: 'User not found'
+                });
+            }
+
+            res.status(200).json({
+                success: true,
+                message: 'Password reset successfully'
+            });
+        } catch (error) {
+            res.status(400).json({
+                success: false,
+                error: error.message
+            });
+        }
+    });
+
 
     // ADD CARDS
     app.post('/api/addcard', async (req, res, next) => {
@@ -194,118 +309,6 @@ exports.setApp = function (app, client) {
         res.status(200).json(ret);
     });
 
-    // Verify Email 
-    app.post('/api/verify-email', async (req, res) => {
-        // incoming: token
-        // outgoing: success, error
-        var error = '';
-
-        try {
-            const { token } = req.body;
-
-            const decoded = verifyEmailToken(token);
-
-
-            const db = client.db('Finance-app');
-
-            const user = await db.collection('Users').findOne({
-                emailVerificationToken: token
-            });
-
-            if (!user) {
-                error = 'Invalid verification token';
-            } else {
-
-                // Update user verification status in database
-                await db.collection('Users').updateOne(
-                    { UserID: decoded.userId },
-                    {
-                        $set: {
-                            isEmailVerified: true,
-                            emailVerificationToken: null,
-                            verificationTokenExpires: null
-                        }
-                    }
-                );
-
-                res.status(200).json({
-                    success: true,
-                    message: 'Email verified successfully'
-                });
-            }
-        } catch (error) {
-            res.status(400).json({
-                success: false,
-                error: error.message
-            });
-        }
-    });
-
-    // Request Password Reset
-    app.post('/api/forgot-password', async (req, res) => {
-        try {
-            const { email } = req.body;
-
-            // Find user by email
-            const db = client.db('Finance-app');
-            const user = await db.collection('Users').findOne({ email });
-
-            if (!user) {
-                // doesnt reveal if email exists or not
-                return res.status(200).json({
-                    success: true,
-                    message: 'If the email exists, a reset link has been sent'
-                });
-            }
-
-            const resetToken = generatePasswordResetToken(user.UserID, user.email);
-            const result = await sendPasswordResetEmail(email, resetToken);
-
-            if (result.success) {
-                res.status(200).json({
-                    success: true,
-                    message: 'If the email exists, a reset link has been sent'
-                });
-            } else {
-                res.status(500).json({
-                    success: false,
-                    error: 'Failed to send reset email'
-                });
-            }
-        } catch (error) {
-            console.error('Error in forgot password:', error);
-            res.status(500).json({
-                success: false,
-                error: 'Internal server error'
-            });
-        }
-    });
-
-    // Reset Password
-    app.post('/api/reset-password', async (req, res) => {
-        try {
-            const { token, newPassword } = req.body;
-
-            const decoded = verifyPasswordResetToken(token);
-
-            const db = client.db('Finance-app');
-            // hash the password
-            await db.collection('Users').updateOne(
-                { UserID: decoded.userId },
-                { $set: { Password: newPassword } }
-            );
-
-            res.status(200).json({
-                success: true,
-                message: 'Password reset successfully'
-            });
-        } catch (error) {
-            res.status(400).json({
-                success: false,
-                error: error.message
-            });
-        }
-    });
-
+    
 }
 
