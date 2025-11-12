@@ -1,13 +1,15 @@
-import Layout from '../components/Layout';
+import Footer from '../components/footer.tsx';
+import PageTitle from '../components/PageTitle.tsx';
+import Portfolio from '../components/Portfolio.tsx';
+import NavBar from '../components/NavBar.tsx';
 
 const TradePage = () => {
     return (
-        <Layout>
-            <h1>Trade</h1>
-            <p>
-                This is the Trade page. Add your trading functionality here.
-            </p>
-        </Layout>
+        <div className="login-page-container">
+            <NavBar/>
+            <Portfolio />
+            <Footer />
+        </div>
     );
 };
 

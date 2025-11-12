@@ -390,9 +390,9 @@ html, body {
   background: linear-gradient(145deg, #ffffff, #f8f9fa);
   border: 1px solid #e1e5e9;
   border-radius: 16px;
-  padding: 0.8rem;
+  padding: 1.5rem;
   width: 100%;
-  max-width: 380px;
+  max-width: 450px;
   margin: 0 auto;
   box-shadow:
     0 10px 25px rgba(0, 0, 0, 0.1),

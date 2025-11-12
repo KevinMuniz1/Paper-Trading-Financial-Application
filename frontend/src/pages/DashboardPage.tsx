@@ -6,7 +6,6 @@ const DashboardPage = () => {
     return (
         <Layout>
             <PageTitle />
-            <Portfolio/>
         </Layout>
     );
 }

@@ -1,9 +1,8 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import './NavBar.css';
 
 const NavBar = () => {
     const location = useLocation();
-    const navigate = useNavigate();
 
     // get user data from localStorage
     const userData = localStorage.getItem('user_data');

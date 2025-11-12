@@ -22,6 +22,8 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/portfolio" element={<PortfolioPage />} />
+          <Route path="/trade" element={<TradePage />} />
         </Routes>
       </BrowserRouter>
     </div></div>
