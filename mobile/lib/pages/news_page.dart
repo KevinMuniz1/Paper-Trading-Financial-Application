@@ -37,7 +37,8 @@ class _NewsPageState extends State<NewsPage> {
 		return Scaffold(
 			appBar: AppBar(
 				title: const Text('News'),
-				backgroundColor: Colors.blue,
+				backgroundColor: const Color(0xFF6C5CE7),
+				foregroundColor: Colors.white,
 				centerTitle: true,
 				actions: [
 					IconButton(

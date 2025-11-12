@@ -16,9 +16,36 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Paper Trading Mobile',
+      title: 'SimpliTrade Mobile',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: MaterialColor(0xFF6C5CE7, {
+          50: const Color(0xFFEDE8FF),
+          100: const Color(0xFFD3C6FF),
+          200: const Color(0xFFB69FFF),
+          300: const Color(0xFF9876FF),
+          400: const Color(0xFF8257FF),
+          500: const Color(0xFF6C5CE7),
+          600: const Color(0xFF5F4ECC),
+          700: const Color(0xFF523EB0),
+          800: const Color(0xFF452E95),
+          900: const Color(0xFF331B6F),
+        }),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF6C5CE7),
+          primary: const Color(0xFF6C5CE7),
+          secondary: const Color(0xFF7ED321),
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF6C5CE7),
+          foregroundColor: Colors.white,
+          centerTitle: true,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF7ED321),
+            foregroundColor: Colors.white,
+          ),
+        ),
       ),
       home: const LoginScreen(),
     );
@@ -121,69 +148,130 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Paper Trading Financial App'),
-        backgroundColor: Colors.blue,
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // App Icon and Welcome
-            const Icon(
-              Icons.monetization_on,
-              size: 80,
-              color: Colors.green,
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Welcome Back',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Sign in to your account',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
-            ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF6C5CE7),
+              Color(0xFF9776EC),
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 40),
+                // SimpliTrade Logo
+                Container(
+                  height: 120,
+                  width: 120,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Image.asset(
+                      'assets/simpli_trade_logo.png',
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                const Text(
+                  'Welcome to SimpliTrade',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Sign in to your account',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.white70,
+                  ),
+                ),
             const SizedBox(height: 40),
             
             // Username Field
-            TextField(
-              controller: _usernameController,
-              decoration: const InputDecoration(
-                labelText: 'Username',
-                prefixIcon: Icon(Icons.person),
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 5,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-              textInputAction: TextInputAction.next,
+              child: TextField(
+                controller: _usernameController,
+                decoration: const InputDecoration(
+                  labelText: 'Username',
+                  prefixIcon: Icon(Icons.person, color: Color(0xFF6C5CE7)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(12)),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  fillColor: Colors.white,
+                  filled: true,
+                ),
+                textInputAction: TextInputAction.next,
+              ),
             ),
             const SizedBox(height: 16),
             
             // Password Field
-            TextField(
-              controller: _passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Password',
-                prefixIcon: Icon(Icons.lock),
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 5,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-              textInputAction: TextInputAction.done,
-              onSubmitted: (_) => _handleLogin(),
+              child: TextField(
+                controller: _passwordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Password',
+                  prefixIcon: Icon(Icons.lock, color: Color(0xFF6C5CE7)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(12)),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  fillColor: Colors.white,
+                  filled: true,
+                ),
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => _handleLogin(),
+              ),
             ),
             const SizedBox(height: 24),
             
@@ -191,13 +279,13 @@ class _LoginScreenState extends State<LoginScreen> {
             ElevatedButton(
               onPressed: _handleLogin,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
+                backgroundColor: const Color(0xFF7ED321),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                elevation: 2,
+                elevation: 3,
               ),
               child: const Text(
                 'Login',
@@ -239,10 +327,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 );
               },
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Colors.blue),
+                side: const BorderSide(color: Colors.white, width: 2),
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
               child: const Text(
@@ -250,11 +338,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.blue,
+                  color: Colors.white,
                 ),
               ),
             ),
-          ],
+            const SizedBox(height: 20),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -399,7 +490,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Create Account'),
-        backgroundColor: Colors.blue,
+        backgroundColor: const Color(0xFF6C5CE7),
+        foregroundColor: Colors.white,
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -535,7 +627,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             ElevatedButton(
               onPressed: _handleRegistration,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
+                backgroundColor: const Color(0xFF7ED321),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
@@ -558,15 +650,15 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: _message.contains('Creating') ? Colors.blue.shade50 : Colors.orange.shade50,
-                  border: Border.all(color: _message.contains('Creating') ? Colors.blue.shade200 : Colors.orange.shade200),
+                  color: _message.contains('Creating') ? const Color(0xFF6C5CE7).withOpacity(0.1) : Colors.orange.shade50,
+                  border: Border.all(color: _message.contains('Creating') ? const Color(0xFF6C5CE7).withOpacity(0.3) : Colors.orange.shade200),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   _message,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: _message.contains('Creating') ? Colors.blue.shade800 : Colors.orange.shade800,
+                    color: _message.contains('Creating') ? const Color(0xFF6C5CE7) : Colors.orange.shade800,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -586,7 +678,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 'Already have an account? Sign In',
                 style: TextStyle(
                   fontSize: 16,
-                  color: Colors.blue,
+                  color: Color(0xFF6C5CE7),
                 ),
               ),
             ),
@@ -629,7 +721,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
             _currentIndex = index;
           });
         },
-        selectedItemColor: Colors.blue,
+        selectedItemColor: const Color(0xFF6C5CE7),
         unselectedItemColor: Colors.grey,
         items: const [
           BottomNavigationBarItem(
@@ -791,44 +883,166 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _showDecreaseFundsDialog() {
+    final TextEditingController amountController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Decrease Buying Power'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Current Balance: \$${_buyingPower.toStringAsFixed(2)}'),
+              const SizedBox(height: 15),
+              TextField(
+                controller: amountController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Amount to Decrease',
+                  prefixText: '\$',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final amount = double.tryParse(amountController.text);
+                if (amount != null && amount > 0) {
+                  if (amount <= _buyingPower) {
+                    setState(() {
+                      _buyingPower -= amount;
+                    });
+                    _saveBuyingPower();
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Decreased buying power by \$${amount.toStringAsFixed(2)}'),
+                        backgroundColor: Colors.orange,
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Cannot decrease more than your current balance'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+              ),
+              child: const Text('Decrease Funds', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Paper Trading'),
-        backgroundColor: Colors.blue,
-        centerTitle: true,
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset(
+                  'assets/simpli_trade_logo.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Text('SimpliTrade'),
+          ],
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Smaller Welcome Section
-            Text(
-              'Welcome ${widget.firstName} ${widget.lastName}',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
-              ),
+            // Welcome Section with Logo
+            Row(
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF6C5CE7).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.asset(
+                      'assets/simpli_trade_logo.png',
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 15),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Welcome back,',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      Text(
+                        '${widget.firstName} ${widget.lastName}',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF6C5CE7),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 25),
             
             // Buying Power Section
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.green.shade400, Colors.green.shade600],
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF7ED321), Color(0xFF5CB815)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(15),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.green.withOpacity(0.3),
+                    color: const Color(0xFF7ED321).withOpacity(0.3),
                     blurRadius: 10,
                     offset: const Offset(0, 5),
                   ),
@@ -855,26 +1069,50 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   const SizedBox(height: 15),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _showAddFundsDialog,
-                      icon: const Icon(Icons.add, color: Colors.green),
-                      label: const Text(
-                        'Increase Buying Power',
-                        style: TextStyle(
-                          color: Colors.green,
-                          fontWeight: FontWeight.bold,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: _showAddFundsDialog,
+                          icon: const Icon(Icons.add, color: Colors.green),
+                          label: const Text(
+                            'Increase',
+                            style: TextStyle(
+                              color: Colors.green,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
                         ),
                       ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: _showDecreaseFundsDialog,
+                          icon: const Icon(Icons.remove, color: Colors.red),
+                          label: const Text(
+                            'Decrease',
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),
@@ -884,81 +1122,13 @@ class _HomeScreenState extends State<HomeScreen> {
             // Portfolio Chart
             const PortfolioChart(),
             const SizedBox(height: 30),
-            
-            // Quick Actions
-            const Text(
-              'Quick Actions',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 15),
-            
-            Row(
-              children: [
-                Expanded(
-                  child: _buildQuickActionCard(
-                    'Stocks',
-                    Icons.trending_up,
-                    Colors.orange,
-                    () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const StocksPage()),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: _buildQuickActionCard(
-                    'Research',
-                    Icons.search,
-                    Colors.blue,
-                    () {},
-                  ),
-                ),
-              ],
-            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildQuickActionCard(String title, IconData icon, Color color, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: color.withOpacity(0.3)),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              size: 40,
-              color: color,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
 }
 
 // Account Screen
@@ -976,60 +1146,104 @@ class AccountScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Account'),
-        backgroundColor: Colors.blue,
-        centerTitle: true,
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset(
+                  'assets/simpli_trade_logo.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Text('Account'),
+          ],
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            // Profile Section
+            // Profile Section with SimpliTrade Branding
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(25),
               decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(15),
-                border: Border.all(color: Colors.grey.shade200),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF6C5CE7), Color(0xFF9776EC)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF6C5CE7).withOpacity(0.3),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
               ),
               child: Column(
                 children: [
-                  const CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.blue,
-                    child: Icon(
-                      Icons.person,
-                      size: 60,
+                  // SimpliTrade Logo instead of person icon
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
                       color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Image.asset(
+                        'assets/simpli_trade_logo.png',
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 20),
                   Text(
                     '$firstName $lastName',
                     style: const TextStyle(
-                      fontSize: 24,
+                      fontSize: 28,
                       fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 8),
                   const Text(
-                    'Paper Trading Account',
+                    'SimpliTrade Member',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.grey,
+                      color: Colors.white70,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
+
                 ],
               ),
             ),
             const SizedBox(height: 30),
             
             // Account Options
-            _buildAccountOption(context, 'Portfolio Balance', Icons.account_balance_wallet, false),
             _buildAccountOption(context, 'Trading History', Icons.history, false),
-            _buildAccountOption(context, 'Settings', Icons.settings, false),
-            _buildAccountOption(context, 'Help & Support', Icons.help, false),
             _buildAccountOption(context, 'Log Out', Icons.logout, true),
           ],
         ),
@@ -1039,17 +1253,35 @@ class AccountScreen extends StatelessWidget {
 
   Widget _buildAccountOption(BuildContext context, String title, IconData icon, bool isLogout) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: ListTile(
-        leading: Icon(icon, color: isLogout ? Colors.red : Colors.blue),
+        leading: Icon(
+          icon, 
+          color: isLogout ? Colors.red : const Color(0xFF6C5CE7),
+        ),
         title: Text(
           title,
           style: TextStyle(
-            color: isLogout ? Colors.red : Colors.black,
-            fontWeight: isLogout ? FontWeight.w600 : FontWeight.normal,
+            color: isLogout ? Colors.red : Colors.black87,
+            fontWeight: isLogout ? FontWeight.w600 : FontWeight.w500,
           ),
         ),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+        trailing: Icon(
+          Icons.arrow_forward_ios, 
+          size: 16,
+          color: isLogout ? Colors.red : const Color(0xFF6C5CE7),
+        ),
         onTap: () {
           if (isLogout) {
             _showLogoutDialog(context);
@@ -1109,7 +1341,8 @@ class NotificationsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notifications'),
-        backgroundColor: Colors.blue,
+        backgroundColor: const Color(0xFF6C5CE7),
+        foregroundColor: Colors.white,
         centerTitle: true,
       ),
       body: const Center(
@@ -1153,7 +1386,7 @@ class _TradePageState extends State<TradePage> with SingleTickerProviderStateMix
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
     _loadData();
   }
 
@@ -1222,7 +1455,7 @@ class _TradePageState extends State<TradePage> with SingleTickerProviderStateMix
             ElevatedButton(
               onPressed: () => _executeTrade(stock, amountController.text, isBuy),
               style: ElevatedButton.styleFrom(
-                backgroundColor: isBuy ? Colors.green : Colors.red,
+                backgroundColor: isBuy ? const Color(0xFF7ED321) : Colors.red,
               ),
               child: Text(
                 isBuy ? 'Buy' : 'Sell',
@@ -1387,7 +1620,7 @@ class _TradePageState extends State<TradePage> with SingleTickerProviderStateMix
                   onPressed: fromStock != null && toStock != null
                       ? () => _executeSwap(fromStock!, toStock!, amountController.text)
                       : null,
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6C5CE7)),
                   child: const Text('Swap', style: TextStyle(color: Colors.white)),
                 ),
               ],
@@ -1436,14 +1669,17 @@ class _TradePageState extends State<TradePage> with SingleTickerProviderStateMix
     return Scaffold(
       appBar: AppBar(
         title: const Text('Trade'),
-        backgroundColor: Colors.blue,
+        backgroundColor: const Color(0xFF6C5CE7),
+        foregroundColor: Colors.white,
         centerTitle: true,
         bottom: TabBar(
           controller: _tabController,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          indicatorColor: const Color(0xFF7ED321),
           tabs: const [
             Tab(text: 'Quick Trade'),
             Tab(text: 'Swap'),
-            Tab(text: 'Portfolio'),
           ],
         ),
       ),
@@ -1452,7 +1688,6 @@ class _TradePageState extends State<TradePage> with SingleTickerProviderStateMix
         children: [
           _buildQuickTradeTab(),
           _buildSwapTab(),
-          _buildPortfolioTab(),
         ],
       ),
     );
@@ -1465,13 +1700,19 @@ class _TradePageState extends State<TradePage> with SingleTickerProviderStateMix
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(16),
-          color: Colors.blue.shade50,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF6C5CE7).withOpacity(0.1), Color(0xFF7ED321).withOpacity(0.1)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
           child: Column(
             children: [
-              const Text('Available Cash', style: TextStyle(fontSize: 16)),
+              const Text('Available Cash', style: TextStyle(fontSize: 16, color: Color(0xFF6C5CE7))),
               Text(
                 '\$${_buyingPower.toStringAsFixed(2)}',
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF6C5CE7)),
               ),
             ],
           ),
@@ -1557,7 +1798,7 @@ class _TradePageState extends State<TradePage> with SingleTickerProviderStateMix
                       icon: const Icon(Icons.trending_up),
                       label: const Text('Buy'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
+                        backgroundColor: const Color(0xFF7ED321),
                         foregroundColor: Colors.white,
                       ),
                     ),
@@ -1627,126 +1868,7 @@ class _TradePageState extends State<TradePage> with SingleTickerProviderStateMix
     );
   }
 
-  Widget _buildPortfolioTab() {
-    if (_portfolio.isEmpty) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.account_balance_wallet_outlined, size: 80, color: Colors.grey),
-            SizedBox(height: 20),
-            Text('No holdings yet', style: TextStyle(fontSize: 18, color: Colors.grey)),
-            Text('Start trading to build your portfolio', style: TextStyle(color: Colors.grey)),
-          ],
-        ),
-      );
-    }
 
-    final totalValue = _portfolio.fold(
-      0.0,
-      (sum, holding) => sum + (holding.shares * holding.currentPrice),
-    );
-
-    return Column(
-      children: [
-        // Portfolio Summary
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          color: Colors.green.shade50,
-          child: Column(
-            children: [
-              const Text('Portfolio Value', style: TextStyle(fontSize: 16)),
-              Text(
-                '\$${totalValue.toStringAsFixed(2)}',
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              Text('+ Cash: \$${_buyingPower.toStringAsFixed(2)}'),
-              const Divider(),
-              Text(
-                'Total: \$${(totalValue + _buyingPower).toStringAsFixed(2)}',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-        ),
-        // Holdings List
-        Expanded(
-          child: ListView.builder(
-            itemCount: _portfolio.length,
-            itemBuilder: (context, index) {
-              final holding = _portfolio[index];
-              final currentValue = holding.shares * holding.currentPrice;
-              final gainLoss = currentValue - (holding.shares * holding.averagePrice);
-              final gainLossPercent = ((holding.currentPrice - holding.averagePrice) / holding.averagePrice) * 100;
-              final isPositive = gainLoss >= 0;
-
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: isPositive ? Colors.green.shade100 : Colors.red.shade100,
-                    child: Text(
-                      holding.symbol.substring(0, 2),
-                      style: TextStyle(
-                        color: isPositive ? Colors.green : Colors.red,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  title: Text(holding.symbol, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('${holding.shares.toStringAsFixed(4)} shares'),
-                      Text('Avg: \$${holding.averagePrice.toStringAsFixed(2)}'),
-                    ],
-                  ),
-                  trailing: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        '\$${currentValue.toStringAsFixed(2)}',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        '${isPositive ? '+' : ''}\$${gainLoss.toStringAsFixed(2)}',
-                        style: TextStyle(
-                          color: isPositive ? Colors.green : Colors.red,
-                          fontSize: 12,
-                        ),
-                      ),
-                      Text(
-                        '${isPositive ? '+' : ''}${gainLossPercent.toStringAsFixed(1)}%',
-                        style: TextStyle(
-                          color: isPositive ? Colors.green : Colors.red,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                  onTap: () {
-                    final stock = _popularStocks.firstWhere(
-                      (s) => s.symbol == holding.symbol,
-                      orElse: () => Stock(
-                        symbol: holding.symbol, 
-                        name: holding.name, 
-                        price: holding.currentPrice, 
-                        change: 0, 
-                        changePercent: 0
-                      ),
-                    );
-                    _showQuickTradeOptions(stock);
-                  },
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 // News Screen
@@ -1758,7 +1880,8 @@ class NewsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Financial News'),
-        backgroundColor: Colors.blue,
+        backgroundColor: const Color(0xFF6C5CE7),
+        foregroundColor: Colors.white,
         centerTitle: true,
       ),
       body: const Center(
@@ -2447,7 +2570,8 @@ class _StocksPageState extends State<StocksPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Stocks'),
-        backgroundColor: Colors.blue,
+        backgroundColor: const Color(0xFF6C5CE7),
+        foregroundColor: Colors.white,
         centerTitle: true,
       ),
       body: _isLoading
@@ -2476,15 +2600,15 @@ class _StocksPageState extends State<StocksPage> {
           width: 50,
           height: 50,
           decoration: BoxDecoration(
-            color: Colors.blue.shade50,
+            color: const Color(0xFF6C5CE7).withOpacity(0.1),
             borderRadius: BorderRadius.circular(25),
           ),
           child: Center(
             child: Text(
               stock.symbol.length >= 2 ? stock.symbol.substring(0, 2) : stock.symbol,
-              style: TextStyle(
+              style: const TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Colors.blue.shade700,
+                color: Color(0xFF6C5CE7),
               ),
             ),
           ),
@@ -2614,7 +2738,7 @@ class _StockDetailPageState extends State<StockDetailPage> {
                   }
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF7ED321)),
               child: const Text('Buy', style: TextStyle(color: Colors.white)),
             ),
           ],
@@ -2696,7 +2820,8 @@ class _StockDetailPageState extends State<StockDetailPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.stock.symbol),
-        backgroundColor: Colors.blue,
+        backgroundColor: const Color(0xFF6C5CE7),
+        foregroundColor: Colors.white,
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -2834,7 +2959,7 @@ class _StockDetailPageState extends State<StockDetailPage> {
                     icon: const Icon(Icons.add_shopping_cart),
                     label: const Text('Buy'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
+                      backgroundColor: const Color(0xFF7ED321),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 15),
                     ),
@@ -3008,7 +3133,8 @@ class _PortfolioPageState extends State<PortfolioPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Portfolio'),
-        backgroundColor: Colors.blue,
+        backgroundColor: const Color(0xFF6C5CE7),
+        foregroundColor: Colors.white,
         centerTitle: true,
       ),
       body: _isLoading
@@ -3096,7 +3222,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.blue,
+                                    color: Color(0xFF7ED321),
                                   ),
                                 ),
                               ],
