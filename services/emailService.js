@@ -86,7 +86,6 @@ const sendVerificationEmail = async (email, verificationToken) => {
 const sendPasswordResetEmail = async (email, resetToken) => {
     try {
         const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
-
         const { data, error } = await resend.emails.send({
             from: process.env.FROM_EMAIL,
             to: email,

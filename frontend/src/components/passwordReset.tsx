@@ -3,15 +3,35 @@ import { Router, useNavigate } from "react-router-dom";
 
 function PasswordReset() {
     const [message, setMessage] = useState('');
+    const [email, setEmail] = useState('');
+    const navigate = useNavigate();
 
     async function resetPassword(event: React.MouseEvent<HTMLButtonElement>) {
         event.preventDefault();
-         const navigate = useNavigate();
-        // Implement password reset logic here
+        
+        try {
+            const response = await fetch('/api/forgot-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    email: email,
+                })
+            });
 
-        //set success message
-        setMessage('If this email is registered, a password reset link will be sent.');
-        setTimeout(() => navigate('/'), 3000);
+            const result = await response.json();
+            console.log('Password reset response:', result);
+
+            if (response.ok) {
+                setMessage('If this email is registered, a password reset link will be sent.');
+                setTimeout(() => navigate('/'), 3000);
+            } else {
+                setMessage('An error occurred. Please try again.');
+                console.error('Password reset failed:', result);
+            }
+        } catch (error) {
+            console.error('Error sending password reset request:', error);
+            setMessage('An error occurred. Please try again.');
+        }
     }
 
     return (
@@ -28,7 +48,7 @@ function PasswordReset() {
             <form>
                 <div className="form-group">
                     <label htmlFor="email">Email Address</label>
-                    <input type="email" id="email" placeholder="Enter your email" required />
+                    <input type="email" id="email" placeholder="Enter your email" value={email} onChange={(e) => setEmail(e.target.value)} required />
                 </div>
                 <button type="submit" id="resetButton" onClick={resetPassword}>
                     Send Reset Link

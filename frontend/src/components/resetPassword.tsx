@@ -27,14 +27,14 @@ function ResetPassword() {
 
         try {
             // Implement API call to reset password
-            // await fetch('/api/reset-password', {
-            //     method: 'POST',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify({ 
-            //         token: token,
-            //         newPassword: newPassword 
-            //     })
-            // });
+            await fetch('/api/reset-password', {
+             method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    token: token,
+                    newPassword: newPassword 
+                 })
+             });
 
             setMessage('Password successfully reset! Redirecting to login...');
             

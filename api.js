@@ -248,9 +248,10 @@ exports.setApp = function (app, client) {
 
             // Find user by email
             const db = client.db('Finance-app');
-            const user = await db.collection('Users').findOne({ email });
+            const user = await db.collection('Users').findOne({ Email: email });
 
             if (!user) {
+                console.log('User not found for email:', email);
                 // doesnt reveal if email exists or not
                 return res.status(200).json({
                     success: true,

@@ -8,7 +8,7 @@ import PortfolioPage from './pages/PortfolioPage';
 import TradePage from './pages/TradePage';
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import ForgotPasswordPage from './pages/forgot-password';
-import ResetPasswordPage from './pages/resetPassword';
+import ResetPasswordPage from './pages/reset-password';
 
 function App() {
   return (
