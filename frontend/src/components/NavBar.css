@@ -160,14 +160,18 @@
 .layout-with-sidebar {
     display: flex;
     min-height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
 }
 
 .main-content {
     margin-left: 280px;
     flex: 1;
     background: #f8f9fa;
-    min-height: 100vh;
-    padding: 2rem;
+    height: 100vh;
+    padding: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 @media (max-width: 768px) {
@@ -182,7 +186,7 @@
     
     .main-content {
         margin-left: 0;
-        padding: 1rem;
+        padding: 0;
     }
     
     .brand-text {
