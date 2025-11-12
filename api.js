@@ -142,47 +142,106 @@ exports.setApp = function (app, client) {
         res.status(200).json(ret);
     });
 
-    // Function to extract stock tickers from text
-    function extractTickers(text) {
-        if (!text) return [];
+    // Function to extract the primary stock ticker from text
+    function extractPrimaryTicker(title, description) {
+        if (!title && !description) return null;
 
-        const tickers = new Set();
+        const fullText = `${title || ''} ${description || ''}`;
 
-        // Common stock ticker patterns
-        const tickerPatterns = [
-            /\$([A-Z]{1,5})\b/g,  // $AAPL format
-            /\b([A-Z]{1,5})(?:\s+stock|\s+shares|\s+Inc|\s+Corp|\s+ticker)/gi,  // AAPL stock format
-        ];
+        // Popular stock tickers with their company names for matching
+        const tickerMap = {
+            'AAPL': ['Apple', 'iPhone', 'iPad', 'Mac', 'iOS'],
+            'MSFT': ['Microsoft', 'Windows', 'Xbox', 'Azure', 'Office'],
+            'GOOGL': ['Google', 'Alphabet', 'YouTube', 'Android', 'Chrome'],
+            'AMZN': ['Amazon', 'AWS', 'Prime', 'Alexa'],
+            'NVDA': ['Nvidia', 'GPU', 'graphics card'],
+            'META': ['Meta', 'Facebook', 'Instagram', 'WhatsApp', 'Zuckerberg'],
+            'TSLA': ['Tesla', 'Musk', 'electric vehicle', 'EV'],
+            'JPM': ['JPMorgan', 'JP Morgan', 'Chase'],
+            'JNJ': ['Johnson & Johnson', 'J&J'],
+            'V': ['Visa'],
+            'PG': ['Procter & Gamble', 'P&G'],
+            'XOM': ['Exxon', 'ExxonMobil'],
+            'UNH': ['UnitedHealth'],
+            'MA': ['Mastercard'],
+            'HD': ['Home Depot'],
+            'CVX': ['Chevron'],
+            'MRK': ['Merck'],
+            'PFE': ['Pfizer'],
+            'ABBV': ['AbbVie'],
+            'KO': ['Coca-Cola', 'Coke'],
+            'PEP': ['Pepsi', 'PepsiCo'],
+            'COST': ['Costco'],
+            'WMT': ['Walmart'],
+            'DIS': ['Disney'],
+            'CSCO': ['Cisco'],
+            'NFLX': ['Netflix'],
+            'ADBE': ['Adobe'],
+            'CRM': ['Salesforce'],
+            'NKE': ['Nike'],
+            'TMO': ['Thermo Fisher'],
+            'ABT': ['Abbott'],
+            'ACN': ['Accenture'],
+            'MCD': ['McDonald', 'McDonalds'],
+            'AVGO': ['Broadcom'],
+            'DHR': ['Danaher'],
+            'VZ': ['Verizon'],
+            'TXN': ['Texas Instruments'],
+            'NEE': ['NextEra'],
+            'INTC': ['Intel'],
+            'CMCSA': ['Comcast'],
+            'LIN': ['Linde'],
+            'PM': ['Philip Morris'],
+            'UPS': ['UPS', 'United Parcel'],
+            'RTX': ['Raytheon'],
+            'QCOM': ['Qualcomm'],
+            'HON': ['Honeywell'],
+            'WFC': ['Wells Fargo'],
+            'SBUX': ['Starbucks'],
+            'AMD': ['AMD', 'Advanced Micro Devices'],
+            'SNOW': ['Snowflake'],
+            'CRM': ['Salesforce'],
+            'SQ': ['Square', 'Block'],
+            'PYPL': ['PayPal'],
+            'UBER': ['Uber'],
+            'ABNB': ['Airbnb'],
+            'COIN': ['Coinbase']
+        };
 
-        // Popular stock tickers to look for (most common S&P 500 stocks)
-        const popularTickers = [
-            'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'TSLA', 'BRK.B', 'JPM', 'JNJ',
-            'V', 'PG', 'XOM', 'UNH', 'MA', 'HD', 'CVX', 'MRK', 'PFE', 'ABBV',
-            'KO', 'PEP', 'COST', 'WMT', 'DIS', 'CSCO', 'NFLX', 'ADBE', 'CRM', 'NKE',
-            'TMO', 'ABT', 'ACN', 'MCD', 'AVGO', 'DHR', 'VZ', 'TXN', 'NEE', 'INTC',
-            'CMCSA', 'LIN', 'PM', 'UPS', 'RTX', 'QCOM', 'HON', 'WFC', 'SBUX', 'AMD'
-        ];
+        // First check for $TICKER format in title (highest priority)
+        const dollarPattern = /\$([A-Z]{1,5})\b/g;
+        let match = dollarPattern.exec(title || '');
+        if (match) {
+            return match[1];
+        }
 
-        // Check for ticker patterns
-        tickerPatterns.forEach(pattern => {
-            let match;
-            while ((match = pattern.exec(text)) !== null) {
-                const ticker = match[1].toUpperCase();
-                if (ticker.length >= 1 && ticker.length <= 5) {
-                    tickers.add(ticker);
+        // Check for company names in title first (title is more important)
+        for (const [ticker, keywords] of Object.entries(tickerMap)) {
+            for (const keyword of keywords) {
+                const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+                if (regex.test(title || '')) {
+                    return ticker;
                 }
             }
-        });
+        }
 
-        // Check for popular tickers mentioned in text
-        popularTickers.forEach(ticker => {
-            const regex = new RegExp(`\\b${ticker}\\b`, 'i');
-            if (regex.test(text)) {
-                tickers.add(ticker);
+        // Then check in description
+        for (const [ticker, keywords] of Object.entries(tickerMap)) {
+            for (const keyword of keywords) {
+                const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+                if (regex.test(description || '')) {
+                    return ticker;
+                }
             }
-        });
+        }
 
-        return Array.from(tickers).slice(0, 3); // Limit to 3 tickers per article
+        // Last resort: check for $TICKER in description
+        match = dollarPattern.exec(description || '');
+        if (match) {
+            return match[1];
+        }
+
+        return null;
     }
 
     // GET NEWS
@@ -202,11 +261,19 @@ exports.setApp = function (app, client) {
 
             // Fetch stock-specific news from top financial news sources
             // Including Yahoo Finance, Bloomberg, CNBC, Financial Times, Reuters, WSJ
-            const query = encodeURIComponent('(stocks OR "stock market" OR trading OR NYSE OR NASDAQ OR "S&P 500" OR "Dow Jones" OR earnings OR IPO OR shares)');
-            const domains = 'finance.yahoo.com,bloomberg.com,cnbc.com,ft.com,reuters.com,wsj.com,marketwatch.com,businessinsider.com,forbes.com';
+            const query = encodeURIComponent('stocks OR "stock market" OR trading OR earnings OR shares');
+            const domains = 'finance.yahoo.com,bloomberg.com,cnbc.com,reuters.com,wsj.com,marketwatch.com,businessinsider.com,forbes.com';
+
+            // Get date range for past 30 days (NewsAPI free tier limitation)
+            const toDate = new Date();
+            const fromDate = new Date();
+            fromDate.setDate(fromDate.getDate() - 30); // 30 days ago
+
+            const fromDateStr = fromDate.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+            const toDateStr = toDate.toISOString().split('T')[0];
 
             const response = await fetch(
-                `https://newsapi.org/v2/everything?q=${query}&domains=${domains}&language=en&sortBy=publishedAt&pageSize=30&apiKey=${newsApiKey}`
+                `https://newsapi.org/v2/everything?q=${query}&domains=${domains}&from=${fromDateStr}&to=${toDateStr}&language=en&sortBy=publishedAt&pageSize=100&apiKey=${newsApiKey}`
             );
 
             const data = await response.json();
@@ -215,8 +282,7 @@ exports.setApp = function (app, client) {
                 const articles = data.articles
                     .filter(article => article.title && article.description) // Filter out articles without title or description
                     .map(article => {
-                        const fullText = `${article.title} ${article.description || ''} ${article.content || ''}`;
-                        const tickers = extractTickers(fullText);
+                        const primaryTicker = extractPrimaryTicker(article.title, article.description);
 
                         return {
                             title: article.title,
@@ -225,9 +291,10 @@ exports.setApp = function (app, client) {
                             urlToImage: article.urlToImage,
                             publishedAt: article.publishedAt,
                             source: article.source.name,
-                            tickers: tickers
+                            ticker: primaryTicker
                         };
-                    });
+                    })
+                    .filter(article => article.ticker !== null); // Only include articles with an identifiable ticker
 
                 res.status(200).json({ articles: articles, error: '' });
             } else {

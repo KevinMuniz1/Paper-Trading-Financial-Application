@@ -9,7 +9,7 @@ interface Article {
     urlToImage: string;
     publishedAt: string;
     source: string;
-    tickers: string[];
+    ticker: string | null;
 }
 
 const News = () => {
@@ -52,6 +52,39 @@ const News = () => {
             hour: '2-digit',
             minute: '2-digit'
         });
+    };
+
+    // Get brand color for ticker
+    const getTickerColor = (ticker: string): string => {
+        const colorMap: { [key: string]: string } = {
+            'AAPL': '#000000',     // Apple - Black
+            'MSFT': '#00A4EF',     // Microsoft - Blue
+            'GOOGL': '#4285F4',    // Google - Blue
+            'AMZN': '#FF9900',     // Amazon - Orange
+            'NVDA': '#76B900',     // Nvidia - Green
+            'META': '#0866FF',     // Meta - Blue
+            'TSLA': '#E82127',     // Tesla - Red
+            'JPM': '#117ACA',      // JPMorgan - Blue
+            'V': '#1A1F71',        // Visa - Navy
+            'MA': '#EB001B',       // Mastercard - Red
+            'NFLX': '#E50914',     // Netflix - Red
+            'DIS': '#113CCF',      // Disney - Blue
+            'SBUX': '#00704A',     // Starbucks - Green
+            'NKE': '#000000',      // Nike - Black
+            'MCD': '#FFC72C',      // McDonald's - Yellow
+            'KO': '#F40009',       // Coca-Cola - Red
+            'PEP': '#004B93',      // Pepsi - Blue
+            'AMD': '#ED1C24',      // AMD - Red
+            'INTC': '#0071C5',     // Intel - Blue
+            'PYPL': '#003087',     // PayPal - Blue
+            'UBER': '#000000',     // Uber - Black
+            'ABNB': '#FF5A5F',     // Airbnb - Red/Pink
+            'COIN': '#0052FF',     // Coinbase - Blue
+            'WMT': '#0071CE',      // Walmart - Blue
+            'COST': '#0D6EFD',     // Costco - Blue
+        };
+
+        return colorMap[ticker] || '#1a7221'; // Default green
     };
 
     if (loading) {
@@ -101,12 +134,13 @@ const News = () => {
                             <div className="article-content">
                                 <div className="article-header">
                                     <div className="article-source">{article.source}</div>
-                                    {article.tickers && article.tickers.length > 0 && (
-                                        <div className="ticker-tags">
-                                            {article.tickers.map((ticker, idx) => (
-                                                <span key={idx} className="ticker-tag">${ticker}</span>
-                                            ))}
-                                        </div>
+                                    {article.ticker && (
+                                        <span
+                                            className="ticker-tag"
+                                            style={{ backgroundColor: getTickerColor(article.ticker) }}
+                                        >
+                                            ${article.ticker}
+                                        </span>
                                     )}
                                 </div>
                                 <h3 className="article-title">{article.title}</h3>
