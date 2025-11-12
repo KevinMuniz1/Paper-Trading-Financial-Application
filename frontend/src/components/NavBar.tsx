@@ -1,89 +1,81 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import './NavBar.css';
+import { useState, useEffect, useRef } from "react";
+import { Link, useLocation } from "react-router-dom";
+import "./NavBar.css";
 
 const NavBar = () => {
-    const location = useLocation();
-    const navigate = useNavigate();
+  const location = useLocation();
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
 
-    // get user data from localStorage
-    const userData = localStorage.getItem('user_data');
-    let username = "User"; 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-    if (userData) {
-        try {
-            const user = JSON.parse(userData);
-            username = `${user.firstName} ${user.lastName}`;
-        } catch (error) {
-            console.error('Error parsing user data:', error);
-        }
-    }
+  const notifications = [
+    "📈 AAPL up 2.5% today",
+    "💸 BTC dropped 1.2%",
+    "📰 Market news available",
+    "📊 Portfolio +4.3% this week",
+  ];
 
-    function doLogout(event: any): void {
-        event.preventDefault();
-        localStorage.removeItem("user_data");
-        window.location.href = '/';
-    }
+  return (
+    <div className="navbar-wrapper">
 
-    return (
-        <nav className="sidebar">
-            <div className="sidebar-header">
-                <Link to="/dashboard" className="brand-link">
-                    <div className="brand-icon">PT</div>
-                    <span className="brand-text">SimpliTrade</span>
-                </Link>
-            </div>
-            <ul className="sidebar-menu">
-                <li className="sidebar-item">
-                    <Link 
-                        to="/dashboard" 
-                        className={`sidebar-link ${location.pathname === '/dashboard' ? 'active' : ''}`}
-                    >
-                        <div className="link-icon">🏠</div>
-                        <span className="link-text">Home</span>
-                    </Link>
-                </li>
-                <li className="sidebar-item">
-                    <Link 
-                        to="/new-view" 
-                        className={`sidebar-link ${location.pathname === '/new-view' ? 'active' : ''}`}
-                    >
-                        <div className="link-icon">📰</div>
-                        <span className="link-text">News</span>
-                    </Link>
-                </li>
-                <li className="sidebar-item">
-                    <Link 
-                        to="/portfolio" 
-                        className={`sidebar-link ${location.pathname === '/portfolio' ? 'active' : ''}`}
-                    >
-                        <div className="link-icon">💼</div>
-                        <span className="link-text">Portfolio</span>
-                    </Link>
-                </li>
-                <li className="sidebar-item">
-                    <Link 
-                        to="/trade" 
-                        className={`sidebar-link ${location.pathname === '/trade' ? 'active' : ''}`}
-                    >
-                        <div className="link-icon">📈</div>
-                        <span className="link-text">Trade</span>
-                    </Link>
-                </li>
-            </ul>
-            <div className="user-section">
-                <div className="user-info">
-                    <span className="user-name">Logged In As {username}</span>
-                </div>
-                <button 
-                    type="button" 
-                    className="logout-button"
-                    onClick={doLogout}
+      <div className="navigation-Bar">
+
+        <Link to="./SearchAndNewsPage">
+          <h2 className="navigation-bar-button">Search</h2>
+        </Link>
+
+        <div className="nav-item has-dropdown" ref={notifRef}>
+          <h2 className="navigation-bar-button" onClick={() => setShowNotifications((prev) => !prev)}
+           > Notifications</h2>
+
+          {showNotifications && (
+            <div className="notif-popover">
+              <div className="notif-header">
+                Recent Notifications
+                <span
+                  className="notif-close"
+                  onClick={() => setShowNotifications(false)}
                 >
-                    <span className="link-text">Log Out</span>
-                </button>
+                  ✖
+                </span>
+              </div>
+              <div className="notif-list">
+                {notifications.map((n, i) => (
+                  <div key={i} className="notif-item">
+                    {n}
+                  </div>
+                ))}
+              </div>
+              <div className="notif-footer">View all →</div>
             </div>
-        </nav>
-    );
+          )}
+        </div>
+
+        {/* Home */}
+        {location.pathname !== "/DashboardPage" ? (
+          <Link to="./DashboardPage">
+            <h2 className="navigation-bar-button">Home</h2>
+          </Link>
+        ) : (
+          <h2 className="navigation-bar-button">Home</h2>
+        )}
+
+        {/* Account */}
+        <Link to="./SearchAndNewsPage">
+          <h2 className="navigation-bar-button">Account</h2>
+        </Link>
+      </div>
+    </div>
+  );
 };
 
 export default NavBar;

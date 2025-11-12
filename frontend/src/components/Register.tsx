@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { buildPath } from './Path';
+import { buildPath } from '../../Path';
 
 function Register() {
   const [message, setMessage] = useState('');
