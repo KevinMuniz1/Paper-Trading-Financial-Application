@@ -17,6 +17,12 @@ const NavBar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  function doLogout(event: any): void {
+        event.preventDefault();
+        localStorage.removeItem("user_data");
+        window.location.href = '/';
+    }
+
   const notifications = [
     "AAPL up 2.5% today",
     "BTC dropped 1.2%",
@@ -73,6 +79,10 @@ const NavBar = () => {
         <Link to="./SearchAndNewsPage">
           <h2 className="navigation-bar-button">Account</h2>
         </Link>
+
+  
+         <h2 onClick={doLogout} className="navigation-bar-button">Logout</h2>
+
       </div>
     </div>
   );
