@@ -45,10 +45,10 @@ api.setApp(app, client);
 
 // Only serve static files in production
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static('/var/www/html'));
+  app.use(express.static('/var/www/frontend/dist'));
 
   app.get('*', (req, res) => {
-    res.sendFile('/var/www/html/index.html');
+    res.sendFile('/var/www/frontend/dist/index.html');
   });
 } else {
   app.get('/', (req, res) => {
