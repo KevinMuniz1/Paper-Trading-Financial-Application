@@ -1,42 +1,48 @@
 import { useEffect, useRef, useState } from "react";
 import { createChart, ColorType, AreaSeries } from "lightweight-charts";
+import "./DashboardPage.css";
 
-type TimePeriod = '1D' | '1W' | '1M' | '3M' | '1Y' | 'ALL';
+type TimePeriod = "1D" | "1W" | "1M" | "3M" | "1Y" | "ALL";
 
 export default function StockChart() {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
   const seriesRef = useRef<any>(null);
-  const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('1M');
+  const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>("1M");
 
-  // Generate data based on period
+  // Generate random price data
   const generateData = (period: TimePeriod) => {
     const now = new Date();
     const data = [];
     let days = 30;
-    
-    switch(period) {
-      case '1D': days = 1; break;
-      case '1W': days = 7; break;
-      case '1M': days = 30; break;
-      case '3M': days = 90; break;
-      case '1Y': days = 365; break;
-      case 'ALL': days = 730; break;
+
+    switch (period) {
+      case "1D": days = 1; break;
+      case "1W": days = 7; break;
+      case "1M": days = 30; break;
+      case "3M": days = 90; break;
+      case "1Y": days = 365; break;
+      case "ALL": days = 730; break;
     }
 
-    let basePrice = 152;
+    let price = 152;
+
     for (let i = days; i >= 0; i--) {
       const date = new Date(now);
       date.setDate(date.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0];
-      
-      basePrice += (Math.random() - 0.5) * 5;
-      data.push({ time: dateStr, value: basePrice });
+
+      price += (Math.random() - 0.5) * 5;
+
+      data.push({
+        time: date.toISOString().split("T")[0],
+        value: price,
+      });
     }
-    
+
     return data;
   };
 
+  // Create chart
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
@@ -51,40 +57,32 @@ export default function StockChart() {
       },
       width: chartContainerRef.current.clientWidth,
       height: 300,
-      timeScale: {
-        visible: false,
-      },
-      rightPriceScale: {
-        visible: false,
-      },
+      timeScale: { visible: false },
+      rightPriceScale: { visible: false },
       crosshair: {
-        horzLine: {
-          visible: false,
-        },
-        vertLine: {
-          visible: false,
-        },
+        horzLine: { visible: false },
+        vertLine: { visible: false },
       },
     });
 
-    const areaSeries = chart.addSeries(AreaSeries,{
+    const series = chart.addSeries(AreaSeries, {
       lineColor: "#00C853",
       topColor: "rgba(0, 200, 83, 0.4)",
-      bottomColor: "rgba(0, 200, 83, 0.0)",
+      bottomColor: "rgba(0, 200, 83, 0)",
       lineWidth: 2,
     });
 
     chartRef.current = chart;
-    seriesRef.current = areaSeries;
+    seriesRef.current = series;
 
     const data = generateData(selectedPeriod);
-    areaSeries.setData(data);
+    series.setData(data);
     chart.timeScale().fitContent();
 
     const handleResize = () => {
       if (chartContainerRef.current) {
-        chart.applyOptions({ 
-          width: chartContainerRef.current.clientWidth 
+        chart.applyOptions({
+          width: chartContainerRef.current.clientWidth,
         });
       }
     };
@@ -97,7 +95,7 @@ export default function StockChart() {
     };
   }, []);
 
-  // Update data when period changes
+  // Update data on period change
   useEffect(() => {
     if (seriesRef.current) {
       const data = generateData(selectedPeriod);
@@ -106,45 +104,22 @@ export default function StockChart() {
     }
   }, [selectedPeriod]);
 
-  const periods: TimePeriod[] = ['1D', '1W', '1M', '3M', '1Y', 'ALL'];
+  const periods: TimePeriod[] = ["1D", "1W", "1M", "3M", "1Y", "ALL"];
 
   return (
-    <div style={{ width: "100%", fontFamily: "system-ui, -apple-system, sans-serif" }}>
-      <div style={{ position: "relative", width: "100%", height: "300px", marginBottom: "16px" }}>
-        <div ref={chartContainerRef} style={{ width: "100%", height: "300px" }} />
-        <style>{`
-          a[href*="tradingview.com"] {
-            display: none !important;
-          }
-        `}</style>
+    <div className="chart-wrapper">
+      <div className="chart-container">
+        <div className="chart-element" ref={chartContainerRef} />
       </div>
-      
-      <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
+
+      <div className="period-selector">
         {periods.map((period) => (
           <button
             key={period}
             onClick={() => setSelectedPeriod(period)}
-            style={{
-              padding: "8px 16px",
-              fontSize: "14px",
-              fontWeight: "500",
-              border: selectedPeriod === period ? "none" : "1px solid #e0e0e0",
-              borderRadius: "8px",
-              background: selectedPeriod === period ? "#000000" : "#ffffff",
-              color: selectedPeriod === period ? "#ffffff" : "#666666",
-              cursor: "pointer",
-              transition: "all 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              if (selectedPeriod !== period) {
-                e.currentTarget.style.background = "#f5f5f5";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (selectedPeriod !== period) {
-                e.currentTarget.style.background = "#ffffff";
-              }
-            }}
+            className={`period-btn ${
+              selectedPeriod === period ? "active" : ""
+            }`}
           >
             {period}
           </button>
