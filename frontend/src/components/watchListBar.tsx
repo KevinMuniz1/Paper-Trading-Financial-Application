@@ -41,7 +41,7 @@ export default function WatchListBar() {
         marginBottom: "24px",
         color: "#000000ff"
       }}>
-        Watchlist
+        Holdings 
       </h2>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
