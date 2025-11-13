@@ -309,6 +309,68 @@ exports.setApp = function (app, client) {
         res.status(200).json(ret);
     });
 
+     app.get('/api/news', async (req, res, next) => {
+        // outgoing: articles[], error
+        var error = '';
+
+        try {
+            const newsApiKey = process.env.NEWS_API_KEY;
+
+            if (!newsApiKey || newsApiKey === 'YOUR_API_KEY_HERE') {
+                return res.status(200).json({
+                    articles: [],
+                    error: 'NewsAPI key not configured. Please add your API key to the .env file.'
+                });
+            }
+
+            // Fetch stock-specific news from top financial news sources
+            // Including Yahoo Finance, Bloomberg, CNBC, Financial Times, Reuters, WSJ
+            const query = encodeURIComponent('stocks OR "stock market" OR trading OR earnings OR shares');
+            const domains = 'finance.yahoo.com,bloomberg.com,cnbc.com,reuters.com,wsj.com,marketwatch.com,businessinsider.com,forbes.com';
+
+            // Get date range for past 30 days (NewsAPI free tier limitation)
+            const toDate = new Date();
+            const fromDate = new Date();
+            fromDate.setDate(fromDate.getDate() - 30); // 30 days ago
+
+            const fromDateStr = fromDate.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+            const toDateStr = toDate.toISOString().split('T')[0];
+
+            const response = await fetch(
+                `https://newsapi.org/v2/everything?q=${query}&domains=${domains}&from=${fromDateStr}&to=${toDateStr}&language=en&sortBy=publishedAt&pageSize=100&apiKey=${newsApiKey}`
+            );
+
+            const data = await response.json();
+
+            if (data.status === 'ok') {
+                const articles = data.articles
+                    .filter(article => article.title && article.description) // Filter out articles without title or description
+                    .map(article => {
+                        const primaryTicker = extractPrimaryTicker(article.title, article.description);
+
+                        return {
+                            title: article.title,
+                            description: article.description,
+                            url: article.url,
+                            urlToImage: article.urlToImage,
+                            publishedAt: article.publishedAt,
+                            source: article.source.name,
+                            ticker: primaryTicker
+                        };
+                    })
+                    .filter(article => article.ticker !== null); // Only include articles with an identifiable ticker
+
+                res.status(200).json({ articles: articles, error: '' });
+            } else {
+                error = data.message || 'Failed to fetch news';
+                res.status(200).json({ articles: [], error: error });
+            }
+        } catch (e) {
+            error = e.toString();
+            res.status(200).json({ articles: [], error: error });
+        }
+    });
+
     
 }
 

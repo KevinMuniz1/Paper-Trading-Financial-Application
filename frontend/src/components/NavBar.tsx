@@ -29,7 +29,7 @@ const NavBar = () => {
 
       <div className="navigation-Bar">
 
-        <Link to="./SearchAndNewsPage">
+        <Link to="/news">
           <h2 className="navigation-bar-button">Search</h2>
         </Link>
 
