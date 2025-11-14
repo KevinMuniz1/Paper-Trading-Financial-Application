@@ -22,26 +22,6 @@ class NewsArticleTile extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-        if (article.isApple || article.isTesla || article.isAmazon || article.isNvidia)
-                Padding(
-                  padding: const EdgeInsets.only(right: 8.0, top: 2),
-                  child: _TagChip(
-          label: article.isApple
-            ? 'Apple'
-            : article.isTesla
-              ? 'Tesla'
-              : article.isAmazon
-                ? 'Amazon'
-                : 'Nvidia',
-          color: article.isApple
-            ? Colors.black
-            : article.isTesla
-              ? Colors.red
-              : article.isAmazon
-                ? Colors.orange
-                : Colors.green,
-                  ),
-                ),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,30 +69,5 @@ class NewsArticleTile extends StatelessWidget {
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     }
-  }
-}
-
-class _TagChip extends StatelessWidget {
-  final String label;
-  final Color color;
-  const _TagChip({required this.label, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.circle, size: 6, color: Colors.white),
-          const SizedBox(width: 6),
-          Text(label, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.2)),
-        ],
-      ),
-    );
   }
 }

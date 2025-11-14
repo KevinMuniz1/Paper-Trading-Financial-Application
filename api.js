@@ -62,7 +62,6 @@ const nextUserID = lastUser ? lastUser.UserID + 1 : 1;
 
 // Create new user with all required fields
 const newUser = {
-UserID: nextUserID,
 FirstName: firstName,
 LastName: lastName,
 Email: email,
@@ -128,7 +127,8 @@ res.status(200).json(ret);
 // Financial News endpoint 
 app.get('/api/news', async (req, res) => {
   try {
-    const articles = await newsService.getMarketNews();
+    const bust = req.query.bustCache === '1' || req.query.bustCache === 'true';
+    const articles = await newsService.getMarketNews({ bustCache: bust });
     res.status(200).json({ articles });
   } catch (e) {
     console.error('GET /api/news error:', e);

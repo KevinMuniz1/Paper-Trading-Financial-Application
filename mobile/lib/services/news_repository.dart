@@ -1,3 +1,8 @@
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
+
+import '../api_host.dart';
 import '../models/news_article.dart';
 
 /// Simple repository for providing curated news articles.
@@ -6,11 +11,70 @@ class NewsRepository {
   const NewsRepository();
 
   Future<List<NewsArticle>> fetchFeaturedArticles() async {
-    // The user requested exactly two Apple articles in a compact layout.
-    const url = 'https://finance.yahoo.com/news/apple-could-make-133-billion-a-year-on-humanoid-robots-by-2040-morgan-stanley-194419260.html';
+    // Try live API first
+    final apiArticles = await _fetchFromApi();
+    // Always include curated static as fallback/enrichment
+    final staticArticles = _staticArticles();
 
-  final now = DateTime.now();
-    final articles = [
+    // Merge and dedupe by URL
+    final seen = <String>{};
+    final merged = <NewsArticle>[
+      ...apiArticles,
+      ...staticArticles,
+    ].where((a) {
+      if (a.url.isEmpty || seen.contains(a.url)) return false;
+      seen.add(a.url);
+      return true;
+    }).toList();
+
+    // Sort newest-first
+    merged.sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
+    return merged;
+  }
+
+  Future<List<NewsArticle>> _fetchFromApi() async {
+    final base = ApiHost.getBaseUrl();
+    final uri = Uri.parse('$base/news');
+    try {
+      final r = await http.get(uri).timeout(const Duration(seconds: 10));
+      if (r.statusCode != 200) return [];
+      final data = json.decode(r.body) as Map<String, dynamic>;
+      final list = (data['articles'] as List?) ?? const [];
+      return list.map((e) => _fromServerJson(e as Map<String, dynamic>)).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  NewsArticle _fromServerJson(Map<String, dynamic> json) {
+    final article = NewsArticle.fromJson(json);
+    final inferred = _inferTags(article.title, article.source);
+    return NewsArticle(
+      id: article.id,
+      title: article.title,
+      url: article.url,
+      source: article.source,
+      publishedAt: article.publishedAt,
+      summary: article.summary,
+      tags: article.tags.isNotEmpty ? article.tags : inferred,
+    );
+  }
+
+  List<String> _inferTags(String title, String source) {
+    final t = title.toLowerCase();
+    final s = source.toLowerCase();
+    final tags = <String>[];
+    if (t.contains('apple') || s.contains('apple')) tags.add('Apple');
+    if (t.contains('tesla') || s.contains('tesla')) tags.add('Tesla');
+    if (t.contains('amazon') || s.contains('amazon')) tags.add('Amazon');
+    if (t.contains('nvidia') || s.contains('nvidia')) tags.add('Nvidia');
+    return tags;
+  }
+
+  List<NewsArticle> _staticArticles() {
+    const url = 'https://finance.yahoo.com/news/apple-could-make-133-billion-a-year-on-humanoid-robots-by-2040-morgan-stanley-194419260.html';
+    final now = DateTime.now();
+    return [
       // Apple articles
       NewsArticle(
         id: 'apple-robots-1',
@@ -88,9 +152,5 @@ class NewsRepository {
         tags: const ['Nvidia', 'Quantum Computing', 'Strategy'],
       ),
     ];
-
-    // Ensure newest first
-    articles.sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
-    return articles;
   }
 }
