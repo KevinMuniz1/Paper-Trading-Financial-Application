@@ -1,9 +1,11 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { MongoClient } = require('mongodb'); 
+const { MongoClient } = require('mongodb');
+require('dotenv').config();
 const { PORT, MONGODB_URL } = require('./config');
-require('dotenv').config(); 
+const { generateEmailVerificationToken } = require('./services/tokenService');
+const { sendVerificationEmail } = require('./services/emailService');
 
 const app = express();
 
@@ -33,7 +35,17 @@ app.use(cors({
 
 app.use(express.json());
 
-const client = new MongoClient(MONGODB_URL);
+// Your existing CORS headers
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
+  next();
+});
+
+const url = MONGODB_URL || process.env.MONGODB_URL || 'mongodb://localhost:27017/Finance-app';
+console.log('Connecting to MongoDB at:', url);
+const client = new MongoClient(url);
 
 async function connectDB() {
   try {
@@ -51,10 +63,10 @@ api.setApp(app, client);
 
 // Only serve static files in production
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static('/var/www/html'));
-  
+  app.use(express.static('/var/www/frontend/dist'));
+
   app.get('*', (req, res) => {
-    res.sendFile('/var/www/html/index.html');
+    res.sendFile('/var/www/frontend/dist/index.html');
   });
 } else {
   app.get('/', (req, res) => {
