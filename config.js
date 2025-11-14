@@ -9,6 +9,10 @@ if (os.platform() === 'darwin') {
 }
 
 const PORT = process.env.PORT || defaultPort;
-const MONGODB_URL = process.env.MONGODB_URL;
+// Fallback to provided MongoDB URL if env not set
+const MONGODB_URL = process.env.MONGODB_URL || "mongodb+srv://admin:password123**@finance-app.ilbngw2.mongodb.net/?retryWrites=true&w=majority&appName=Finance-app";
 
-module.exports = { PORT, MONGODB_URL };
+// News API Key
+// Note: Can be overridden via environment variable NEWS_API_KEY
+const NEWS_API_KEY = process.env.NEWS_API_KEY || '1c0719f9763f40bc930c18f249bdb962';
+module.exports = { PORT, MONGODB_URL, NEWS_API_KEY };

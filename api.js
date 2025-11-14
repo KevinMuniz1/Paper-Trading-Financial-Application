@@ -1,11 +1,17 @@
 require('express');
 require('mongodb');
-require('dotenv').config();
+require('dotenv').config(); 
 const { PORT, MONGODB_URL } = require('./config');
+const newsService = require('./services/newsService');
 const { generateEmailVerificationToken, generatePasswordResetToken, verifyEmailToken, verifyPasswordResetToken } = require('./services/tokenService');
 const { sendVerificationEmail, sendPasswordResetEmail } = require('./services/emailService');
 
-exports.setApp = function (app, client) {
+exports.setApp = function ( app, client )
+{
+
+    // Initialize NewsService with DB instance
+    const db = client.db('Finance-app');
+    newsService.setDb(db);
 
     // LOGIN
     app.post('/api/login', async (req, res, next) => {
@@ -109,7 +115,7 @@ exports.setApp = function (app, client) {
                     }
                 } catch (emailError) {
                     console.error('Error sending verification email:', emailError);
-                    // registration finishes even if verif does nto work
+                    // registration finishes even if verif does not work
                 }
 
                 var ret = {
@@ -279,13 +285,11 @@ exports.setApp = function (app, client) {
         res.status(200).json(ret);
     });
 
-    // SEARCH CARDS
     app.post('/api/searchcards', async (req, res, next) => {
         // incoming: userId, search
         // outgoing: results[], error
         var error = '';
         const { userId, search } = req.body;
-
         var _search = search.trim();
         const db = client.db('Finance-app');
 
@@ -475,5 +479,15 @@ exports.setApp = function (app, client) {
     });
 
     
+    // Financial News endpoint 
+    app.get('/api/news', async (req, res) => {
+        try {
+            const bust = req.query.bustCache === '1' || req.query.bustCache === 'true';
+            const articles = await newsService.getMarketNews({ bustCache: bust });
+            res.status(200).json({ articles });
+        } catch (e) {
+            console.error('GET /api/news error:', e);
+            res.status(200).json({ articles: [], error: 'unavailable' });
+        }
+    });
 }
-
