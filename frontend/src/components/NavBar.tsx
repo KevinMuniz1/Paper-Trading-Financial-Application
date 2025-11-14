@@ -35,35 +35,18 @@ const NavBar = () => {
 
       <div className="navigation-Bar">
 
-        <Link to="./SearchAndNewsPage">
+        <Link to="/news">
           <h2 className="navigation-bar-button">Search</h2>
         </Link>
 
-        <div className="nav-item has-dropdown" ref={notifRef}>
-          <h2 className="navigation-bar-button" onClick={() => setShowNotifications((prev) => !prev)}
-           > Notifications</h2>
+        <div className="dropdown">
+            <button className="dropbtn">Notifications ▼</button>
 
-          {showNotifications && (
-            <div className="notif-popover">
-              <div className="notif-header">
-                Recent Notifications
-                <span
-                  className="notif-close"
-                  onClick={() => setShowNotifications(false)}
-                >
-                  ✖
-                </span>
-              </div>
-              <div className="notif-list">
-                {notifications.map((n, i) => (
-                  <div key={i} className="notif-item">
-                    {n}
-                  </div>
-                ))}
-              </div>
-              <div className="notif-footer">View all →</div>
-            </div>
-          )}
+        <div className="dropdown-content">
+            {notifications.map((item, index) => (
+         <a key={index}>{item}</a>
+        ))}
+        </div>
         </div>
 
         {/* Home */}
@@ -76,7 +59,7 @@ const NavBar = () => {
         )}
 
         {/* Account */}
-        <Link to="./SearchAndNewsPage">
+        <Link to="/stockPage">
           <h2 className="navigation-bar-button">Account</h2>
         </Link>
 
