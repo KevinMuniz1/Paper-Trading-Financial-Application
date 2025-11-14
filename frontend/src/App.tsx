@@ -15,7 +15,7 @@ function App() {
           <Route path="/" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/DashBoardPage" element={<DashboardPage />} />
-          <Route path="/verifsy-email" element={<VerifyEmailPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/news" element={<News/>} />
         </Routes>
       </BrowserRouter>
