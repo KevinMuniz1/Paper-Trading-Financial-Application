@@ -9,8 +9,26 @@ const { sendVerificationEmail } = require('./services/emailService');
 
 const app = express();
 
+// CORS configuration: allow specific origins including localhost:5050
+const allowedOrigins = [
+  'http://localhost:5050',
+  'http://localhost:5173',
+  'http://paper-trade-app.com',
+  'http://www.paper-trade-app.com',
+];
+
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://paper-trade-app.com', 'http://www.paper-trade-app.com'],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g., mobile apps, curl)
+    if (!origin) return callback(null, true);
+
+    // Allow any localhost or 127.0.0.1 origin (any port) during development
+    const isLocalhost = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+    if (isLocalhost || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
