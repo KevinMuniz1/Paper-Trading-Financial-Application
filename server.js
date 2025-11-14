@@ -6,6 +6,8 @@ require('dotenv').config();
 const { PORT, MONGODB_URL } = require('./config');
 const { generateEmailVerificationToken } = require('./services/tokenService');
 const { sendVerificationEmail } = require('./services/emailService');
+const { updatePortfolioTotals, getPortfolioData } = require('./services/portfolioService');
+const StockService = require('./services/stockService.js');
 
 const app = express();
 
