@@ -309,7 +309,110 @@ exports.setApp = function (app, client) {
         res.status(200).json(ret);
     });
 
-     app.get('/api/news', async (req, res, next) => {
+     // Function to extract the primary stock ticker from text
+    function extractPrimaryTicker(title, description) {
+        if (!title && !description) return null;
+
+        const fullText = `${title || ''} ${description || ''}`;
+
+        // Popular stock tickers with their company names for matching
+        const tickerMap = {
+            'AAPL': ['Apple', 'iPhone', 'iPad', 'Mac', 'iOS'],
+            'MSFT': ['Microsoft', 'Windows', 'Xbox', 'Azure', 'Office'],
+            'GOOGL': ['Google', 'Alphabet', 'YouTube', 'Android', 'Chrome'],
+            'AMZN': ['Amazon', 'AWS', 'Prime', 'Alexa'],
+            'NVDA': ['Nvidia', 'GPU', 'graphics card'],
+            'META': ['Meta', 'Facebook', 'Instagram', 'WhatsApp', 'Zuckerberg'],
+            'TSLA': ['Tesla', 'Musk', 'electric vehicle', 'EV'],
+            'JPM': ['JPMorgan', 'JP Morgan', 'Chase'],
+            'JNJ': ['Johnson & Johnson', 'J&J'],
+            'V': ['Visa'],
+            'PG': ['Procter & Gamble', 'P&G'],
+            'XOM': ['Exxon', 'ExxonMobil'],
+            'UNH': ['UnitedHealth'],
+            'MA': ['Mastercard'],
+            'HD': ['Home Depot'],
+            'CVX': ['Chevron'],
+            'MRK': ['Merck'],
+            'PFE': ['Pfizer'],
+            'ABBV': ['AbbVie'],
+            'KO': ['Coca-Cola', 'Coke'],
+            'PEP': ['Pepsi', 'PepsiCo'],
+            'COST': ['Costco'],
+            'WMT': ['Walmart'],
+            'DIS': ['Disney'],
+            'CSCO': ['Cisco'],
+            'NFLX': ['Netflix'],
+            'ADBE': ['Adobe'],
+            'CRM': ['Salesforce'],
+            'NKE': ['Nike'],
+            'TMO': ['Thermo Fisher'],
+            'ABT': ['Abbott'],
+            'ACN': ['Accenture'],
+            'MCD': ['McDonald', 'McDonalds'],
+            'AVGO': ['Broadcom'],
+            'DHR': ['Danaher'],
+            'VZ': ['Verizon'],
+            'TXN': ['Texas Instruments'],
+            'NEE': ['NextEra'],
+            'INTC': ['Intel'],
+            'CMCSA': ['Comcast'],
+            'LIN': ['Linde'],
+            'PM': ['Philip Morris'],
+            'UPS': ['UPS', 'United Parcel'],
+            'RTX': ['Raytheon'],
+            'QCOM': ['Qualcomm'],
+            'HON': ['Honeywell'],
+            'WFC': ['Wells Fargo'],
+            'SBUX': ['Starbucks'],
+            'AMD': ['AMD', 'Advanced Micro Devices'],
+            'SNOW': ['Snowflake'],
+            'CRM': ['Salesforce'],
+            'SQ': ['Square', 'Block'],
+            'PYPL': ['PayPal'],
+            'UBER': ['Uber'],
+            'ABNB': ['Airbnb'],
+            'COIN': ['Coinbase']
+        };
+
+        // First check for $TICKER format in title (highest priority)
+        const dollarPattern = /\$([A-Z]{1,5})\b/g;
+        let match = dollarPattern.exec(title || '');
+        if (match) {
+            return match[1];
+        }
+
+        // Check for company names in title first (title is more important)
+        for (const [ticker, keywords] of Object.entries(tickerMap)) {
+            for (const keyword of keywords) {
+                const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+                if (regex.test(title || '')) {
+                    return ticker;
+                }
+            }
+        }
+
+        // Then check in description
+        for (const [ticker, keywords] of Object.entries(tickerMap)) {
+            for (const keyword of keywords) {
+                const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+                if (regex.test(description || '')) {
+                    return ticker;
+                }
+            }
+        }
+
+        // Last resort: check for $TICKER in description
+        match = dollarPattern.exec(description || '');
+        if (match) {
+            return match[1];
+        }
+
+        return null;
+    }
+
+    // GET NEWS
+    app.get('/api/news', async (req, res, next) => {
         // outgoing: articles[], error
         var error = '';
 
