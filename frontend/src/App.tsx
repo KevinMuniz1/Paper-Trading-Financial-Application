@@ -18,6 +18,8 @@ function App() {
           <Route path="/DashBoardPage" element={<DashboardPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/news" element={<News/>} />
+
+          
         </Routes>
       </BrowserRouter>
     </div></div>
