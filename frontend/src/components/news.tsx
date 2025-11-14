@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { buildPath } from "../../Path";
-import './News.css';
+import './news.css';
 
 interface Article {
     title: string;
