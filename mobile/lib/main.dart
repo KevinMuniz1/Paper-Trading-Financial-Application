@@ -81,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
   // Compute API base URL appropriate for the current platform.
-  final String apiBaseUrl = ApiHost.getBaseUrl(5000);
+  final String apiBaseUrl = ApiHost.getBaseUrl();
   final String loginEndpoint = '$apiBaseUrl/login';
 
       // Prepare request body - matches frontend format
@@ -411,7 +411,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     });
 
     try {
-      final String apiBaseUrl = ApiHost.getBaseUrl(5000);
+  final String apiBaseUrl = ApiHost.getBaseUrl();
       final String registerEndpoint = '$apiBaseUrl/register';
 
       final Map<String, dynamic> requestBody = {

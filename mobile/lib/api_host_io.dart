@@ -2,9 +2,13 @@ import 'dart:io' show Platform;
 
 class ApiHost {
   /// Returns the base API URL appropriate for the current platform.
-  ///
-  /// Defaults to port 5050 (matches backend `config.js` default on macOS).
-  static String getBaseUrl([int port = 5050]) {
+  /// Priority: --dart-define API_PORT -> platform default.
+  /// Platform defaults: macOS/iOS 5050, others 5000.
+  static String getBaseUrl([int? overridePort]) {
+    final definePort = const String.fromEnvironment('API_PORT');
+    final parsed = int.tryParse(definePort);
+    final port = overridePort ?? parsed ?? _platformDefaultPort();
+
     try {
       if (Platform.isAndroid) {
         // Android emulator: host machine is 10.0.2.2
@@ -15,5 +19,12 @@ class ApiHost {
     }
     // iOS simulator, desktop, or other native platforms: use localhost
     return 'http://localhost:$port/api';
+  }
+
+  static int _platformDefaultPort() {
+    try {
+      if (Platform.isMacOS || Platform.isIOS) return 5050;
+    } catch (_) {}
+    return 5000;
   }
 }
