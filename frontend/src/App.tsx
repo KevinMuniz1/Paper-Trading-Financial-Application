@@ -6,7 +6,6 @@ import DashboardPage from './pages/DashboardPage';
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import News from "./components/news";
 
-
 function App() {
   return (
 <div className="min-h-screen bg-gradient-to-br from-green-500 via-green-600 to-black m-0 p-0">
@@ -17,10 +16,7 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/DashBoardPage" element={<DashboardPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
-          <Route path="/news" element={<News />} />
-
-
-
+          <Route path="/news" element={<News/>} />
         </Routes>
       </BrowserRouter>
     </div></div>
