@@ -5,7 +5,6 @@ import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import News from "./components/news";
-import DisplayStockPageLayout from "./components/stockPageLayout";
 
 function App() {
   return (
@@ -16,9 +15,8 @@ function App() {
           <Route path="/" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/DashBoardPage" element={<DashboardPage />} />
-          <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/verifsy-email" element={<VerifyEmailPage />} />
           <Route path="/news" element={<News/>} />
-          <Route path="/stockPage" element={<DisplayStockPageLayout />} />
         </Routes>
       </BrowserRouter>
     </div></div>
