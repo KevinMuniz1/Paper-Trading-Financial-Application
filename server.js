@@ -60,11 +60,24 @@ async function connectDB() {
 
 connectDB();
 
-var api = require('./api.js');
-api.setApp(app, client);
+const apiRoutes = require('./api.js');
+apiRoutes.setApp(app, client);
+
+// Mount the API routes on the /api path
+app.use('/api', apiRoutes);
+
+// Serve static files from the React app
+app.use(express.static(path.join(__dirname, 'frontend/dist')));
+
+
+// The "catchall" handler: for any request that doesn't match one above,
+// send back React's index.html file.
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'frontend/dist/index.html'));
+});
 
 // Only serve static files in production
-if (process.env.NODE_ENV === 'production') {
+/*if (process.env.NODE_ENV === 'production') {
   app.use(express.static('/var/www/frontend/dist'));
 
   app.get('*', (req, res) => {
@@ -74,6 +87,6 @@ if (process.env.NODE_ENV === 'production') {
   app.get('/', (req, res) => {
     res.send('Server is alive!');
   });
-}
+}*/
 
 app.listen(PORT, () => console.log("Server running on port " + PORT));
