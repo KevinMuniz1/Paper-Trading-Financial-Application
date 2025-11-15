@@ -1159,4 +1159,137 @@ exports.setApp = function ( app, client )
             res.status(200).json({ articles: [], error: 'unavailable' });
         }
     });
+
+    // GET USER INFO BY ID
+    app.post('/api/user/profile', async (req, res, next) => {
+        // incoming: userId
+        // outgoing: id, firstName, lastName, email, login, error
+        var error = '';
+        const { userId } = req.body;
+
+        try {
+            if (!userId) {
+                error = 'User ID is required';
+                var ret = { error: error };
+                res.status(200).json(ret);
+                return;
+            }
+
+            const db = client.db('Finance-app');
+            const user = await db.collection('Users').findOne({
+                UserID: parseInt(userId)
+            });
+
+            if (!user) {
+                error = 'User not found';
+                var ret = { error: error };
+                res.status(200).json(ret);
+                return;
+            }
+
+            var ret = {
+                id: user.UserID,
+                firstName: user.FirstName,
+                lastName: user.LastName,
+                email: user.Email,
+                login: user.Login,
+                error: error
+            };
+            res.status(200).json(ret);
+        } catch (e) {
+            res.status(200).json({ error: e.toString() });
+        }
+    });
+
+    // UPDATE USER PROFILE
+    app.patch('/api/user/update', async (req, res, next) => {
+        // incoming: userId, firstName, lastName, email, login (optional)
+        // outgoing: success, error, message
+        var error = '';
+        const { userId, firstName, lastName, email, login } = req.body;
+
+        try {
+            if (!userId) {
+                error = 'User ID is required';
+                var ret = { success: false, error: error };
+                res.status(200).json(ret);
+                return;
+            }
+
+            const db = client.db('Finance-app');
+
+            // Check if user exists
+            const user = await db.collection('Users').findOne({
+                UserID: parseInt(userId)
+            });
+
+            if (!user) {
+                error = 'User not found';
+                var ret = { success: false, error: error };
+                res.status(200).json(ret);
+                return;
+            }
+
+            // Check if new login/email already exists (if being changed)
+            if (login && login !== user.Login) {
+                const existingLogin = await db.collection('Users').findOne({
+                    Login: login
+                });
+                if (existingLogin) {
+                    error = 'Username already exists';
+                    var ret = { success: false, error: error };
+                    res.status(200).json(ret);
+                    return;
+                }
+            }
+
+            if (email && email !== user.Email) {
+                const existingEmail = await db.collection('Users').findOne({
+                    Email: email
+                });
+                if (existingEmail) {
+                    error = 'Email already exists';
+                    var ret = { success: false, error: error };
+                    res.status(200).json(ret);
+                    return;
+                }
+            }
+
+            // Build update object
+            const updateObj = {};
+            if (firstName) updateObj.FirstName = firstName;
+            if (lastName) updateObj.LastName = lastName;
+            if (email) updateObj.Email = email;
+            if (login) updateObj.Login = login;
+
+            // Update user
+            const result = await db.collection('Users').updateOne(
+                { UserID: parseInt(userId) },
+                { $set: updateObj }
+            );
+
+            if (result.modifiedCount === 0) {
+                error = 'Failed to update user';
+                var ret = { success: false, error: error };
+                res.status(200).json(ret);
+                return;
+            }
+
+            console.log(`User ${userId} updated successfully`);
+
+            var ret = {
+                success: true,
+                error: error,
+                message: 'Profile updated successfully'
+            };
+            res.status(200).json(ret);
+
+        } catch (e) {
+            error = e.toString();
+            console.error('Update user error:', e);
+            var ret = { success: false, error: error };
+            res.status(200).json(ret);
+        }
+    });
+
 }

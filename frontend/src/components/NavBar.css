@@ -1,15 +1,15 @@
 
 .navigation-Bar {
   position: fixed;     
-  top: 1rem;             
-  right: 2rem;            
+  top: 3rem;             
+  right: 5rem;            
   display: flex;
   flex-direction: row;
-  gap: 2rem;          
+  gap: 3rem;          
   align-items: center;
   justify-content: flex-end;
   background: transparent; 
-  z-index: 1000;     
+  z-index: 1000;
 }
 
 .navigation-bar-button {
@@ -18,6 +18,18 @@
   font-size: 1.1rem;
   cursor: pointer;
   transition: color 0.2s ease;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+}
+
+.nav-item a {
+  display: flex;
+  align-items: center;
 }
 
 
@@ -237,21 +249,31 @@
 .dropbtn {
   background-color: transparent;
   color: white;
-  padding: 10px 16px;
+  padding: 0;
   font-size: 1.1rem;
   border: none;
   cursor: pointer;
+  margin: 0;
+  padding-bottom: 10px;
 }
 
 .dropdown-content {
   display: none;
   position: absolute;
   background-color: #ffffff;
-  min-width: 200px;
+  min-width: 175px;
   box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
   border-radius: 6px;
   padding: 8px 0;
   z-index: 100;
+  left: 50%;
+  transform: translateX(-50%);
+  top: calc(100% - 8px);
+  pointer-events: auto;
+}
+
+.dropdown-content.show {
+  display: block;
 }
 
 .dropdown-content a {
@@ -267,6 +289,10 @@
 
 .dropdown:hover .dropdown-content {
   display: block;
+}
+
+.dropdown {
+  pointer-events: auto;
 }
 
 .dropdown:hover .dropbtn {
