@@ -8,6 +8,7 @@ const { sendVerificationEmail, sendPasswordResetEmail } = require('./services/em
 const stockService = require('./services/stockService');
 const { updatePortfolioTotals, getPortfolioData } = require('./services/portfolioService');
 const topMoversService = require('./services/topMoversService');
+const searchService = require('./services/searchService');
 
 
 exports.setApp = function ( app, client )
@@ -1179,6 +1180,38 @@ exports.setApp = function ( app, client )
             res.status(200).json({
                 gainers: [],
                 losers: [],
+                error: error
+            });
+        }
+    });
+
+    // SEARCH STOCKS
+    app.get('/api/search', async (req, res) => {
+        // incoming: query (query parameter)
+        // outgoing: results[], error
+        var error = '';
+
+        try {
+            const query = req.query.q || req.query.query;
+
+            if (!query || query.trim() === '') {
+                res.status(200).json({
+                    results: [],
+                    error: 'Search query is required'
+                });
+                return;
+            }
+
+            const result = await searchService.searchStocks(query.trim());
+            res.status(200).json({
+                results: result.results,
+                error: ''
+            });
+        } catch (e) {
+            error = e.toString();
+            console.error('GET /api/search error:', e);
+            res.status(200).json({
+                results: [],
                 error: error
             });
         }
