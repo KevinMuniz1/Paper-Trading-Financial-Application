@@ -180,59 +180,6 @@ const AccountSettingsPage = () => {
     fetchUserData();
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSaving(true);
-    setMessage("");
-
-    try {
-      const userData = localStorage.getItem("user_data");
-      if (!userData) {
-        setMessageType("error");
-        setMessage("Please log in first");
-        setIsSaving(false);
-        return;
-      }
-
-      const parsed = JSON.parse(userData);
-      const userId = parsed.id;
-
-      // TODO: Replace with your actual API endpoint
-      const response = await fetch(buildPath("user/update"), {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId,
-          firstName: accountData.firstName,
-          lastName: accountData.lastName,
-          email: accountData.email,
-        }),
-      });
-
-      if (response.ok) {
-        setMessageType("success");
-        setMessage("Account updated successfully!");
-        
-        // Update localStorage
-        parsed.firstName = accountData.firstName;
-        parsed.lastName = accountData.lastName;
-        parsed.email = accountData.email;
-        localStorage.setItem("user_data", JSON.stringify(parsed));
-      } else {
-        setMessageType("error");
-        setMessage("Failed to update account. Please try again.");
-      }
-    } catch (error) {
-      setMessageType("error");
-      setMessage("An error occurred. Please try again.");
-      console.error("Error updating account:", error);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   return (
     <div className="account-settings-page">
       <NavBar />
