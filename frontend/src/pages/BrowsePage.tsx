@@ -22,6 +22,11 @@ interface Stock {
     marketCap: number;
 }
 
+interface SearchResult {
+    symbol: string;
+    name: string;
+}
+
 const BrowsePage = () => {
     const [articles, setArticles] = useState<Article[]>([]);
     const [gainers, setGainers] = useState<Stock[]>([]);
@@ -30,11 +35,37 @@ const BrowsePage = () => {
     const [moversLoading, setMoversLoading] = useState(true);
     const [error, setError] = useState('');
     const [moversError, setMoversError] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+    const [searching, setSearching] = useState(false);
+    const [showResults, setShowResults] = useState(false);
 
     useEffect(() => {
         fetchNews();
         fetchTopMovers();
     }, []);
+
+    // Close search results when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as HTMLElement;
+            if (!target.closest('.search-wrapper')) {
+                setShowResults(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
+    // Hide results when search query is cleared
+    useEffect(() => {
+        if (searchQuery.trim() === '') {
+            setShowResults(false);
+        }
+    }, [searchQuery]);
 
     const fetchNews = async () => {
         try {
@@ -124,9 +155,102 @@ const BrowsePage = () => {
         return colorMap[ticker] || '#1a7221';
     };
 
+    const handleSearch = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!searchQuery.trim()) {
+            setShowResults(false);
+            return;
+        }
+
+        try {
+            setSearching(true);
+            setShowResults(true);
+
+            const response = await fetch(buildPath(`search?q=${encodeURIComponent(searchQuery.trim())}`), {
+                method: 'GET',
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                console.error('Search error:', data.error);
+                setSearchResults([]);
+            } else {
+                setSearchResults(data.results || []);
+            }
+        } catch (err: any) {
+            console.error('Error searching stocks:', err);
+            setSearchResults([]);
+        } finally {
+            setSearching(false);
+        }
+    };
+
+    const handleResultClick = (symbol: string) => {
+        console.log('Clicked on stock:', symbol);
+        setShowResults(false);
+        setSearchQuery('');
+        // TODO: Navigate to stock detail page or perform action
+    };
+
     return (
         <div className="browse-page">
             <h1 className="page-title">Browse</h1>
+
+            {/* Search Bar */}
+            <div className="search-wrapper">
+                <form className="search-container" onSubmit={handleSearch}>
+                    <input
+                        type="text"
+                        className="search-input"
+                        placeholder="Search for stocks, news, or companies..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    <button type="submit" className="search-button">
+                        <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        >
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                    </button>
+                </form>
+
+                {/* Search Results Dropdown */}
+                {showResults && (
+                    <div className="search-results">
+                        {searching ? (
+                            <div className="search-result-item searching">
+                                Searching...
+                            </div>
+                        ) : searchResults.length > 0 ? (
+                            searchResults.map((result, index) => (
+                                <div
+                                    key={index}
+                                    className="search-result-item"
+                                    onClick={() => handleResultClick(result.symbol)}
+                                >
+                                    <div className="result-symbol">{result.symbol}</div>
+                                    <div className="result-name">{result.name}</div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="search-result-item no-results">
+                                No results found
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
 
             {/* News Section */}
             <div className="news-section">
