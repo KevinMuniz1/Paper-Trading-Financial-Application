@@ -19,7 +19,7 @@ exports.setApp = function ( app, client )
     // LOGIN
     app.post('/api/login', async (req, res, next) => {
         // incoming: login, password
-        // outgoing: id, firstName, lastName, error
+        // outgoing: id, firstName, lastName, email, login, error
         var error = '';
         const { login, password } = req.body;
         const db = client.db('Finance-app');
@@ -33,6 +33,8 @@ exports.setApp = function ( app, client )
             var id = -1;
             var fn = '';
             var ln = '';
+            var em = '';
+            var lg = '';
 
             if (results.length > 0) {
                 /* 
@@ -45,14 +47,16 @@ exports.setApp = function ( app, client )
                 id = results[0].UserID;
                 fn = results[0].FirstName;
                 ln = results[0].LastName;
+                em = results[0].Email;
+                lg = results[0].Login;
             } else {
                 error = 'Invalid login credentials';
             }
 
-            var ret = { id: id, firstName: fn, lastName: ln, error: error };
+            var ret = { id: id, firstName: fn, lastName: ln, email: em, login: lg, error: error };
             res.status(200).json(ret);
         } catch (e) {
-            res.status(200).json({ id: -1, firstName: '', lastName: '', error: e.toString() });
+            res.status(200).json({ id: -1, firstName: '', lastName: '', email: '', login: '', error: e.toString() });
         }
     });
 
