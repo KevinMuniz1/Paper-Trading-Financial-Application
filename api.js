@@ -1255,12 +1255,20 @@ exports.setApp = function ( app, client )
                 }
             }
 
-            // Build update object
+            // Build update object - handle both camelCase and PascalCase field names
             const updateObj = {};
             if (firstName) updateObj.FirstName = firstName;
             if (lastName) updateObj.LastName = lastName;
             if (email) updateObj.Email = email;
             if (login) updateObj.Login = login;
+
+            // If no fields to update, return error
+            if (Object.keys(updateObj).length === 0) {
+                error = 'No fields to update';
+                var ret = { success: false, error: error };
+                res.status(200).json(ret);
+                return;
+            }
 
             // Update user
             const result = await db.collection('Users').updateOne(
