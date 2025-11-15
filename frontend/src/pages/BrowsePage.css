@@ -1,0 +1,221 @@
+.browse-page {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 2rem;
+    box-sizing: border-box;
+    overflow-y: auto;
+    align-items: flex-start;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.page-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 1.5rem 0;
+    text-align: center;
+    width: 100%;
+}
+
+.subsection-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0 0 0.75rem 0;
+    text-align: left;
+}
+
+/* News Section - Compact with scrollbar */
+.news-section {
+    width: 100%;
+    background: transparent;
+    padding: 1rem;
+    box-sizing: border-box;
+    max-height: 250px;
+    overflow: hidden;
+}
+
+.articles-scroll {
+    display: flex;
+    flex-direction: row;
+    overflow-x: scroll;
+    overflow-y: hidden;
+    gap: 1rem;
+    padding: 0.5rem 0 1rem 0;
+    max-height: 180px;
+
+    /* Visible scrollbar - always show */
+    scrollbar-width: auto;
+    scrollbar-color: rgba(255, 255, 255, 0.6) rgba(255, 255, 255, 0.2);
+}
+
+.articles-scroll::-webkit-scrollbar {
+    height: 12px;
+}
+
+.articles-scroll::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    margin: 0 10px;
+}
+
+.articles-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 6px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.articles-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.article-card {
+    width: 250px;
+    min-width: 250px;
+    height: auto;
+    flex-shrink: 0;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.article-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.article-content {
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.article-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.article-source {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #1a7221;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ticker-tag {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #ffffff;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.ticker-tag:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+}
+
+.article-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #0a2541;
+    margin: 0;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.loading-spinner {
+    text-align: center;
+    font-size: 1.2rem;
+    color: #ffffff;
+    padding: 2rem;
+}
+
+.error-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.error-message {
+    background-color: #fee;
+    color: #c33;
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.retry-button {
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #1a7221, #26c93a);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.retry-button:hover {
+    background: linear-gradient(135deg, #155a1d, #1f9f2e);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(26, 114, 33, 0.3);
+}
+
+/* Other sections placeholder */
+.other-sections {
+    width: 100%;
+    background: transparent;
+    padding: 1.5rem;
+    box-sizing: border-box;
+    flex-grow: 1;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .browse-page {
+        padding: 1rem;
+        gap: 1rem;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+    }
+
+    .news-section {
+        padding: 1rem;
+    }
+
+    .articles-scroll {
+        gap: 1rem;
+    }
+
+    .article-image-container {
+        height: 160px;
+    }
+}
