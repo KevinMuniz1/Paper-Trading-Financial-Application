@@ -72,9 +72,10 @@ const AccountSettingsPage = () => {
 
       const parsed = JSON.parse(userData);
       const userId = parsed.id;
+      const field = editingField.field;
 
       const updateData: Partial<AccountData> = {
-        [editingField.field]: editingField.value.trim(),
+        [field]: editingField.value.trim(),
       };
 
       const response = await fetch(buildPath("user/update"), {
@@ -92,14 +93,15 @@ const AccountSettingsPage = () => {
 
       if (data.success) {
         setMessageType("success");
-        setMessage(`${editingField.field} updated successfully!`);
+        const field = editingField.field as keyof AccountData;
+        setMessage(`${field} updated successfully!`);
         setAccountData((prev) => ({
           ...prev,
-          [editingField.field]: editingField.value.trim(),
+          [field]: editingField.value.trim(),
         }));
 
         // Update localStorage
-        parsed[editingField.field] = editingField.value.trim();
+        parsed[field] = editingField.value.trim();
         localStorage.setItem("user_data", JSON.stringify(parsed));
 
         setEditingField({ field: null, value: "" });
