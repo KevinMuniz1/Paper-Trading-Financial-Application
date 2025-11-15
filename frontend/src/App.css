@@ -542,25 +542,47 @@ html, body {
   border-radius: 8px !important;
 }
 
+/* Footer styling */
+.footer-container {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  padding: 1.5rem 2rem;
+  margin-top: auto;
+  width: 100%;
+  font-size: 0.85rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer-container p {
+  margin: 0;
+  line-height: 1.6;
+}
+
 /* Responsive design for smaller screens */
 @media (max-width: 768px) {
   #title {
     font-size: 2.5rem;
     margin-bottom: 0.3rem;
   }
-  
+
   .subTitle {
     font-size: 1rem;
     margin-bottom: 1.5rem;
   }
-  
+
   #root {
     padding: 1rem;
   }
-  
+
   #loginDiv,
   #registerDiv {
     padding: 2rem;
+  }
+
+  .footer-container {
+    font-size: 0.75rem;
+    padding: 1rem;
   }
 }
 
@@ -568,13 +590,18 @@ html, body {
   #title {
     font-size: 2rem;
   }
-  
+
   .subTitle {
     font-size: 0.9rem;
   }
-  
+
   #loginDiv,
   #registerDiv {
     padding: 1.5rem;
+  }
+
+  .footer-container {
+    font-size: 0.7rem;
+    padding: 0.75rem;
   }
 }
