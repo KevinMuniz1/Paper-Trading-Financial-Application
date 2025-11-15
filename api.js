@@ -7,6 +7,7 @@ const { generateEmailVerificationToken, generatePasswordResetToken, verifyEmailT
 const { sendVerificationEmail, sendPasswordResetEmail } = require('./services/emailService');
 const stockService = require('./services/stockService');
 const { updatePortfolioTotals, getPortfolioData } = require('./services/portfolioService');
+const topMoversService = require('./services/topMoversService');
 
 
 exports.setApp = function ( app, client )
@@ -1148,7 +1149,7 @@ exports.setApp = function ( app, client )
             res.status(200).json(ret);
         }
     });
-    // Financial News endpoint 
+    // Financial News endpoint
     app.get('/api/news', async (req, res) => {
         try {
             const bust = req.query.bustCache === '1' || req.query.bustCache === 'true';
@@ -1157,6 +1158,29 @@ exports.setApp = function ( app, client )
         } catch (e) {
             console.error('GET /api/news error:', e);
             res.status(200).json({ articles: [], error: 'unavailable' });
+        }
+    });
+
+    // GET TOP MOVERS (Gainers and Losers)
+    app.get('/api/top-movers', async (req, res) => {
+        // outgoing: gainers[], losers[], error
+        var error = '';
+
+        try {
+            const result = await topMoversService.getTopMovers();
+            res.status(200).json({
+                gainers: result.gainers,
+                losers: result.losers,
+                error: ''
+            });
+        } catch (e) {
+            error = e.toString();
+            console.error('GET /api/top-movers error:', e);
+            res.status(200).json({
+                gainers: [],
+                losers: [],
+                error: error
+            });
         }
     });
 }
