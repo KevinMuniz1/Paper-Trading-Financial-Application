@@ -12,13 +12,28 @@ interface Article {
     ticker: string | null;
 }
 
+interface Stock {
+    symbol: string;
+    name: string;
+    price: number;
+    change: number;
+    changePercent: number;
+    volume: number;
+    marketCap: number;
+}
+
 const BrowsePage = () => {
     const [articles, setArticles] = useState<Article[]>([]);
+    const [gainers, setGainers] = useState<Stock[]>([]);
+    const [losers, setLosers] = useState<Stock[]>([]);
     const [loading, setLoading] = useState(true);
+    const [moversLoading, setMoversLoading] = useState(true);
     const [error, setError] = useState('');
+    const [moversError, setMoversError] = useState('');
 
     useEffect(() => {
         fetchNews();
+        fetchTopMovers();
     }, []);
 
     const fetchNews = async () => {
@@ -40,6 +55,29 @@ const BrowsePage = () => {
             console.error('Error fetching news:', err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchTopMovers = async () => {
+        try {
+            setMoversLoading(true);
+            const response = await fetch(buildPath('top-movers'), {
+                method: 'GET',
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                setMoversError(data.error);
+            } else {
+                setGainers(data.gainers || []);
+                setLosers(data.losers || []);
+            }
+        } catch (err: any) {
+            setMoversError('Failed to fetch top movers. Please check your connection.');
+            console.error('Error fetching top movers:', err);
+        } finally {
+            setMoversLoading(false);
         }
     };
 
@@ -132,11 +170,68 @@ const BrowsePage = () => {
                 )}
             </div>
 
-            {/* Additional sections can be added here */}
-            <div className="other-sections">
-                {/* Placeholder for future content */}
-                <h2 className="subsection-title">Stock Search</h2>
-                <p style={{ color: '#fff', padding: '2rem' }}>Search functionality coming soon...</p>
+            {/* Biggest Gainers Section */}
+            <div className="movers-section">
+                <h2 className="subsection-title">Biggest Gainers</h2>
+                {moversLoading ? (
+                    <div className="loading-spinner">Loading top gainers...</div>
+                ) : moversError ? (
+                    <div className="error-container">
+                        <div className="error-message">{moversError}</div>
+                        <button onClick={fetchTopMovers} className="retry-button">
+                            Retry
+                        </button>
+                    </div>
+                ) : (
+                    <div className="movers-scroll">
+                        {gainers.map((stock, index) => (
+                            <div key={index} className="stock-card gainer">
+                                <div className="stock-content">
+                                    <div className="stock-header">
+                                        <div className="stock-symbol">{stock.symbol}</div>
+                                        <div className="stock-change positive">
+                                            +{stock.changePercent.toFixed(2)}%
+                                        </div>
+                                    </div>
+                                    <div className="stock-name">{stock.name}</div>
+                                    <div className="stock-price">${stock.price.toFixed(2)}</div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* Biggest Losers Section */}
+            <div className="movers-section">
+                <h2 className="subsection-title">Biggest Losers</h2>
+                {moversLoading ? (
+                    <div className="loading-spinner">Loading top losers...</div>
+                ) : moversError ? (
+                    <div className="error-container">
+                        <div className="error-message">{moversError}</div>
+                        <button onClick={fetchTopMovers} className="retry-button">
+                            Retry
+                        </button>
+                    </div>
+                ) : (
+                    <div className="movers-scroll">
+                        {losers.map((stock, index) => (
+                            <div key={index} className="stock-card loser">
+                                <div className="stock-content">
+                                    <div className="stock-header">
+                                        <div className="stock-symbol">{stock.symbol}</div>
+                                        <div className="stock-change negative">
+                                            {stock.changePercent.toFixed(2)}%
+                                        </div>
+                                    </div>
+                                    <div className="stock-name">{stock.name}</div>
+                                    <div className="stock-price">${stock.price.toFixed(2)}</div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );
