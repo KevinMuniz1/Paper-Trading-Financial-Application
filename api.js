@@ -222,7 +222,7 @@ module.exports = function (client) {
 
             const resetToken = generatePasswordResetToken(user.UserID, user.Email);
             console.log('PASSWORD RESET TOKEN:', resetToken);
-            console.log('Reset URL:', `http://localhost:5173/reset-password?token=${resetToken}`);
+            console.log('Reset URL:', `http://${baseUrl}/reset-password?token=${resetToken}`);
             const result = await sendPasswordResetEmail(email, resetToken);
 
             if (result.success) {
