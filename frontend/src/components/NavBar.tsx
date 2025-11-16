@@ -5,12 +5,17 @@ import "./NavBar.css";
 const NavBar = () => {
   const location = useLocation();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showAccount, setShowAccount] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
+  const accountRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
         setShowNotifications(false);
+      }
+      if (accountRef.current && !accountRef.current.contains(event.target as Node)) {
+        setShowAccount(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -35,6 +40,17 @@ const NavBar = () => {
 
       <div className="navigation-Bar">
 
+        {/* Home */}
+        <div className="nav-item">
+          {location.pathname !== "/DashboardPage" ? (
+            <Link to="/DashboardPage">
+              <h2 className="navigation-bar-button">Home</h2>
+            </Link>
+          ) : (
+            <h2 className="navigation-bar-button">Home</h2>
+          )}
+        </div>
+        
         <Link to="/browse" className="navigation-bar-button search-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="8"></circle>
@@ -42,32 +58,34 @@ const NavBar = () => {
           </svg>
         </Link>
 
-        <div className="dropdown">
+        <div 
+          className="dropdown" 
+          ref={notifRef}
+          onMouseEnter={() => setShowNotifications(true)}
+          onMouseLeave={() => setShowNotifications(false)}
+        >
             <button className="dropbtn">Notifications ▼</button>
 
-        <div className="dropdown-content">
+        <div className={`dropdown-content ${showNotifications ? 'show' : ''}`}>
             {notifications.map((item, index) => (
          <a key={index}>{item}</a>
         ))}
         </div>
         </div>
 
-        {/* Home */}
-        {location.pathname !== "/DashboardPage" ? (
-          <Link to="./DashboardPage">
-            <h2 className="navigation-bar-button">Home</h2>
-          </Link>
-        ) : (
-          <h2 className="navigation-bar-button">Home</h2>
-        )}
-
         {/* Account */}
-        <Link to="/stockPage">
-          <h2 className="navigation-bar-button">Account</h2>
-        </Link>
-
-  
-         <h2 onClick={doLogout} className="navigation-bar-button">Logout</h2>
+        <div 
+          className="dropdown"
+          ref={accountRef}
+          onMouseEnter={() => setShowAccount(true)}
+          onMouseLeave={() => setShowAccount(false)}
+        >
+          <button className="dropbtn">Account  ▼</button>
+          <div className={`dropdown-content ${showAccount ? 'show' : ''}`}>
+            <Link to="/accountSettings">Update User Information</Link>
+            <a href="#" onClick={doLogout}>Logout</a>
+          </div>
+        </div>
 
       </div>
     </div>

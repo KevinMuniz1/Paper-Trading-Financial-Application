@@ -1,4 +1,5 @@
-require('express');
+const express = require('express');
+const router = express.Router();
 require('mongodb');
 require('dotenv').config(); 
 const { PORT, MONGODB_URL } = require('./config');
@@ -9,19 +10,17 @@ const stockService = require('./services/stockService');
 const { updatePortfolioTotals, getPortfolioData } = require('./services/portfolioService');
 const topMoversService = require('./services/topMoversService');
 const searchService = require('./services/searchService');
+const baseUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
 
-
-exports.setApp = function ( app, client )
-{
-
+module.exports = function (client) {
     // Initialize NewsService with DB instance
     const db = client.db('Finance-app');
     newsService.setDb(db);
 
     // LOGIN
-    app.post('/api/login', async (req, res, next) => {
+    router.post('/login', async (req, res, next) => {
         // incoming: login, password
-        // outgoing: id, firstName, lastName, error
+        // outgoing: id, firstName, lastName, email, login, error
         var error = '';
         const { login, password } = req.body;
         const db = client.db('Finance-app');
@@ -35,6 +34,8 @@ exports.setApp = function ( app, client )
             var id = -1;
             var fn = '';
             var ln = '';
+            var em = '';
+            var lg = '';
 
             if (results.length > 0) {
                 /* 
@@ -47,19 +48,21 @@ exports.setApp = function ( app, client )
                 id = results[0].UserID;
                 fn = results[0].FirstName;
                 ln = results[0].LastName;
+                em = results[0].Email;
+                lg = results[0].Login;
             } else {
                 error = 'Invalid login credentials';
             }
 
-            var ret = { id: id, firstName: fn, lastName: ln, error: error };
+            var ret = { id: id, firstName: fn, lastName: ln, email: em, login: lg, error: error };
             res.status(200).json(ret);
         } catch (e) {
-            res.status(200).json({ id: -1, firstName: '', lastName: '', error: e.toString() });
+            res.status(200).json({ id: -1, firstName: '', lastName: '', email: '', login: '', error: e.toString() });
         }
     });
 
     // REGISTER USERS
-    app.post('/api/register', async (req, res, next) => {
+    router.post('/register', async (req, res, next) => {
         // incoming: firstName, lastName, email, login, password
         // outgoing: id, error
         var error = '';
@@ -156,7 +159,7 @@ exports.setApp = function ( app, client )
     });
 
     // Verify Email 
-    app.post('/api/verify-email', async (req, res) => {
+    router.post('/verify-email', async (req, res) => {
         // incoming: token
         // outgoing: success, error
         var error = '';
@@ -203,7 +206,7 @@ exports.setApp = function ( app, client )
     });
 
     // Request Password Reset
-    app.post('/api/forgot-password', async (req, res) => {
+    router.post('/forgot-password', async (req, res) => {
         try {
             const { email } = req.body;
 
@@ -212,6 +215,7 @@ exports.setApp = function ( app, client )
             const user = await db.collection('Users').findOne({ Email: email });
 
             if (!user) {
+                console.log('User not found for email:', email);
                 // doesnt reveal if email exists or not
                 return res.status(200).json({
                     success: true,
@@ -221,7 +225,7 @@ exports.setApp = function ( app, client )
 
             const resetToken = generatePasswordResetToken(user.UserID, user.Email);
             console.log('PASSWORD RESET TOKEN:', resetToken);
-            console.log('Reset URL:', `http://localhost:5173/reset-password?token=${resetToken}`);
+            console.log('Reset URL:', `http://${baseUrl}/reset-password?token=${resetToken}`);
             const result = await sendPasswordResetEmail(email, resetToken);
 
             if (result.success) {
@@ -245,7 +249,7 @@ exports.setApp = function ( app, client )
     });
 
     // Reset Password
-    app.post('/api/reset-password', async (req, res) => {
+    router.post('/reset-password', async (req, res) => {
         try {
             const { token, newPassword } = req.body;
 
@@ -279,7 +283,7 @@ exports.setApp = function ( app, client )
     });
 
     // VIEW BUYING POWER
-    app.post('/api/portfolio/buying-power', async (req, res, next) => {
+    router.post('/portfolio/buying-power', async (req, res, next) => {
         const { userId } = req.body;
         var error = '';
 
@@ -310,7 +314,7 @@ exports.setApp = function ( app, client )
 
     
     // ADD BUYING POWER
-    app.post('/api/portfolio/add-funds', async (req, res, next) => {
+    router.post('/portfolio/add-funds', async (req, res, next) => {
         // incoming: userId, amount
         // outgoing: success, error, newBalance
         var error = '';
@@ -377,7 +381,7 @@ exports.setApp = function ( app, client )
     });
 
     // ADD TRADES CARD 
-    app.post('/api/addcard', async (req, res, next) => {
+    router.post('/addcard', async (req, res, next) => {
         const { userId, cardName, tickerSymbol, shares = 1 } = req.body;
         var error = '';
 
@@ -473,7 +477,7 @@ exports.setApp = function ( app, client )
     });
 
     // SEARCH TRADES CARDS
-    app.post('/api/searchcards', async (req, res, next) => {
+    router.post('/searchcards', async (req, res, next) => {
         // incoming: userId, search
         // outgoing: results[], error
         var error = '';
@@ -550,7 +554,7 @@ exports.setApp = function ( app, client )
     });
 
     // SELL TRADE/CARD
-    app.post('/api/sell', async (req, res, next) => {
+    router.post('/sell', async (req, res, next) => {
         // incoming: userId, tradeId, quantity 
         // outgoing: success, error, message, saleAmount, remainingQuantity
         var error = '';
@@ -650,7 +654,7 @@ exports.setApp = function ( app, client )
     });
 
     // SELL ALL SHARES OF SYMBOL
-    app.post('/api/sell-all', async (req, res, next) => {
+    router.post('/sell-all', async (req, res, next) => {
         // incoming: userId, symbol
         // outgoing: success, error, message, totalSaleAmount, soldQuantity
         var error = '';
@@ -834,7 +838,7 @@ exports.setApp = function ( app, client )
     }
 
     // GET NEWS
-    app.get('/api/news', async (req, res, next) => {
+    router.get('/news', async (req, res, next) => {
         // outgoing: articles[], error
         var error = '';
 
@@ -897,7 +901,7 @@ exports.setApp = function ( app, client )
     });
 
     // DISPLAY PORTFOLIO SUMMARY 
-    app.post('/api/portfolio/summary', async (req, res, next) => {
+    router.post('/portfolio/summary', async (req, res, next) => {
         const { userId } = req.body;
         var error = '';
 
@@ -929,7 +933,7 @@ exports.setApp = function ( app, client )
     });
     
     // ADD TO WATCHLIST
-    app.post('/api/watchlist/add', async (req, res, next) => {
+    router.post('/watchlist/add', async (req, res, next) => {
         // incoming: userId, symbol
         // outgoing: success, error, message
         var error = '';
@@ -1009,7 +1013,7 @@ exports.setApp = function ( app, client )
     });
 
     // DELETE FROM WATCHLIST
-    app.post('/api/watchlist/delete', async (req, res, next) => {
+    router.post('/watchlist/delete', async (req, res, next) => {
         // incoming: userId, symbol
         // outgoing: success, error, message
         var error = '';
@@ -1054,7 +1058,7 @@ exports.setApp = function ( app, client )
     });
 
     // DISPLAY WATCHLIST
-    app.post('/api/watchlist', async (req, res, next) => {
+    router.post('/watchlist', async (req, res, next) => {
         // incoming: userId
         // outgoing: watchlist[], error
         var error = '';
@@ -1118,7 +1122,7 @@ exports.setApp = function ( app, client )
     });
 
     // CHECK IF IN WATCHLIST
-    app.post('/api/watchlist/check', async (req, res, next) => {
+    router.post('/watchlist/check', async (req, res, next) => {
         // incoming: userId, symbol
         // outgoing: isInWatchlist, error
         var error = '';
@@ -1151,7 +1155,7 @@ exports.setApp = function ( app, client )
         }
     });
     // Financial News endpoint
-    app.get('/api/news', async (req, res) => {
+    router.get('/news', async (req, res) => {
         try {
             const bust = req.query.bustCache === '1' || req.query.bustCache === 'true';
             const articles = await newsService.getMarketNews({ bustCache: bust });
@@ -1163,7 +1167,7 @@ exports.setApp = function ( app, client )
     });
 
     // GET TOP MOVERS (Gainers and Losers)
-    app.get('/api/top-movers', async (req, res) => {
+    router.get('/top-movers', async (req, res) => {
         // outgoing: gainers[], losers[], error
         var error = '';
 
@@ -1186,7 +1190,7 @@ exports.setApp = function ( app, client )
     });
 
     // SEARCH STOCKS
-    app.get('/api/search', async (req, res) => {
+    router.get('/search', async (req, res) => {
         // incoming: query (query parameter)
         // outgoing: results[], error
         var error = '';
@@ -1216,4 +1220,146 @@ exports.setApp = function ( app, client )
             });
         }
     });
+
+    // GET USER INFO BY ID
+    router.post('/user/profile', async (req, res, next) => {
+        // incoming: userId
+        // outgoing: id, firstName, lastName, email, login, error
+        var error = '';
+        const { userId } = req.body;
+
+        try {
+            if (!userId) {
+                error = 'User ID is required';
+                var ret = { error: error };
+                res.status(200).json(ret);
+                return;
+            }
+
+            const db = client.db('Finance-app');
+            const user = await db.collection('Users').findOne({
+                UserID: parseInt(userId)
+            });
+
+            if (!user) {
+                error = 'User not found';
+                var ret = { error: error };
+                res.status(200).json(ret);
+                return;
+            }
+
+            var ret = {
+                id: user.UserID,
+                firstName: user.FirstName,
+                lastName: user.LastName,
+                email: user.Email,
+                login: user.Login,
+                error: error
+            };
+            res.status(200).json(ret);
+        } catch (e) {
+            res.status(200).json({ error: e.toString() });
+        }
+    });
+
+    // UPDATE USER PROFILE
+    router.patch('/user/update', async (req, res, next) => {
+        // incoming: userId, firstName, lastName, email, login (optional)
+        // outgoing: success, error, message
+        var error = '';
+        const { userId, firstName, lastName, email, login } = req.body;
+
+        try {
+            if (!userId) {
+                error = 'User ID is required';
+                var ret = { success: false, error: error };
+                res.status(200).json(ret);
+                return;
+            }
+
+            const db = client.db('Finance-app');
+
+            // Check if user exists
+            const user = await db.collection('Users').findOne({
+                UserID: parseInt(userId)
+            });
+
+            if (!user) {
+                error = 'User not found';
+                var ret = { success: false, error: error };
+                res.status(200).json(ret);
+                return;
+            }
+
+            // Check if new login/email already exists (if being changed)
+            if (login && login !== user.Login) {
+                const existingLogin = await db.collection('Users').findOne({
+                    Login: login
+                });
+                if (existingLogin) {
+                    error = 'Username already exists';
+                    var ret = { success: false, error: error };
+                    res.status(200).json(ret);
+                    return;
+                }
+            }
+
+            if (email && email !== user.Email) {
+                const existingEmail = await db.collection('Users').findOne({
+                    Email: email
+                });
+                if (existingEmail) {
+                    error = 'Email already exists';
+                    var ret = { success: false, error: error };
+                    res.status(200).json(ret);
+                    return;
+                }
+            }
+
+            // Build update object - handle both camelCase and PascalCase field names
+            const updateObj = {};
+            if (firstName) updateObj.FirstName = firstName;
+            if (lastName) updateObj.LastName = lastName;
+            if (email) updateObj.Email = email;
+            if (login) updateObj.Login = login;
+
+            // If no fields to update, return error
+            if (Object.keys(updateObj).length === 0) {
+                error = 'No fields to update';
+                var ret = { success: false, error: error };
+                res.status(200).json(ret);
+                return;
+            }
+
+            // Update user
+            const result = await db.collection('Users').updateOne(
+                { UserID: parseInt(userId) },
+                { $set: updateObj }
+            );
+
+            if (result.modifiedCount === 0) {
+                error = 'Failed to update user';
+                var ret = { success: false, error: error };
+                res.status(200).json(ret);
+                return;
+            }
+
+            console.log(`User ${userId} updated successfully`);
+
+            var ret = {
+                success: true,
+                error: error,
+                message: 'Profile updated successfully'
+            };
+            res.status(200).json(ret);
+
+        } catch (e) {
+            error = e.toString();
+            console.error('Update user error:', e);
+            var ret = { success: false, error: error };
+            res.status(200).json(ret);
+        }
+    });
+
+    return router;
 }

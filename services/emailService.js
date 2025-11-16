@@ -7,7 +7,8 @@ console.log('Email service loaded. Resend API Key present:', !!process.env.RESEN
 const sendVerificationEmail = async (email, verificationToken) => {
     try {
         console.log('sendVerificationEmail called with:', { email, token: verificationToken.substring(0, 20) + '...' });
-        const verificationLink = `${process.env.FRONTEND_URL}/verify-email?token=${verificationToken}`;
+        const baseUrl = (process.env.FRONTEND_URL || '').replace(/\/$/, '');
+        const verificationLink = `${baseUrl}/verify-email?token=${verificationToken}`;
 
         console.log('Verification link:', verificationLink);
         console.log('Sending via Resend...');
@@ -85,8 +86,8 @@ const sendVerificationEmail = async (email, verificationToken) => {
 
 const sendPasswordResetEmail = async (email, resetToken) => {
     try {
-        const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
-
+        const baseUrl = (process.env.FRONTEND_URL || '').replace(/\/$/, '');
+        const resetLink = `${baseUrl}/reset-password?token=${resetToken}`;
         const { data, error } = await resend.emails.send({
             from: process.env.FROM_EMAIL,
             to: email,
