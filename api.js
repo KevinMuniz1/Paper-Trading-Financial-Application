@@ -8,6 +8,7 @@ const { generateEmailVerificationToken, generatePasswordResetToken, verifyEmailT
 const { sendVerificationEmail, sendPasswordResetEmail } = require('./services/emailService');
 const stockService = require('./services/stockService');
 const { updatePortfolioTotals, getPortfolioData } = require('./services/portfolioService');
+const baseUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
 
 module.exports = function (client) {
     // Initialize NewsService with DB instance
