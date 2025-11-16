@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { buildPath } from './Path';
+import { buildPath } from '../../Path';
 import './News.css';
 
 interface Article {
