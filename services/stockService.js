@@ -1,5 +1,14 @@
-const yahooFinance = require('yahoo-finance2').default;
+const YahooFinance = require('yahoo-finance2').default;
 const NodeCache = require('node-cache');
+
+// Debug what we're getting
+console.log('=== YAHOO FINANCE DEBUG ===');
+console.log('Default export type:', typeof YahooFinance);
+console.log('Is function?', typeof YahooFinance === 'function');
+console.log('===========================');
+
+// Create an instance
+const yahooFinance = new YahooFinance();
 
 const priceCache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
 
