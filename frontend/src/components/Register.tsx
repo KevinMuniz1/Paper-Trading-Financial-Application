@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { buildPath } from './Path';
+import { buildPath } from '../../Path';
 
 function Register() {
   const [message, setMessage] = useState('');
@@ -29,6 +29,8 @@ function Register() {
         body: js,
         headers: { 'Content-Type': 'application/json' }
       });
+
+      console.log(fetch(buildPath("register"))); 
 
       const res = await response.json();
 

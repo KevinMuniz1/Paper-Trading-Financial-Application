@@ -3,10 +3,9 @@ import './App.css';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
-import NewViewPage from './pages/NewViewPage';
-import PortfolioPage from './pages/PortfolioPage';
-import TradePage from './pages/TradePage';
 import VerifyEmailPage from "./pages/VerifyEmailPage";
+import News from "./components/news";
+import AccountSettingsPage from "./pages/AccountSettingsPage";
 import ForgotPasswordPage from './pages/forgot-password';
 import ResetPasswordPage from './pages/reset-password';
 
@@ -18,29 +17,16 @@ function App() {
         <Routes>
           <Route path="/" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/DashBoardPage" element={<DashboardPage />} />
+          <Route path="/accountSettings" element={<AccountSettingsPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/news" element={<News/>} />
         </Routes>
       </BrowserRouter>
     </div></div>
   );
 }
 
-/*
-function App() {
-    return (
-        <BrowserRouter>
-            <Routes>
-                <Route path="/" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/new-view" element={<NewViewPage />} />
-                <Route path="/portfolio" element={<PortfolioPage />} />
-                <Route path="/trade" element={<TradePage />} />
-            </Routes>
-        </BrowserRouter>
-    );
-}*/
 export default App;

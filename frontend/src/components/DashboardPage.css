@@ -1,0 +1,204 @@
+
+.layout-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  background-color: transparent; 
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+
+.main-section {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 2rem;  /* Add back the gap */
+  width: 100vw;
+  padding: 0 2rem;
+  box-sizing: border-box;
+}
+
+.chart-wrapper {
+  flex: 1;           
+  min-height: 0;    
+}
+
+
+.left-panel {
+  position: relative;
+  flex: 2.5;
+  height: 55vh;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  gap: 1.5rem;
+}
+
+
+
+
+
+.right-panel {
+  height: 60vh;
+  width: 25vw;
+  background-color: #ffffff;
+  color: white;
+  border-radius: 12px;
+  box-shadow: 0 0 12px rgba(79, 76, 76, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-left: auto; 
+  margin-right: 2rem; 
+  overflow: hidden;
+}
+
+
+@media (max-width: 900px) {
+  .main-section {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .left-panel,
+  .right-panel {
+    width: 90%;
+    height: auto;
+  }
+}
+
+
+.outlined-btn {
+  padding: 10px 18px;
+  border: 2px solid #000000; /* outline color */
+  background: transparent;
+  color: #00c853;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.2s ease;
+  margin-bottom: 1rem;
+}
+
+
+.button-container {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end; 
+}
+
+.outlined-btn:hover {
+  background: #11c96d19; /* light tint */
+}
+
+.outlined-btn:active {
+  background: #00000033;
+}
+
+
+.button-container {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;  
+  margin-bottom: 5rem;
+  padding-right: 1rem;        
+}
+
+
+/* Container for value + change */
+.portfolio-summary {
+  position: absolute;       /* Stick it in the corner */
+  top: 1rem;                
+  left: 1.5rem;             /* Moves slightly inwards from the corner */
+  z-index: 10;              /* Stay above chart */
+  pointer-events: none;  
+}
+
+/* Portfolio value (large text) */
+.portfolio-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #000;
+}
+
+/* Portfolio performance (small green/red text) */
+.portfolio-change {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.portfolio-change.positive {
+  color: #00C853;  /* green */
+}
+
+.portfolio-change.negative {
+  color: #FF3B30; /* red */
+}
+
+
+
+
+.chart-wrapper-left {
+  width: 100%;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.chart-container {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  margin-bottom: 5rem;
+}
+
+.chart-element {
+  width: 100%;
+  height: 300px;
+}
+
+/* Hide TradingView branding */
+a[href*="tradingview.com"] {
+  display: none !important;
+}
+
+/* Period Selector */
+.period-selector {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+/* Buttons */
+.period-btn {
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #666666;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.period-btn:hover {
+  background: #f5f5f5;
+}
+
+.period-btn.active {
+  background: #000000;
+  color: #ffffff;
+  border: none;
+}
+
+.period-btn.active:hover {
+  background: #000000;
+}

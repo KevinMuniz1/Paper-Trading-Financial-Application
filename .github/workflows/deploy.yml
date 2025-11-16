@@ -32,7 +32,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           port: ${{ secrets.SERVER_PORT }}
-          source: "server.js,package.json,package-lock.json,config.js,api.js"
+          source: "server.js,package.json,package-lock.json,config.js,api.js,services/**"
           target: "/var/paperTradeServer"
           strip_components: 0
 
@@ -54,7 +54,7 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           port: ${{ secrets.SERVER_PORT }}
           source: "frontend/dist/*"
-          target: "/var/www/html"
+          target: "/var/www/frontend/dist"
           strip_components: 2
 
       - name: Install backend dependencies and restart services

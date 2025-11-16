@@ -1,0 +1,272 @@
+.account-settings-page {
+  min-height: 100vh;
+  background: transparent;
+  padding: 2rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  width: 100%;
+  overflow-x: visible;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.account-settings-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0;
+  width: 100%;
+}
+
+.settings-content {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 2.5rem;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  width: 100%;
+}
+
+.settings-content h1 {
+  color: #ffffff;
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+}
+
+.settings-subtitle {
+  color: #b0b0b0;
+  font-size: 0.95rem;
+  margin: 0 0 2rem 0;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 2rem;
+  color: #b0b0b0;
+}
+
+.loading-state p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.settings-table {
+  display: flex;
+  flex-direction: column;
+  gap:0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.settings-row {
+  display: grid;
+  grid-template-columns: 160px 1fr 280px;
+  gap: 1.5rem;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.02);
+  transition: background 0.2s ease;
+}
+
+.settings-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.settings-row:last-child {
+  border-bottom: none;
+}
+
+.field-label {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.label-text {
+  color: #888888;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.field-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  grid-column: 2 / 5;
+}
+
+.field-value {
+  color: #ffffff;
+  font-size: 0.95rem;
+  flex: 1;
+  word-break: break-word;
+}
+
+.change-btn {
+  padding: 0.5rem 1.2rem;
+  background: rgba(0, 200, 83, 0.2);
+  color: #00C853;
+  border: 1px solid #00C853;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.change-btn:hover {
+  background: rgba(0, 200, 83, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 200, 83, 0.3);
+}
+
+.field-edit {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  grid-column: 2 / 5;
+}
+
+.edit-input {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  border: 1px solid rgba(0, 200, 83, 0.5);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+}
+
+.edit-input:focus {
+  outline: none;
+  border-color: #00C853;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 10px rgba(0, 200, 83, 0.3);
+}
+
+.edit-input::placeholder {
+  color: #666666;
+}
+
+.save-btn {
+  padding: 0.6rem 1.2rem;
+  background: linear-gradient(135deg, #00C853 0%, #009c40 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.save-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #00E676 0%, #00b83a 100%);
+  box-shadow: 0 4px 12px rgba(0, 200, 83, 0.4);
+}
+
+.save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cancel-btn {
+  padding: 0.6rem 1.2rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.cancel-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.cancel-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.message {
+  padding: 1rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.message.success {
+  background: rgba(0, 200, 83, 0.2);
+  border: 1px solid rgba(0, 200, 83, 0.5);
+  color: #00C853;
+}
+
+.message.error {
+  background: rgba(255, 59, 48, 0.2);
+  border: 1px solid rgba(255, 59, 48, 0.5);
+  color: #ff3b30;
+}
+
+@media (max-width: 768px) {
+  .account-settings-container {
+    padding-top: 2rem;
+  }
+
+  .settings-content {
+    padding: 1.5rem;
+  }
+
+  .settings-content h1 {
+    font-size: 1.5rem;
+  }
+
+  .settings-row {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .field-label {
+    margin-bottom: 0.5rem;
+  }
+
+  .field-display {
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+
+  .change-btn {
+    width: 100%;
+  }
+
+  .field-edit {
+    flex-direction: column;
+  }
+
+  .edit-input {
+    width: 100%;
+  }
+
+  .save-btn,
+  .cancel-btn {
+    width: 100%;
+  }
+}
+
+

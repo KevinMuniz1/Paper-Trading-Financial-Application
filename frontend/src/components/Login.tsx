@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { buildPath } from './Path';
+import { buildPath } from '../../Path';
 
 
 
@@ -37,7 +37,7 @@ function Login() {
         };
         localStorage.setItem('user_data', JSON.stringify(user));
         setMessage('');
-        navigate('/dashboard');
+        navigate('/DashboardPage');
       }
     } catch (error: any) {
       console.error('Login error:', error);
