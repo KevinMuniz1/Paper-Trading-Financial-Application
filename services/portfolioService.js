@@ -35,7 +35,7 @@ async function updatePortfolioTotals(userId, db) {
         // Update each trade and calculate totals
         for (const trade of trades) {
             const currentPrice = currentPrices[trade.tickerSymbol] || trade.purchasePrice;
-            const currentValue = currentPrice * trade.shares;
+            const currentValue = currentPrice * trade.quantity;
             const gain = currentValue - trade.totalCost;
             const gainPercent = trade.totalCost > 0 ? (gain / trade.totalCost) * 100 : 0;
 

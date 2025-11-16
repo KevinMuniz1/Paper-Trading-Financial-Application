@@ -380,7 +380,7 @@ module.exports = function (client) {
 
     // ADD TRADES CARD 
     router.post('/addcard', async (req, res, next) => {
-        const { userId, cardName, tickerSymbol, shares = 1 } = req.body;
+        const { userId, cardName, tickerSymbol, quantity = 1 } = req.body;
         var error = '';
 
         try {
@@ -395,7 +395,7 @@ module.exports = function (client) {
                 return;
             }
 
-            const totalCost = currentPrice * shares;
+            const totalCost = currentPrice * quantity;
 
             // check buying power
             const portfolio = await db.collection('Portfolio').findOne({ userId: parseInt(userId) });
@@ -416,13 +416,13 @@ module.exports = function (client) {
             // check if tickersymbol is in portfolio already + update share val 
             const existingTrade = await db.collection('Trades').findOne({ userId: parseInt(userId), tickerSymbol: tickerSymbol.toUpperCase() });
             if (existingTrade) {
-                const newShares = existingTrade.shares + parseInt(shares);
+                const newShares = existingTrade.quantity + parseInt(quantity);
                 const newTotalCost = existingTrade.totalCost + totalCost;
                 const newPurchasePrice = newTotalCost / newShares;
                 await db.collection('Trades').updateOne(
                     { _id: existingTrade._id },
                     { $set: {
-                        shares: newShares,
+                        quantity: newShares,
                         purchasePrice: newPurchasePrice,
                         totalCost: newTotalCost
                     }}
@@ -433,7 +433,7 @@ module.exports = function (client) {
                     userId: parseInt(userId),
                     tickerSymbol: tickerSymbol.toUpperCase(),
                     cardName: cardName,
-                    shares: parseInt(shares),
+                    quantity: parseInt(quantity),
                     purchasePrice: currentPrice,
                     currentPrice: currentPrice,
                     totalCost: totalCost,
@@ -445,7 +445,7 @@ module.exports = function (client) {
                 };
 
                 await db.collection('Trades').insertOne(newTrade);
-                console.log(`Trade created: ${shares} ${tickerSymbol} for user ${userId}`);
+                console.log(`Trade created: ${quantity} ${tickerSymbol} for user ${userId}`);
             }
 
             // update buying power
@@ -462,7 +462,7 @@ module.exports = function (client) {
 
             var ret = { 
                 error: error,
-                message: `Successfully purchased ${shares} share(s) of ${tickerSymbol} for $${totalCost.toFixed(2)}`
+                message: `Successfully purchased ${quantity} share(s) of ${tickerSymbol} for $${totalCost.toFixed(2)}`
             };
             res.status(200).json(ret);
         }
