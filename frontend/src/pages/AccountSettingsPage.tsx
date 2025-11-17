@@ -263,7 +263,7 @@ const AccountSettingsPage = () => {
       if (data.success) {
         // Clear localStorage and redirect to login
         localStorage.removeItem("user_data");
-        window.location.href = "/login";
+        window.location.href = "/";
       } else {
         setDeleteMessage(data.error || "Failed to delete account");
       }
