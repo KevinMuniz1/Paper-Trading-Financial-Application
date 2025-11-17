@@ -1359,7 +1359,107 @@ module.exports = function (client) {
             var ret = { success: false, error: error };
             res.status(200).json(ret);
         }
+        
+    });
+
+    // Change Password
+    router.patch('/user/change-password', async (req, res) => {
+        try {
+            const { userId, currentPassword, newPassword } = req.body;
+
+            if (!userId || !currentPassword || !newPassword) {
+                return res.status(200).json({
+                    success: false,
+                    error: 'All fields are required'
+                });
+            }
+
+            const db = client.db('Finance-app');
+            
+            // Verify current password
+            const user = await db.collection('Users').findOne({
+                UserID: parseInt(userId),
+                Password: currentPassword
+            });
+
+            if (!user) {
+                return res.status(200).json({
+                    success: false,
+                    error: 'Current password is incorrect'
+                });
+            }
+
+            // Update password
+            await db.collection('Users').updateOne(
+                { UserID: parseInt(userId) },
+                { $set: { Password: newPassword } }
+            );
+
+            res.status(200).json({
+                success: true,
+                message: 'Password changed successfully'
+            });
+        } catch (error) {
+            console.error('Error changing password:', error);
+            res.status(200).json({
+                success: false,
+                error: 'Failed to change password'
+            });
+        }
+    });
+
+    // Delete Account
+    router.delete('/user/delete', async (req, res) => {
+        try {
+            const { userId, password } = req.body;
+
+            if (!userId || !password) {
+                return res.status(200).json({
+                    success: false,
+                    error: 'User ID and password are required'
+                });
+            }
+
+            const db = client.db('Finance-app');
+            
+            // Verify password before deleting
+            const user = await db.collection('Users').findOne({
+                UserID: parseInt(userId),
+                Password: password
+            });
+
+            if (!user) {
+                return res.status(200).json({
+                    success: false,
+                    error: 'Incorrect password'
+                });
+            }
+            
+            // Delete user's trades/cards first
+            await db.collection('Trades').deleteMany({ userId: parseInt(userId) });
+            
+            // Delete user
+            const result = await db.collection('Users').deleteOne({ UserID: parseInt(userId) });
+
+            if (result.deletedCount === 0) {
+                return res.status(200).json({
+                    success: false,
+                    error: 'User not found'
+                });
+            }
+
+            res.status(200).json({
+                success: true,
+                message: 'Account deleted successfully'
+            });
+        } catch (error) {
+            console.error('Error deleting account:', error);
+            res.status(200).json({
+                success: false,
+                error: 'Failed to delete account'
+            });
+        }
     });
 
     return router;
-}
+}    
