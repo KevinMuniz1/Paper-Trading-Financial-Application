@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-require('mongodb');
+const { ObjectId } = require('mongodb');
 require('dotenv').config(); 
 const { PORT, MONGODB_URL } = require('./config');
 const newsService = require('./services/newsService');
@@ -71,91 +71,98 @@ module.exports = function (client) {
         try {
             const db = client.db('Finance-app');
 
+            // Check for existing user/email FIRST before doing anything else
             const existingUser = await db.collection('Users').find({ Login: login }).toArray();
             const existingEmail = await db.collection('Users').find({ Email: email }).toArray();
 
             if (existingUser.length > 0) {
                 error = 'Username already exists';
-            } else if (existingEmail.length > 0) {
-                error = 'Email already exists';
-            } else {
-
-                const lastUser = await db.collection('Users').find().sort({ UserID: -1 }).limit(1).toArray();
-                const nextId = lastUser.length > 0 ? lastUser[0].UserID + 1 : 1;
-
-                console.log('Starting email verification process...');
-                console.log('Generating token for user:', nextId, 'email:', email);
-
-                //const testEmail = 'simplitrade.25@gmail.com';
-                const verificationToken = generateEmailVerificationToken(nextId, email);
-                console.log('Token generated', verificationToken);
-
-                const newUser = {
-                    UserID: nextId,
-                    FirstName: firstName,
-                    LastName: lastName,
-                    Email: email,
-                    Login: login,
-                    Password: password,
-                    isEmailVerified: false,
-                    emailVerificationToken: verificationToken,
-                    verificationTokenExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-                    createdAt: new Date()
-                };
-
-                await db.collection('Users').insertOne(newUser);
-                console.log('User created with ID:', nextId);
-
-                // register newUserin portfolio collection
-                const newPortfolio = {
-                    userId: nextId,
-                    buyingPower: parseDouble(0.00), // start with no buying power
-                    totalPortfolioValue: parseDouble(0.00),
-                    totalInvested: parseDouble(0.00),
-                    totalGain: parseDouble(0.00),
-                    totalGainPercent: parseDouble(0.00),
-                    lastUpdated: new Date(),
-                    createdAt: new Date()
-                };
-
-                await db.collection('Portfolio').insertOne(newPortfolio);
-
-                // AUTO-SEND VERIFICATION EMAIL
-                try {
-
-                    console.log('Calling sendVerificationEmail...');
-                    const emailResult = await sendVerificationEmail(email, verificationToken);
-                    //const emailResult = await sendVerificationEmail(testEmail, verificationToken);
-                    console.log('Email send result:', JSON.stringify(emailResult, null, 2));
-
-                    //change this to only onclude error
-                    if (emailResult.success) {
-                        //console.error('Failed to send verification email:', emailResult.error);
-                        console.error('email success');
-                    } else {
-                        console.error('Failed to send verification email:', emailResult.error);
-                    }
-                } catch (emailError) {
-                    console.error('Error sending verification email:', emailError);
-                    // registration finishes even if verif does not work
-                }
-
-                var ret = {
-                    id: nextId,
-                    error: error,
-                    message: 'Registration successful! Please check your email to verify your account.'
-                };
+                var ret = { id: -1, error: error };
                 res.status(200).json(ret);
                 return;
             }
+            
+            if (existingEmail.length > 0) {
+                error = 'Email already exists';
+                var ret = { id: -1, error: error };
+                res.status(200).json(ret);
+                return;
+            }
+
+            // If we get here, no conflicts - proceed with registration
+            const lastUser = await db.collection('Users').find().sort({ UserID: -1 }).limit(1).toArray();
+            const nextId = lastUser.length > 0 ? lastUser[0].UserID + 1 : 1;
+
+            console.log('Starting email verification process...');
+            console.log('Generating token for user:', nextId, 'email:', email);
+
+            //const testEmail = 'simplitrade.25@gmail.com';
+            const verificationToken = generateEmailVerificationToken(nextId, email);
+            console.log('Token generated', verificationToken);
+
+            const newUser = {
+                UserID: nextId,
+                FirstName: firstName,
+                LastName: lastName,
+                Email: email,
+                Login: login,
+                Password: password,
+                isEmailVerified: false,
+                emailVerificationToken: verificationToken,
+                verificationTokenExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+                createdAt: new Date()
+            };
+
+            await db.collection('Users').insertOne(newUser);
+            console.log('User created with ID:', nextId);
+
+            // register newUser in portfolio collection
+            const newPortfolio = {
+                userId: nextId,
+                buyingPower: parseFloat(0.00), // start with no buying power
+                totalPortfolioValue: parseFloat(0.00),
+                totalInvested: parseFloat(0.00),
+                totalGain: parseFloat(0.00),
+                totalGainPercent: parseFloat(0.00),
+                lastUpdated: new Date(),
+                createdAt: new Date()
+            };
+
+            await db.collection('Portfolio').insertOne(newPortfolio);
+
+            // AUTO-SEND VERIFICATION EMAIL
+            try {
+                console.log('Calling sendVerificationEmail...');
+                const emailResult = await sendVerificationEmail(email, verificationToken);
+                //const emailResult = await sendVerificationEmail(testEmail, verificationToken);
+                console.log('Email send result:', JSON.stringify(emailResult, null, 2));
+
+                //change this to only include error
+                if (emailResult.success) {
+                    //console.error('Failed to send verification email:', emailResult.error);
+                    console.log('Email sent successfully');
+                } else {
+                    console.error('Failed to send verification email:', emailResult.error);
+                }
+            } catch (emailError) {
+                console.error('Error sending verification email:', emailError);
+                // registration finishes even if verif does not work
+            }
+
+            var ret = {
+                id: nextId,
+                error: '',
+                message: 'Registration successful! Please check your email to verify your account.'
+            };
+            res.status(200).json(ret);
 
         }
         catch (e) {
             error = e.toString();
             console.error('Registration error:', e);
+            var ret = { id: -1, error: error };
+            res.status(200).json(ret);
         }
-        var ret = { id: -1, error: error };
-        res.status(200).json(ret);
     });
 
     // Verify Email 
@@ -324,9 +331,8 @@ module.exports = function (client) {
             const db = client.db('Finance-app');
 
             // data validation input
-
-            if (isNaN(amount) || parseFloat(amount) <= 0) {
-                error = 'Amount must be a positive number';
+            if (isNaN(amount) || parseFloat(amount) === 0) {
+                error = 'Amount must be a non-zero number';
                 var ret = { success: false, error: error, newBalance: 0 };
                 res.status(200).json(ret);
                 return;
@@ -339,6 +345,23 @@ module.exports = function (client) {
             if (!portfolio) {
                 error = 'Portfolio not found for user';
                 var ret = { success: false, error: error, newBalance: 0 };
+                res.status(200).json(ret);
+                return;
+            }
+
+            // If decreasing (negative amount), check if sufficient balance
+            if (addAmount < 0 && portfolio.buyingPower < Math.abs(addAmount)) {
+                error = 'Insufficient buying power to decrease by this amount';
+                var ret = { success: false, error: error, newBalance: portfolio.buyingPower };
+                res.status(200).json(ret);
+                return;
+            }
+
+            // Check if the operation would result in negative balance
+            const newBalance = portfolio.buyingPower + addAmount;
+            if (newBalance < 0) {
+                error = 'Cannot decrease buying power below $0.00';
+                var ret = { success: false, error: error, newBalance: portfolio.buyingPower };
                 res.status(200).json(ret);
                 return;
             }
@@ -362,13 +385,15 @@ module.exports = function (client) {
             // get updated balance
             const updatedPortfolio = await db.collection('Portfolio').findOne({ userId: parseInt(userId) });
             
-            console.log(`Added $${addAmount.toFixed(2)} to user ${userId}. New balance: $${updatedPortfolio.buyingPower.toFixed(2)}`);
+            const action = addAmount > 0 ? 'Added' : 'Decreased';
+            const absAmount = Math.abs(addAmount);
+            console.log(`${action} $${absAmount.toFixed(2)} ${addAmount > 0 ? 'to' : 'from'} user ${userId}. New balance: $${updatedPortfolio.buyingPower.toFixed(2)}`);
 
             var ret = { 
                 success: true, 
                 error: error,
                 newBalance: updatedPortfolio.buyingPower,
-                message: `Successfully added $${addAmount.toFixed(2)} to your account. New balance: $${updatedPortfolio.buyingPower.toFixed(2)}`
+                message: `Successfully ${addAmount > 0 ? 'added' : 'decreased'} $${absAmount.toFixed(2)} ${addAmount > 0 ? 'to' : 'from'} your account. New balance: $${updatedPortfolio.buyingPower.toFixed(2)}`
             };
             res.status(200).json(ret);
 
@@ -425,8 +450,8 @@ module.exports = function (client) {
                     { _id: existingTrade._id },
                     { $set: {
                         quantity: newShares,
-                        purchasePrice: parseDouble(newPurchasePrice),
-                        totalCost: parseDouble(newTotalCost)
+                        purchasePrice: parseFloat(newPurchasePrice),
+                        totalCost: parseFloat(newTotalCost)
                     }}
                 );
             } else {
@@ -436,10 +461,10 @@ module.exports = function (client) {
                     tickerSymbol: tickerSymbol.toUpperCase(),
                     cardName: cardName,
                     quantity: parseInt(quantity),
-                    purchasePrice: parseDouble(currentPrice),
-                    currentPrice: parseDouble(currentPrice),
-                    totalCost: parseDouble(totalCost),
-                    currentValue: parseDouble(totalCost),
+                    purchasePrice: parseFloat(currentPrice),
+                    currentPrice: parseFloat(currentPrice),
+                    totalCost: parseFloat(totalCost),
+                    currentValue: parseFloat(totalCost),
                     gain: 0.00,
                     gainPercent: 0.00,
                     purchaseDate: new Date(),
@@ -572,7 +597,7 @@ module.exports = function (client) {
 
             // Find the trade
             const trade = await db.collection('Trades').findOne({
-                _id: new require('mongodb').ObjectId(tradeId),
+                _id: new ObjectId(tradeId),
                 userId: parseInt(userId)
             });
 
@@ -599,7 +624,7 @@ module.exports = function (client) {
             if (sellQuantity === trade.quantity) {
                 // Sell all shares - delete the trade
                 await db.collection('Trades').deleteOne({
-                    _id: new require('mongodb').ObjectId(tradeId)
+                    _id: new ObjectId(tradeId)
                 });
             } else {
                 // Sell partial shares - update the trade
@@ -607,7 +632,7 @@ module.exports = function (client) {
                 const remainingCost = (trade.totalCost / trade.quantity) * remainingQuantity;
                 
                 await db.collection('Trades').updateOne(
-                    { _id: new require('mongodb').ObjectId(tradeId) },
+                    { _id: new ObjectId(tradeId) },
                     {
                         $set: {
                             quantity: remainingQuantity,
@@ -990,7 +1015,7 @@ module.exports = function (client) {
                 symbol: symbolUpper,
                 name: stockName,
                 addedDate: new Date(),
-                currentPrice: parseDouble(price),
+                currentPrice: parseFloat(price),
                 createdAt: new Date()
             };
 
@@ -1216,6 +1241,39 @@ module.exports = function (client) {
             console.error('GET /api/search error:', e);
             res.status(200).json({
                 results: [],
+                error: error
+            });
+        }
+    });
+
+    // GET STOCK PRICES
+    router.post('/stock/prices', async (req, res) => {
+        // incoming: symbols (array of stock symbols)
+        // outgoing: prices (object with symbol: price pairs), error
+        var error = '';
+        const { symbols } = req.body;
+
+        try {
+            if (!symbols || !Array.isArray(symbols) || symbols.length === 0) {
+                res.status(200).json({
+                    prices: {},
+                    error: 'Symbols array is required'
+                });
+                return;
+            }
+
+            // Fetch prices from Yahoo Finance API
+            const prices = await stockService.getMultiplePrices(symbols);
+            
+            res.status(200).json({
+                prices: prices,
+                error: ''
+            });
+        } catch (e) {
+            error = e.toString();
+            console.error('POST /api/stock/prices error:', e);
+            res.status(200).json({
+                prices: {},
                 error: error
             });
         }

@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_host.dart';
 import 'pages/news_page.dart';
+import 'services/api_service.dart';
 
 void main() {
   runApp(const MyApp());
@@ -435,24 +436,15 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
         
         if (responseData['error'] == null || responseData['error'].isEmpty) {
-          // Registration successful
+          // Registration successful - Show email verification message
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => const LoginScreen(),
+              builder: (context) => EmailVerificationScreen(
+                email: email,
+              ),
             ),
           );
-          
-          // Show success message on login screen
-          Future.delayed(const Duration(milliseconds: 500), () {
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Account created successfully! Please log in.'),
-                backgroundColor: Colors.green,
-              ),
-            );
-          });
         } else {
           // Registration failed
           if (!mounted) return;
@@ -479,6 +471,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   void dispose() {
     _firstNameController.dispose();
     _lastNameController.dispose();
+    _emailController.dispose();
     _usernameController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -689,6 +682,184 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   }
 }
 
+// Email Verification Screen
+class EmailVerificationScreen extends StatelessWidget {
+  final String email;
+
+  const EmailVerificationScreen({
+    super.key,
+    required this.email,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Email Verification'),
+        backgroundColor: const Color(0xFF6C5CE7),
+        foregroundColor: Colors.white,
+        centerTitle: true,
+        automaticallyImplyLeading: false,
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF6C5CE7),
+              Color(0xFF9776EC),
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 40),
+                // Email Icon
+                Container(
+                  height: 120,
+                  width: 120,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(60),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.mark_email_read,
+                    size: 60,
+                    color: Color(0xFF6C5CE7),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                const Text(
+                  'Verify Your Email',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: [
+                      const Text(
+                        'We\'ve sent a verification email to:',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        email,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF6C5CE7),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Please check your inbox and click the verification link to activate your account.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    border: Border.all(color: Colors.orange.shade200),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        color: Colors.orange.shade700,
+                        size: 32,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Important',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.orange.shade700,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'You can log in now, but some features may require email verification. Don\'t forget to check your spam folder!',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 40),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => const LoginScreen()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF7ED321),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 3,
+                  ),
+                  child: const Text(
+                    'Go to Login',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // Main App Screen with Bottom Navigation
 class MainAppScreen extends StatefulWidget {
   final int userId;
@@ -753,13 +924,14 @@ class _MainAppScreenState extends State<MainAppScreen> {
     switch (index) {
       case 0:
         return HomeScreen(
+          userId: widget.userId,
           firstName: widget.firstName,
           lastName: widget.lastName,
         );
       case 1:
-        return const PortfolioPage();
+        return PortfolioPage(userId: widget.userId);
       case 2:
-        return const TradePage();
+        return TradePage(userId: widget.userId);
       case 3:
         return const NewsPage();
       case 4:
@@ -769,6 +941,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
         );
       default:
         return HomeScreen(
+          userId: widget.userId,
           firstName: widget.firstName,
           lastName: widget.lastName,
         );
@@ -778,11 +951,13 @@ class _MainAppScreenState extends State<MainAppScreen> {
 
 // Home Screen
 class HomeScreen extends StatefulWidget {
+  final int userId;
   final String firstName;
   final String lastName;
 
   const HomeScreen({
     super.key,
+    required this.userId,
     required this.firstName,
     required this.lastName,
   });
@@ -792,7 +967,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  double _buyingPower = 10000.0; // Default starting buying power
+  double _buyingPower = 0.0;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -802,28 +978,21 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadBuyingPower() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final result = await ApiService.getBuyingPower(widget.userId);
       if (mounted) {
         setState(() {
-          _buyingPower = prefs.getDouble('buying_power') ?? 10000.0;
+          _buyingPower = (result['buyingPower'] ?? 0.0).toDouble();
+          _isLoading = false;
         });
       }
     } catch (e) {
       print('Error loading buying power: $e');
       if (mounted) {
         setState(() {
-          _buyingPower = 10000.0;
+          _buyingPower = 0.0;
+          _isLoading = false;
         });
       }
-    }
-  }
-
-  Future<void> _saveBuyingPower() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setDouble('buying_power', _buyingPower);
-    } catch (e) {
-      print('Error saving buying power: $e');
     }
   }
 
@@ -859,20 +1028,44 @@ class _HomeScreenState extends State<HomeScreen> {
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 final amount = double.tryParse(amountController.text);
                 if (amount != null && amount > 0) {
-                  setState(() {
-                    _buyingPower += amount;
-                  });
-                  _saveBuyingPower();
                   Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Added \$${amount.toStringAsFixed(2)} to your buying power!'),
-                      backgroundColor: Colors.green,
-                    ),
+                  
+                  // Show loading
+                  if (!mounted) return;
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (context) => const Center(child: CircularProgressIndicator()),
                   );
+                  
+                  final result = await ApiService.addFunds(widget.userId, amount);
+                  
+                  // Always close loading dialog first, even if widget is unmounted
+                  Navigator.of(context).pop(); // Close loading
+                  
+                  if (!mounted) return;
+                  
+                  if (result['success'] == true) {
+                    setState(() {
+                      _buyingPower = (result['newBalance'] ?? _buyingPower).toDouble();
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(result['message'] ?? 'Funds added successfully!'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(result['error'] ?? 'Failed to add funds'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
                 }
               },
               child: const Text('Add Funds'),
@@ -915,35 +1108,58 @@ class _HomeScreenState extends State<HomeScreen> {
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 final amount = double.tryParse(amountController.text);
                 if (amount != null && amount > 0) {
-                  if (amount <= _buyingPower) {
+                  if (amount > _buyingPower) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Cannot decrease more than current balance'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+                  
+                  Navigator.of(context).pop();
+                  
+                  // Show loading
+                  if (!mounted) return;
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (context) => const Center(child: CircularProgressIndicator()),
+                  );
+                  
+                  final result = await ApiService.decreaseFunds(widget.userId, amount);
+                  
+                  // Always close loading dialog first, even if widget is unmounted
+                  Navigator.of(context).pop(); // Close loading
+                  
+                  if (!mounted) return;
+                  
+                  if (result['success'] == true) {
                     setState(() {
-                      _buyingPower -= amount;
+                      _buyingPower = (result['newBalance'] ?? _buyingPower).toDouble();
                     });
-                    _saveBuyingPower();
-                    Navigator.of(context).pop();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Decreased buying power by \$${amount.toStringAsFixed(2)}'),
-                        backgroundColor: Colors.orange,
+                        content: Text('Successfully decreased buying power by \$${amount.toStringAsFixed(2)}'),
+                        backgroundColor: Colors.green,
                       ),
                     );
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Cannot decrease more than your current balance'),
+                      SnackBar(
+                        content: Text(result['error'] ?? 'Failed to decrease funds'),
                         backgroundColor: Colors.red,
                       ),
                     );
                   }
                 }
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-              ),
-              child: const Text('Decrease Funds', style: TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('Decrease', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -979,7 +1195,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      body: SingleChildScrollView(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1124,7 +1342,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 30),
           ],
         ),
-      ),
+        ),
     );
   }
 
@@ -1371,78 +1589,352 @@ class NotificationsScreen extends StatelessWidget {
 
 // Trade Screen
 class TradePage extends StatefulWidget {
-  const TradePage({super.key});
+  final int userId;
+  
+  const TradePage({super.key, required this.userId});
 
   @override
   State<TradePage> createState() => _TradePageState();
 }
 
-class _TradePageState extends State<TradePage> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _TradePageState extends State<TradePage> {
   double _buyingPower = 0.0;
-  List<PortfolioHolding> _portfolio = [];
-  List<Stock> _popularStocks = [];
+  bool _isLoading = true;
+  List<Stock> _availableStocks = [];
+  Map<String, dynamic> _userHoldings = {};
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _initializeStocks();
     _loadData();
   }
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
+  void _initializeStocks() {
+    // Initialize the 8 stocks with placeholder data
+    // Real prices will be loaded from Yahoo Finance API
+    _availableStocks = [
+      Stock(symbol: 'AAPL', name: 'Apple Inc.', price: 0, change: 0, changePercent: 0),
+      Stock(symbol: 'AMZN', name: 'Amazon.com Inc.', price: 0, change: 0, changePercent: 0),
+      Stock(symbol: 'NFLX', name: 'Netflix Inc.', price: 0, change: 0, changePercent: 0),
+      Stock(symbol: 'NVDA', name: 'NVIDIA Corporation', price: 0, change: 0, changePercent: 0),
+      Stock(symbol: 'GOOGL', name: 'Alphabet Inc.', price: 0, change: 0, changePercent: 0),
+      Stock(symbol: 'MSFT', name: 'Microsoft Corporation', price: 0, change: 0, changePercent: 0),
+      Stock(symbol: 'TSLA', name: 'Tesla Inc.', price: 0, change: 0, changePercent: 0),
+      Stock(symbol: 'META', name: 'Meta Platforms Inc.', price: 0, change: 0, changePercent: 0),
+    ];
   }
 
   Future<void> _loadData() async {
-    final buyingPower = await PortfolioManager.getBuyingPower();
-    final portfolio = await PortfolioManager.getPortfolio();
-    
-    // Load popular stocks for quick trading
-    final popularStocks = [
-      Stock(symbol: 'AAPL', name: 'Apple Inc.', price: 175.43, change: 2.15, changePercent: 1.24),
-      Stock(symbol: 'MSFT', name: 'Microsoft Corporation', price: 337.89, change: -1.23, changePercent: -0.36),
-      Stock(symbol: 'GOOGL', name: 'Alphabet Inc.', price: 125.30, change: 0.85, changePercent: 0.68),
-      Stock(symbol: 'AMZN', name: 'Amazon.com Inc.', price: 133.13, change: 1.45, changePercent: 1.10),
-      Stock(symbol: 'TSLA', name: 'Tesla Inc.', price: 242.65, change: -3.21, changePercent: -1.31),
-      Stock(symbol: 'META', name: 'Meta Platforms Inc.', price: 273.37, change: 2.87, changePercent: 1.06),
-      Stock(symbol: 'NVDA', name: 'NVIDIA Corporation', price: 455.72, change: 12.34, changePercent: 2.78),
-      Stock(symbol: 'NFLX', name: 'Netflix Inc.', price: 378.96, change: -0.67, changePercent: -0.18),
-    ];
-
     setState(() {
-      _buyingPower = buyingPower;
-      _portfolio = portfolio;
-      _popularStocks = popularStocks;
+      _isLoading = true;
     });
+    
+    try {
+      // Load buying power
+      final buyingPowerResult = await ApiService.getBuyingPower(widget.userId);
+      
+      // Load user's current holdings to check ownership
+      final holdingsResult = await ApiService.searchTrades(widget.userId);
+      
+      // Create a map of holdings by symbol for quick lookup (just to show "Owned" indicator)
+      Map<String, dynamic> holdingsMap = {};
+      if (holdingsResult['results'] != null) {
+        for (var holding in holdingsResult['results']) {
+          holdingsMap[holding['symbol']] = holding;
+        }
+      }
+
+      // Realistic static percentage changes for each stock
+      final Map<String, double> staticChangePercents = {
+        'AAPL': 1.25,    // Apple - modest positive
+        'AMZN': -0.82,   // Amazon - slight negative
+        'NFLX': 2.15,    // Netflix - strong positive
+        'NVDA': -1.43,   // NVIDIA - moderate negative
+        'GOOGL': 0.67,   // Google - slight positive
+        'MSFT': 1.08,    // Microsoft - positive
+        'TSLA': -2.34,   // Tesla - volatile negative
+        'META': 1.89,    // Meta - solid positive
+      };
+
+      // Fetch real stock prices from Yahoo Finance API
+      final symbols = _availableStocks.map((stock) => stock.symbol).toList();
+      final pricesResult = await ApiService.getStockPrices(symbols);
+      
+      // Update stocks with real prices and static realistic percent changes
+      if (pricesResult['prices'] != null) {
+        final prices = pricesResult['prices'] as Map<String, dynamic>;
+        
+        for (int i = 0; i < _availableStocks.length; i++) {
+          final stock = _availableStocks[i];
+          final currentPrice = prices[stock.symbol];
+          
+          if (currentPrice != null) {
+            final price = (currentPrice is int) ? currentPrice.toDouble() : currentPrice.toDouble();
+            final changePercent = staticChangePercents[stock.symbol] ?? 0.0;
+            final change = (price * changePercent) / 100;
+            
+            _availableStocks[i] = Stock(
+              symbol: stock.symbol,
+              name: stock.name,
+              price: price,
+              change: change,
+              changePercent: changePercent,
+            );
+          }
+        }
+      }
+      
+      if (mounted) {
+        setState(() {
+          _buyingPower = (buyingPowerResult['buyingPower'] ?? 0.0).toDouble();
+          _userHoldings = holdingsMap;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading trade page: $e');
+      if (mounted) {
+        setState(() {
+          _buyingPower = 0.0;
+          _userHoldings = {};
+          _isLoading = false;
+        });
+      }
+    }
   }
 
-  void _showQuickTradeDialog(Stock stock, bool isBuy) {
-    final TextEditingController amountController = TextEditingController();
-    
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Trade Stocks'),
+        backgroundColor: const Color(0xFF6C5CE7),
+        foregroundColor: Colors.white,
+        centerTitle: true,
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: _loadData,
+              child: Column(
+                children: [
+                  // Buying Power Display
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFF6C5CE7).withOpacity(0.1),
+                          const Color(0xFF7ED321).withOpacity(0.1)
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        const Text(
+                          'Available Cash',
+                          style: TextStyle(fontSize: 16, color: Color(0xFF6C5CE7)),
+                        ),
+                        Text(
+                          '\$${_buyingPower.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF6C5CE7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Stock List
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: _availableStocks.length,
+                      itemBuilder: (context, index) {
+                        final stock = _availableStocks[index];
+                        final holding = _userHoldings[stock.symbol];
+                        final isPositive = stock.change >= 0;
+                        final color = isPositive ? Colors.green : Colors.red;
+
+                        return Card(
+                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: const Color(0xFF6C5CE7).withOpacity(0.1),
+                              child: Text(
+                                stock.symbol.substring(0, 2),
+                                style: const TextStyle(
+                                  color: Color(0xFF6C5CE7),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            title: Text(
+                              stock.symbol,
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(stock.name),
+                                if (holding != null)
+                                  Text(
+                                    'Owned: ${holding['quantity'].toStringAsFixed(2)} shares',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF7ED321),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            trailing: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  '\$${stock.price.toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      isPositive ? Icons.arrow_upward : Icons.arrow_downward,
+                                      color: color,
+                                      size: 16,
+                                    ),
+                                    Text(
+                                      '${isPositive ? '+' : ''}${stock.changePercent.toStringAsFixed(2)}%',
+                                      style: TextStyle(color: color, fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            onTap: () => _showTradeDialog(stock, holding),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+    );
+  }
+
+  void _showTradeDialog(Stock stock, dynamic holding) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  stock.symbol,
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  stock.name,
+                  style: const TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Current Price: \$${stock.price.toStringAsFixed(2)}',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                ),
+                if (holding != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'You own: ${holding['quantity'].toStringAsFixed(2)} shares (\$${holding['currentValue'].toStringAsFixed(2)})',
+                    style: const TextStyle(fontSize: 14, color: Color(0xFF7ED321)),
+                  ),
+                ],
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _showBuyDialog(stock);
+                        },
+                        icon: const Icon(Icons.add_shopping_cart),
+                        label: const Text('Buy'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF7ED321),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: holding != null
+                            ? () {
+                                Navigator.pop(context);
+                                _showSellDialog(stock, holding);
+                              }
+                            : null,
+                        icon: const Icon(Icons.sell),
+                        label: const Text('Sell'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          disabledBackgroundColor: Colors.grey,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showBuyDialog(Stock stock) {
+    final TextEditingController quantityController = TextEditingController();
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('${isBuy ? 'Buy' : 'Sell'} ${stock.symbol}'),
+          title: Text('Buy ${stock.symbol}'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Current Price: \$${stock.price.toStringAsFixed(2)}'),
-              if (isBuy) Text('Available Cash: \$${_buyingPower.toStringAsFixed(2)}'),
-              if (!isBuy) _buildCurrentHoldingInfo(stock),
-              const SizedBox(height: 15),
+              Text('Available Cash: \$${_buyingPower.toStringAsFixed(2)}'),
+              const SizedBox(height: 16),
               TextField(
-                controller: amountController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Dollar Amount to ${isBuy ? 'Buy' : 'Sell'}',
-                  prefixText: '\$',
-                  border: const OutlineInputBorder(),
-                  helperText: 'Enter the amount you want to ${isBuy ? 'invest' : 'sell'}',
+                controller: quantityController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  labelText: 'Number of Shares',
+                  border: OutlineInputBorder(),
+                  helperText: 'Enter how many shares to buy',
                 ),
               ),
             ],
@@ -1453,14 +1945,22 @@ class _TradePageState extends State<TradePage> with SingleTickerProviderStateMix
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              onPressed: () => _executeTrade(stock, amountController.text, isBuy),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: isBuy ? const Color(0xFF7ED321) : Colors.red,
-              ),
-              child: Text(
-                isBuy ? 'Buy' : 'Sell',
-                style: const TextStyle(color: Colors.white),
-              ),
+              onPressed: () async {
+                final quantity = int.tryParse(quantityController.text);
+                if (quantity != null && quantity > 0) {
+                  Navigator.of(context).pop();
+                  await _executeBuy(stock, quantity);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Please enter a valid quantity'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF7ED321)),
+              child: const Text('Buy', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -1468,407 +1968,222 @@ class _TradePageState extends State<TradePage> with SingleTickerProviderStateMix
     );
   }
 
-  Widget _buildCurrentHoldingInfo(Stock stock) {
-    final holding = _portfolio.firstWhere(
-      (h) => h.symbol == stock.symbol,
-      orElse: () => PortfolioHolding(
-        symbol: stock.symbol,
-        name: stock.name,
-        shares: 0,
-        averagePrice: 0,
-        currentPrice: stock.price,
-      ),
-    );
-    
-    if (holding.shares == 0) {
-      return const Text('You don\'t own this stock');
-    }
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Shares Owned: ${holding.shares.toStringAsFixed(4)}'),
-        Text('Value: \$${(holding.shares * stock.price).toStringAsFixed(2)}'),
-      ],
-    );
-  }
-
-  Future<void> _executeTrade(Stock stock, String amountText, bool isBuy) async {
-    final amount = double.tryParse(amountText);
-    if (amount == null || amount <= 0) {
-      Navigator.of(context).pop();
-      _showMessage('Please enter a valid amount', Colors.red);
-      return;
-    }
-
-    Navigator.of(context).pop();
-
-    bool success;
-    if (isBuy) {
-      success = await PortfolioManager.buyStock(stock, amount);
-    } else {
-      success = await PortfolioManager.sellStock(stock, amount);
-    }
-
-    if (success) {
-      final shares = amount / stock.price;
-      _showMessage(
-        'Successfully ${isBuy ? 'bought' : 'sold'} ${shares.toStringAsFixed(4)} shares of ${stock.symbol} for \$${amount.toStringAsFixed(2)}',
-        Colors.green,
-      );
-      _loadData(); // Refresh data
-    } else {
-      _showMessage(
-        isBuy ? 'Insufficient buying power' : 'Insufficient shares to sell',
-        Colors.red,
-      );
-    }
-  }
-
-  void _showMessage(String message, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: color,
-        duration: const Duration(seconds: 3),
-      ),
-    );
-  }
-
-  void _showSwapDialog() {
-    Stock? fromStock;
-    Stock? toStock;
-    final TextEditingController amountController = TextEditingController();
+  void _showSellDialog(Stock stock, dynamic holding) {
+    final TextEditingController quantityController = TextEditingController();
+    final maxShares = (holding['quantity'] as num).toDouble();
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text('Swap Stocks'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Sell from:', style: TextStyle(fontWeight: FontWeight.bold)),
-                    DropdownButton<Stock>(
-                      value: fromStock,
-                      hint: const Text('Select stock to sell'),
-                      isExpanded: true,
-                      items: _portfolio.map((holding) {
-                        final stock = _popularStocks.firstWhere(
-                          (s) => s.symbol == holding.symbol,
-                          orElse: () => Stock(
-                            symbol: holding.symbol, 
-                            name: holding.name, 
-                            price: holding.currentPrice, 
-                            change: 0, 
-                            changePercent: 0
-                          ),
-                        );
-                        return DropdownMenuItem<Stock>(
-                          value: stock,
-                          child: Text('${stock.symbol} - ${holding.shares.toStringAsFixed(2)} shares'),
-                        );
-                      }).toList(),
-                      onChanged: (Stock? value) {
-                        setDialogState(() {
-                          fromStock = value;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    const Text('Buy into:', style: TextStyle(fontWeight: FontWeight.bold)),
-                    DropdownButton<Stock>(
-                      value: toStock,
-                      hint: const Text('Select stock to buy'),
-                      isExpanded: true,
-                      items: _popularStocks.map((stock) {
-                        return DropdownMenuItem<Stock>(
-                          value: stock,
-                          child: Text('${stock.symbol} - \$${stock.price.toStringAsFixed(2)}'),
-                        );
-                      }).toList(),
-                      onChanged: (Stock? value) {
-                        setDialogState(() {
-                          toStock = value;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: amountController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Dollar Amount to Swap',
-                        prefixText: '\$',
-                        border: OutlineInputBorder(),
-                        helperText: 'Amount to sell from first stock and buy into second',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: fromStock != null && toStock != null
-                      ? () => _executeSwap(fromStock!, toStock!, amountController.text)
-                      : null,
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6C5CE7)),
-                  child: const Text('Swap', style: TextStyle(color: Colors.white)),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Future<void> _executeSwap(Stock fromStock, Stock toStock, String amountText) async {
-    final amount = double.tryParse(amountText);
-    if (amount == null || amount <= 0) {
-      Navigator.of(context).pop();
-      _showMessage('Please enter a valid amount', Colors.red);
-      return;
-    }
-
-    Navigator.of(context).pop();
-
-    // First sell the from stock
-    final sellSuccess = await PortfolioManager.sellStock(fromStock, amount);
-    if (!sellSuccess) {
-      _showMessage('Failed to sell ${fromStock.symbol} - insufficient shares', Colors.red);
-      return;
-    }
-
-    // Then buy the to stock
-    final buySuccess = await PortfolioManager.buyStock(toStock, amount);
-    if (!buySuccess) {
-      // If buy fails, we need to buy back the original stock
-      await PortfolioManager.buyStock(fromStock, amount);
-      _showMessage('Failed to complete swap - insufficient funds', Colors.red);
-      return;
-    }
-
-    _showMessage(
-      'Successfully swapped \$${amount.toStringAsFixed(2)} from ${fromStock.symbol} to ${toStock.symbol}',
-      Colors.green,
-    );
-    _loadData(); // Refresh data
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Trade'),
-        backgroundColor: const Color(0xFF6C5CE7),
-        foregroundColor: Colors.white,
-        centerTitle: true,
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          indicatorColor: const Color(0xFF7ED321),
-          tabs: const [
-            Tab(text: 'Quick Trade'),
-            Tab(text: 'Swap'),
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildQuickTradeTab(),
-          _buildSwapTab(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickTradeTab() {
-    return Column(
-      children: [
-        // Buying Power Display
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF6C5CE7).withOpacity(0.1), Color(0xFF7ED321).withOpacity(0.1)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-          child: Column(
-            children: [
-              const Text('Available Cash', style: TextStyle(fontSize: 16, color: Color(0xFF6C5CE7))),
-              Text(
-                '\$${_buyingPower.toStringAsFixed(2)}',
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF6C5CE7)),
-              ),
-            ],
-          ),
-        ),
-        // Popular Stocks List
-        Expanded(
-          child: ListView.builder(
-            itemCount: _popularStocks.length,
-            itemBuilder: (context, index) {
-              final stock = _popularStocks[index];
-              final isPositive = stock.change >= 0;
-              final color = isPositive ? Colors.green : Colors.red;
-
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: color.withOpacity(0.1),
-                    child: Text(
-                      stock.symbol.substring(0, 2),
-                      style: TextStyle(color: color, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  title: Text(stock.symbol, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text(stock.name),
-                  trailing: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        '\$${stock.price.toStringAsFixed(2)}',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            isPositive ? Icons.arrow_upward : Icons.arrow_downward,
-                            color: color,
-                            size: 16,
-                          ),
-                          Text(
-                            '${isPositive ? '+' : ''}\$${stock.change.toStringAsFixed(2)}',
-                            style: TextStyle(color: color, fontSize: 12),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  onTap: () => _showQuickTradeOptions(stock),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _showQuickTradeOptions(Stock stock) {
-    showModalBottomSheet(
-      context: context,
-      builder: (BuildContext context) {
-        return Container(
-          padding: const EdgeInsets.all(16),
-          child: Column(
+        return AlertDialog(
+          title: Text('Sell ${stock.symbol}'),
+          content: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                stock.symbol,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              Text(stock.name),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _showQuickTradeDialog(stock, true);
-                      },
-                      icon: const Icon(Icons.trending_up),
-                      label: const Text('Buy'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF7ED321),
-                        foregroundColor: Colors.white,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _showQuickTradeDialog(stock, false);
-                      },
-                      icon: const Icon(Icons.trending_down),
-                      label: const Text('Sell'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
+              Text('Current Price: \$${stock.price.toStringAsFixed(2)}'),
+              Text('Shares Owned: ${maxShares.toStringAsFixed(2)}'),
+              Text('Total Value: \$${holding['currentValue'].toStringAsFixed(2)}'),
+              const SizedBox(height: 16),
+              TextField(
+                controller: quantityController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  labelText: 'Number of Shares',
+                  border: const OutlineInputBorder(),
+                  helperText: 'Max: ${maxShares.toStringAsFixed(2)} shares',
+                ),
               ),
             ],
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _executeSellAll(stock, holding);
+              },
+              child: const Text('Sell All'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final quantity = int.tryParse(quantityController.text);
+                if (quantity != null && quantity > 0 && quantity <= maxShares) {
+                  Navigator.of(context).pop();
+                  await _executeSell(stock, holding, quantity);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Please enter a valid quantity (1-${maxShares.toStringAsFixed(0)})'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('Sell', style: TextStyle(color: Colors.white)),
+            ),
+          ],
         );
       },
     );
   }
 
-  Widget _buildSwapTab() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.swap_horiz, size: 80, color: Colors.blue),
-          const SizedBox(height: 20),
-          const Text(
-            'Stock Swapping',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'Quickly swap between different stocks',
-            style: TextStyle(fontSize: 16, color: Colors.grey),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 30),
-          ElevatedButton.icon(
-            onPressed: _portfolio.isNotEmpty ? _showSwapDialog : null,
-            icon: const Icon(Icons.swap_horiz),
-            label: const Text('Start Swap'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-            ),
-          ),
-          if (_portfolio.isEmpty)
-            const Padding(
-              padding: EdgeInsets.only(top: 16),
-              child: Text(
-                'You need to own stocks to swap',
-                style: TextStyle(color: Colors.grey),
-              ),
-            ),
-        ],
-      ),
+  Future<void> _executeBuy(Stock stock, int quantity) async {
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
     );
+
+    try {
+      final result = await ApiService.buyStock(
+        widget.userId,
+        stock.symbol,
+        stock.name,
+        quantity,
+      );
+
+      // Always close loading dialog first, even if widget is unmounted
+      Navigator.of(context).pop(); // Close loading
+      
+      if (!mounted) return;
+
+      if (result['error'] == null || result['error'].toString().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Successfully bought $quantity shares of ${stock.symbol}'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        await _loadData(); // Refresh data
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['error']),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      // Always close loading dialog first, even if widget is unmounted
+      Navigator.of(context).pop(); // Close loading
+      
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
+  Future<void> _executeSell(Stock stock, dynamic holding, int quantity) async {
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
 
+    try {
+      final result = await ApiService.sellStock(
+        widget.userId,
+        holding['id'],
+        quantity,
+      );
+
+      // Always close loading dialog first, even if widget is unmounted
+      Navigator.of(context).pop(); // Close loading
+      
+      if (!mounted) return;
+
+      if (result['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Successfully sold $quantity shares of ${stock.symbol}'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        await _loadData(); // Refresh data
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['error'] ?? 'Failed to sell stock'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      // Always close loading dialog first, even if widget is unmounted
+      Navigator.of(context).pop(); // Close loading
+      
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _executeSellAll(Stock stock, dynamic holding) async {
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final result = await ApiService.sellAllStock(
+        widget.userId,
+        stock.symbol,
+      );
+
+      // Always close loading dialog first, even if widget is unmounted
+      Navigator.of(context).pop(); // Close loading
+      
+      if (!mounted) return;
+
+      if (result['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Successfully sold all shares of ${stock.symbol}'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        await _loadData(); // Refresh data
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['error'] ?? 'Failed to sell stock'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      // Always close loading dialog first, even if widget is unmounted
+      Navigator.of(context).pop(); // Close loading
+      
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 }
 
 // News Screen
@@ -3068,15 +3383,20 @@ class SimpleChartPainter extends CustomPainter {
 
 // Portfolio Page
 class PortfolioPage extends StatefulWidget {
-  const PortfolioPage({super.key});
+  final int userId;
+  
+  const PortfolioPage({super.key, required this.userId});
 
   @override
   State<PortfolioPage> createState() => _PortfolioPageState();
 }
 
 class _PortfolioPageState extends State<PortfolioPage> {
-  List<PortfolioHolding> _portfolio = [];
+  List<dynamic> _holdings = [];
   double _buyingPower = 0.0;
+  double _totalPortfolioValue = 0.0;
+  double _totalGain = 0.0;
+  double _totalGainPercent = 0.0;
   bool _isLoading = true;
 
   @override
@@ -3086,46 +3406,47 @@ class _PortfolioPageState extends State<PortfolioPage> {
   }
 
   Future<void> _loadPortfolio() async {
+    setState(() {
+      _isLoading = true;
+    });
+    
     try {
-      final portfolio = await PortfolioManager.getPortfolio();
-      final buyingPower = await PortfolioManager.getBuyingPower();
+      final result = await ApiService.getPortfolioSummary(widget.userId);
       
       if (mounted) {
-        setState(() {
-          _portfolio = portfolio;
-          _buyingPower = buyingPower;
-          _isLoading = false;
-        });
+        if (result['error'] == null || result['error'].toString().isEmpty) {
+          final portfolio = result['portfolio'];
+          setState(() {
+            _buyingPower = (portfolio?['buyingPower'] ?? 0.0).toDouble();
+            _totalPortfolioValue = (portfolio?['totalPortfolioValue'] ?? 0.0).toDouble();
+            _totalGain = (portfolio?['totalGain'] ?? 0.0).toDouble();
+            _totalGainPercent = (portfolio?['totalGainPercent'] ?? 0.0).toDouble();
+            _holdings = result['holdings'] ?? [];
+            _isLoading = false;
+          });
+        } else {
+          throw Exception(result['error']);
+        }
       }
     } catch (e) {
       print('Error loading portfolio page: $e');
       if (mounted) {
         setState(() {
-          _portfolio = [];
-          _buyingPower = 10000.0;
+          _holdings = [];
+          _buyingPower = 0.0;
+          _totalPortfolioValue = 0.0;
+          _totalGain = 0.0;
+          _totalGainPercent = 0.0;
           _isLoading = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error loading portfolio. Using default values.'),
+          SnackBar(
+            content: Text('Error loading portfolio: $e'),
             backgroundColor: Colors.orange,
           ),
         );
       }
     }
-  }
-
-  double get _totalPortfolioValue {
-    return _portfolio.fold(0.0, (sum, holding) => sum + holding.totalValue);
-  }
-
-  double get _totalGainLoss {
-    return _portfolio.fold(0.0, (sum, holding) => sum + holding.gainLoss);
-  }
-
-  double get _totalGainLossPercent {
-    final totalCost = _portfolio.fold(0.0, (sum, holding) => sum + holding.totalCost);
-    return totalCost > 0 ? (_totalGainLoss / totalCost) * 100 : 0;
   }
 
   @override
@@ -3196,11 +3517,11 @@ class _PortfolioPageState extends State<PortfolioPage> {
                                       ),
                                     ),
                                     Text(
-                                      '${_totalGainLoss >= 0 ? '+' : ''}\$${_totalGainLoss.toStringAsFixed(2)} (${_totalGainLossPercent >= 0 ? '+' : ''}${_totalGainLossPercent.toStringAsFixed(2)}%)',
+                                      '${_totalGain >= 0 ? '+' : ''}\$${_totalGain.toStringAsFixed(2)} (${_totalGainPercent >= 0 ? '+' : ''}${_totalGainPercent.toStringAsFixed(2)}%)',
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
-                                        color: _totalGainLoss >= 0 ? Colors.green : Colors.red,
+                                        color: _totalGain >= 0 ? Colors.green : Colors.red,
                                       ),
                                     ),
                                   ],
@@ -3243,7 +3564,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
                     ),
                     const SizedBox(height: 10),
                     
-                    if (_portfolio.isEmpty)
+                    if (_holdings.isEmpty)
                       Card(
                         child: Padding(
                           padding: const EdgeInsets.all(40),
@@ -3280,9 +3601,9 @@ class _PortfolioPageState extends State<PortfolioPage> {
                       ListView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _portfolio.length,
+                        itemCount: _holdings.length,
                         itemBuilder: (context, index) {
-                          final holding = _portfolio[index];
+                          final holding = _holdings[index];
                           return _buildHoldingCard(holding);
                         },
                       ),
@@ -3293,8 +3614,17 @@ class _PortfolioPageState extends State<PortfolioPage> {
     );
   }
 
-  Widget _buildHoldingCard(PortfolioHolding holding) {
-    final isPositive = holding.gainLoss >= 0;
+  Widget _buildHoldingCard(dynamic holding) {
+    final symbol = holding['symbol'] ?? '';
+    final name = holding['name'] ?? '';
+    final quantity = (holding['quantity'] ?? 0).toDouble();
+    final currentPrice = (holding['currentPrice'] ?? 0).toDouble();
+    final currentValue = (holding['currentValue'] ?? 0).toDouble();
+    final gain = (holding['gain'] ?? 0).toDouble();
+    final gainPercent = (holding['gainPercent'] ?? 0).toDouble();
+    final purchasePrice = (holding['purchasePrice'] ?? 0).toDouble();
+    
+    final isPositive = gain >= 0;
     final color = isPositive ? Colors.green : Colors.red;
     
     return Card(
@@ -3312,14 +3642,14 @@ class _PortfolioPageState extends State<PortfolioPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      holding.symbol,
+                      symbol,
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
-                      holding.name,
+                      name,
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey.shade600,
@@ -3331,7 +3661,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '\$${holding.totalValue.toStringAsFixed(2)}',
+                      '\$${currentValue.toStringAsFixed(2)}',
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -3346,7 +3676,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
                           size: 16,
                         ),
                         Text(
-                          '${isPositive ? '+' : ''}\$${holding.gainLoss.toStringAsFixed(2)} (${isPositive ? '+' : ''}${holding.gainLossPercent.toStringAsFixed(2)}%)',
+                          '${isPositive ? '+' : ''}\$${gain.toStringAsFixed(2)} (${isPositive ? '+' : ''}${gainPercent.toStringAsFixed(2)}%)',
                           style: TextStyle(
                             color: color,
                             fontSize: 14,
@@ -3364,21 +3694,21 @@ class _PortfolioPageState extends State<PortfolioPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Shares: ${holding.shares.toStringAsFixed(4)}',
+                  'Shares: ${quantity.toStringAsFixed(2)}',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.grey.shade600,
                   ),
                 ),
                 Text(
-                  'Avg Cost: \$${holding.averagePrice.toStringAsFixed(2)}',
+                  'Avg Cost: \$${purchasePrice.toStringAsFixed(2)}',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.grey.shade600,
                   ),
                 ),
                 Text(
-                  'Current: \$${holding.currentPrice.toStringAsFixed(2)}',
+                  'Current: \$${currentPrice.toStringAsFixed(2)}',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.grey.shade600,
