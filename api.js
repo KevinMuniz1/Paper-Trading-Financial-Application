@@ -7,7 +7,7 @@ const newsService = require('./services/newsService');
 const { generateEmailVerificationToken, generatePasswordResetToken, verifyEmailToken, verifyPasswordResetToken } = require('./services/tokenService');
 const { sendVerificationEmail, sendPasswordResetEmail } = require('./services/emailService');
 const stockService = require('./services/stockService');
-const { updatePortfolioTotals, getPortfolioData } = require('./services/portfolioService');
+const { updatePortfolioTotals, getPortfolioData, recordPortfolioSnapshot, getPortfolioHistory } = require('./services/portfolioService');
 const topMoversService = require('./services/topMoversService');
 const searchService = require('./services/searchService');
 const baseUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
@@ -951,6 +951,54 @@ module.exports = function (client) {
             var ret = { 
                 portfolio: null, 
                 holdings: [], 
+                error: error 
+            };
+            res.status(200).json(ret);
+        }
+    });
+    
+    // GET PORTFOLIO HISTORY
+    router.post('/portfolio/history', async (req, res, next) => {
+        const { userId, days } = req.body;
+        var error = '';
+
+        try {
+            if (!userId) {
+                error = 'User ID is required';
+                var ret = { history: [], error: error };
+                res.status(200).json(ret);
+                return;
+            }
+
+            const db = client.db('Finance-app');
+            const daysToFetch = days || 30; // Default to 30 days
+            
+            // Get historical data
+            const history = await getPortfolioHistory(userId, db, daysToFetch);
+            
+            // If no history exists, create an initial snapshot
+            if (history.length === 0) {
+                await recordPortfolioSnapshot(userId, db);
+                const newHistory = await getPortfolioHistory(userId, db, daysToFetch);
+                
+                var ret = {
+                    history: newHistory,
+                    error: error
+                };
+                res.status(200).json(ret);
+            } else {
+                var ret = {
+                    history: history,
+                    error: error
+                };
+                res.status(200).json(ret);
+            }
+        }
+        catch (e) {
+            error = e.toString();
+            console.error('Portfolio history error:', e);
+            var ret = { 
+                history: [], 
                 error: error 
             };
             res.status(200).json(ret);

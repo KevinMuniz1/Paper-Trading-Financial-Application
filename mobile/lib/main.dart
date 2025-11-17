@@ -968,28 +968,42 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   double _buyingPower = 0.0;
+  double _totalPortfolioValue = 0.0;
+  double _totalValue = 0.0;
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadBuyingPower();
+    _loadPortfolioData();
   }
 
-  Future<void> _loadBuyingPower() async {
+  Future<void> _loadPortfolioData() async {
     try {
-      final result = await ApiService.getBuyingPower(widget.userId);
+      // Get complete portfolio summary
+      final result = await ApiService.getPortfolioSummary(widget.userId);
+      
       if (mounted) {
-        setState(() {
-          _buyingPower = (result['buyingPower'] ?? 0.0).toDouble();
-          _isLoading = false;
-        });
+        if (result['error'] == null || result['error'].toString().isEmpty) {
+          final portfolio = result['portfolio'];
+          setState(() {
+            _buyingPower = (portfolio?['buyingPower'] ?? 0.0).toDouble();
+            _totalPortfolioValue = (portfolio?['totalPortfolioValue'] ?? 0.0).toDouble();
+            // Total value is stocks value + buying power
+            _totalValue = _totalPortfolioValue + _buyingPower;
+            _isLoading = false;
+          });
+        } else {
+          throw Exception(result['error']);
+        }
       }
     } catch (e) {
-      print('Error loading buying power: $e');
+      print('Error loading portfolio data: $e');
       if (mounted) {
         setState(() {
           _buyingPower = 0.0;
+          _totalPortfolioValue = 0.0;
+          _totalValue = 0.0;
           _isLoading = false;
         });
       }
@@ -1049,9 +1063,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (!mounted) return;
                   
                   if (result['success'] == true) {
-                    setState(() {
-                      _buyingPower = (result['newBalance'] ?? _buyingPower).toDouble();
-                    });
+                    // Reload full portfolio data to update all values
+                    await _loadPortfolioData();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(result['message'] ?? 'Funds added successfully!'),
@@ -1139,9 +1152,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (!mounted) return;
                   
                   if (result['success'] == true) {
-                    setState(() {
-                      _buyingPower = (result['newBalance'] ?? _buyingPower).toDouble();
-                    });
+                    // Reload full portfolio data to update all values
+                    await _loadPortfolioData();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text('Successfully decreased buying power by \$${amount.toStringAsFixed(2)}'),
@@ -1247,6 +1259,96 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 25),
             
+            // Total Portfolio Value Section
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF6C5CE7), Color(0xFF9776EC)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF6C5CE7).withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Total Portfolio Value',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '\$${_totalValue.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Cash',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.8),
+                              fontSize: 12,
+                            ),
+                          ),
+                          Text(
+                            '\$${_buyingPower.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            'Stocks',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.8),
+                              fontSize: 12,
+                            ),
+                          ),
+                          Text(
+                            '\$${_totalPortfolioValue.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 25),
+            
             // Buying Power Section
             Container(
               width: double.infinity,
@@ -1338,7 +1440,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 30),
             
             // Portfolio Chart
-            const PortfolioChart(),
+            PortfolioChart(userId: widget.userId),
             const SizedBox(height: 30),
           ],
         ),
@@ -2285,7 +2387,7 @@ class PortfolioHolding {
 // Portfolio Value History Point
 class PortfolioValuePoint {
   final DateTime timestamp;
-  final double totalValue;
+  final double totalValue; // This is the combined value (stocks + buying power)
   final double buyingPower;
 
   PortfolioValuePoint({
@@ -2294,7 +2396,8 @@ class PortfolioValuePoint {
     required this.buyingPower,
   });
 
-  double get combinedValue => totalValue + buyingPower;
+  // For backwards compatibility with old code
+  double get combinedValue => totalValue;
 
   Map<String, dynamic> toJson() {
     return {
@@ -2385,7 +2488,9 @@ class PortfolioChartPainter extends CustomPainter {
 
 // Portfolio Chart Widget
 class PortfolioChart extends StatefulWidget {
-  const PortfolioChart({super.key});
+  final int userId;
+  
+  const PortfolioChart({super.key, required this.userId});
 
   @override
   State<PortfolioChart> createState() => _PortfolioChartState();
@@ -2402,47 +2507,39 @@ class _PortfolioChartState extends State<PortfolioChart> {
   }
 
   Future<void> _loadChartData() async {
-    // Update current prices first
-    await _updateCurrentPrices();
-    
-    final history = await PortfolioManager.getPortfolioHistory();
-    
-    // If no history exists, create initial point
-    if (history.isEmpty) {
-      final portfolio = await PortfolioManager.getPortfolio();
-      final buyingPower = await PortfolioManager.getBuyingPower();
-      final totalValue = portfolio.fold(0.0, (sum, holding) => sum + holding.totalValue);
+    try {
+      // Fetch portfolio history from backend
+      final result = await ApiService.getPortfolioHistory(widget.userId, days: 30);
       
-      final initialPoint = PortfolioValuePoint(
-        timestamp: DateTime.now(),
-        totalValue: totalValue,
-        buyingPower: buyingPower,
-      );
-      
-      history.add(initialPoint);
-      await PortfolioManager._savePortfolioHistory(history);
+      if (mounted) {
+        if (result['error'] == null || result['error'].toString().isEmpty) {
+          final historyData = result['history'] as List<dynamic>;
+          
+          final history = historyData.map((data) {
+            return PortfolioValuePoint(
+              timestamp: DateTime.parse(data['timestamp']),
+              totalValue: (data['totalValue'] ?? 0.0).toDouble(),
+              buyingPower: (data['buyingPower'] ?? 0.0).toDouble(),
+            );
+          }).toList();
+          
+          setState(() {
+            _history = history;
+            _isLoading = false;
+          });
+        } else {
+          throw Exception(result['error']);
+        }
+      }
+    } catch (e) {
+      print('Error loading chart data: $e');
+      if (mounted) {
+        setState(() {
+          _history = [];
+          _isLoading = false;
+        });
+      }
     }
-
-    setState(() {
-      _history = history;
-      _isLoading = false;
-    });
-  }
-
-  Future<void> _updateCurrentPrices() async {
-    // Simulate price updates with sample stocks
-    final sampleStocks = [
-      Stock(symbol: 'AAPL', name: 'Apple Inc.', price: 175.43 + (math.Random().nextDouble() - 0.5) * 10, change: 0, changePercent: 0),
-      Stock(symbol: 'MSFT', name: 'Microsoft Corporation', price: 337.89 + (math.Random().nextDouble() - 0.5) * 15, change: 0, changePercent: 0),
-      Stock(symbol: 'GOOGL', name: 'Alphabet Inc.', price: 125.30 + (math.Random().nextDouble() - 0.5) * 8, change: 0, changePercent: 0),
-      Stock(symbol: 'AMZN', name: 'Amazon.com Inc.', price: 133.13 + (math.Random().nextDouble() - 0.5) * 12, change: 0, changePercent: 0),
-      Stock(symbol: 'TSLA', name: 'Tesla Inc.', price: 242.65 + (math.Random().nextDouble() - 0.5) * 20, change: 0, changePercent: 0),
-      Stock(symbol: 'META', name: 'Meta Platforms Inc.', price: 273.37 + (math.Random().nextDouble() - 0.5) * 18, change: 0, changePercent: 0),
-      Stock(symbol: 'NVDA', name: 'NVIDIA Corporation', price: 455.72 + (math.Random().nextDouble() - 0.5) * 25, change: 0, changePercent: 0),
-      Stock(symbol: 'NFLX', name: 'Netflix Inc.', price: 378.96 + (math.Random().nextDouble() - 0.5) * 22, change: 0, changePercent: 0),
-    ];
-    
-    await PortfolioManager.updatePortfolioCurrentPrices(sampleStocks);
   }
 
   @override
@@ -2502,9 +2599,9 @@ class _PortfolioChartState extends State<PortfolioChart> {
     final maxValue = _history.map((p) => p.combinedValue).reduce(math.max);
     final minValue = _history.map((p) => p.combinedValue).reduce(math.min);
     final currentValue = _history.last.combinedValue;
-    final previousValue = _history.length > 1 ? _history[_history.length - 2].combinedValue : currentValue;
-    final change = currentValue - previousValue;
-    final changePercent = previousValue > 0 ? (change / previousValue) * 100 : 0;
+    final firstValue = _history.first.combinedValue;
+    final change = currentValue - firstValue;
+    final changePercent = firstValue > 0 ? (change / firstValue) * 100 : 0;
     final isPositive = change >= 0;
 
     return Container(
@@ -2531,7 +2628,7 @@ class _PortfolioChartState extends State<PortfolioChart> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Total Portfolio Value',
+                    'Portfolio Performance',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
