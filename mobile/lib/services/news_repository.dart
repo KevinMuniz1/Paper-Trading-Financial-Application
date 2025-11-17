@@ -37,18 +37,46 @@ class NewsRepository {
     final uri = Uri.parse('$base/news');
     try {
       final r = await http.get(uri).timeout(const Duration(seconds: 10));
-      if (r.statusCode != 200) return [];
+      if (r.statusCode != 200) {
+        print('News API returned status code: ${r.statusCode}');
+        return [];
+      }
       final data = json.decode(r.body) as Map<String, dynamic>;
+      
+      // Check for API error
+      if (data['error'] != null && data['error'].toString().isNotEmpty) {
+        print('News API returned error: ${data['error']}');
+        return [];
+      }
+      
       final list = (data['articles'] as List?) ?? const [];
       return list.map((e) => _fromServerJson(e as Map<String, dynamic>)).toList();
-    } catch (_) {
+    } catch (e) {
+      print('Error fetching news from API: $e');
       return [];
     }
   }
 
   NewsArticle _fromServerJson(Map<String, dynamic> json) {
-    final article = NewsArticle.fromJson(json);
-    final inferred = _inferTags(article.title, article.source);
+    // The API now returns: title, url, summary, source, publishedAt
+    // Map these to NewsArticle fields
+    final title = json['title']?.toString() ?? '';
+    final url = json['url']?.toString() ?? '';
+    final summary = json['summary']?.toString() ?? json['description']?.toString() ?? '';
+    final source = json['source']?.toString() ?? '';
+    final publishedAtStr = json['publishedAt']?.toString() ?? '';
+    
+    final article = NewsArticle(
+      id: url.isNotEmpty ? url : DateTime.now().millisecondsSinceEpoch.toString(),
+      title: title,
+      url: url,
+      source: source,
+      publishedAt: DateTime.tryParse(publishedAtStr) ?? DateTime.now(),
+      summary: summary,
+      tags: const [], // Will be inferred below
+    );
+    
+    final inferred = _inferTags(article.title, article.summary);
     return NewsArticle(
       id: article.id,
       title: article.title,
@@ -56,18 +84,21 @@ class NewsRepository {
       source: article.source,
       publishedAt: article.publishedAt,
       summary: article.summary,
-      tags: article.tags.isNotEmpty ? article.tags : inferred,
+      tags: inferred,
     );
   }
 
-  List<String> _inferTags(String title, String source) {
+  List<String> _inferTags(String title, String summary) {
     final t = title.toLowerCase();
-    final s = source.toLowerCase();
+    final s = summary.toLowerCase();
     final tags = <String>[];
     if (t.contains('apple') || s.contains('apple')) tags.add('Apple');
     if (t.contains('tesla') || s.contains('tesla')) tags.add('Tesla');
     if (t.contains('amazon') || s.contains('amazon')) tags.add('Amazon');
     if (t.contains('nvidia') || s.contains('nvidia')) tags.add('Nvidia');
+    if (t.contains('microsoft') || s.contains('microsoft')) tags.add('Microsoft');
+    if (t.contains('google') || s.contains('google') || t.contains('alphabet') || s.contains('alphabet')) tags.add('Google');
+    if (t.contains('meta') || s.contains('meta') || t.contains('facebook') || s.contains('facebook')) tags.add('Meta');
     return tags;
   }
 
