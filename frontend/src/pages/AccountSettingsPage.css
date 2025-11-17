@@ -12,7 +12,7 @@
 
 .account-settings-container {
   max-width: 1200px;
-  margin: 2rem auto 0 auto; 
+  margin: 0 auto; 
   width: 100%;
 }
 
@@ -23,7 +23,6 @@
   padding: 2.5rem;
   backdrop-filter: blur(10px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  width: 100%;
 }
 
 .settings-content h1 {
@@ -98,7 +97,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  grid-column: 2 / 5;
+  grid-column: 2 / 4;
 }
 
 .field-value {
