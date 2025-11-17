@@ -88,9 +88,24 @@ async function getPortfolioData(userId, db) {
             .sort({ purchaseDate: -1 })
             .toArray();
 
+        // Format holdings to include proper field names for mobile compatibility
+        const formattedHoldings = trades.map(trade => ({
+            id: trade._id,
+            symbol: trade.tickerSymbol,
+            name: trade.cardName, // Map cardName to name for mobile app
+            quantity: trade.quantity,
+            purchasePrice: trade.purchasePrice,
+            currentPrice: trade.currentPrice,
+            totalCost: trade.totalCost,
+            currentValue: trade.currentValue,
+            gain: trade.gain,
+            gainPercent: trade.gainPercent,
+            purchaseDate: trade.purchaseDate
+        }));
+
         return {
             portfolio: portfolio,
-            holdings: trades
+            holdings: formattedHoldings
         };
     } catch (error) {
         console.error('Error getting portfolio data:', error.message);
