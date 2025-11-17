@@ -1,130 +1,154 @@
-import { useEffect, useRef, useState } from "react";
-import { createChart, ColorType, AreaSeries } from "lightweight-charts";
-import "./DashboardPage.css";
+import {StockChartComponent,StockChartSeriesCollectionDirective,StockChartSeriesDirective,Inject,Crosshair,DateTime,SplineAreaSeries,
+  LineSeries,SplineSeries,CandleSeries,HiloOpenCloseSeries,HiloSeries,RangeAreaSeries,Trendlines,RangeTooltip,Tooltip,EmaIndicator,RsiIndicator,
+  BollingerBands,TmaIndicator,MomentumIndicator,SmaIndicator,AtrIndicator,AccumulationDistributionIndicator,MacdIndicator,StochasticIndicator,Export,IStockChartEventArgs
+} from "@syncfusion/ej2-react-charts";
 
-type TimePeriod = "1D" | "1W" | "1M" | "3M" | "1Y" | "ALL";
+import { googl } from "./stock-data";
+import "@syncfusion/ej2-base/styles/tailwind.css";
 
-export default function StockChart() {
-  const chartContainerRef = useRef<HTMLDivElement>(null);
-  const chartRef = useRef<any>(null);
-  const seriesRef = useRef<any>(null);
-  const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>("1M");
 
-  // Generate random price data
-  const generateData = (period: TimePeriod) => {
-    const now = new Date();
-    const data = [];
-    let days = 30;
 
-    switch (period) {
-      case "1D": days = 1; break;
-      case "1W": days = 7; break;
-      case "1M": days = 30; break;
-      case "3M": days = 90; break;
-      case "1Y": days = 365; break;
-      case "ALL": days = 730; break;
-    }
+// Syncfusion sample gradient CSS
+const SAMPLE_CSS = `
+  .chart-gradient stop[offset="0"] { stop-opacity: 0.5; }
+  .chart-gradient stop[offset="0.3"] { stop-opacity: 0.4; }
+  .chart-gradient stop[offset="0.6"] { stop-opacity: 0.2; }
+  .chart-gradient stop[offset="1"] { stop-opacity: 0; }
+`;
 
-    let price = 152;
+// Syncfusion theme color arrays (required)
+const themes = [
+  "bootstrap5","bootstrap5dark","tailwind","tailwinddark","material","materialdark",
+  "bootstrap4","bootstrap","bootstrapdark","fabric","fabricdark","highcontrast",
+  "fluent","fluentdark","material3","material3dark","fluent2","fluent2highcontrast",
+  "fluent2dark","tailwind3","tailwind3dark"
+];
 
-    for (let i = days; i >= 0; i--) {
-      const date = new Date(now);
-      date.setDate(date.getDate() - i);
+const borderColor = [
+  "#FD7E14","#FD7E14","#5A61F6","#8B5CF6","#00bdae","#9ECB08","#a16ee5","#a16ee5",
+  "#a16ee5","#4472c4","#4472c4","#79ECE4","#1AC9E6","#1AC9E6","#6355C7","#4EAAFF",
+  "#6200EE","#9BB449","#9BB449","#2F4074","#8029F1"
+];
 
-      price += (Math.random() - 0.5) * 5;
 
-      data.push({
-        time: date.toISOString().split("T")[0],
-        value: price,
-      });
-    }
+const SplineArea = () => {
+  const load = (args: IStockChartEventArgs) => {
+    // The actual chart theme → must stay EXACTLY as passed ("TailwindDark")
+    const chartTheme = args.stockChart.theme;
 
-    return data;
+    // Lowercase version ONLY for gradient IDs and your color array
+    const themeKey = chartTheme.toLowerCase();
+
+    // Lookup index in your lowercase themes array
+    const themeIndex = themes.indexOf(themeKey);
+
+    args.stockChart.series[0].border = {
+      width: 2,
+      color: borderColor[themeIndex],
+    };
+
+    args.stockChart.series[0].fill = `url(#${themeKey}-gradient-chart)`;
   };
 
-  // Create chart
-  useEffect(() => {
-    if (!chartContainerRef.current) return;
-
-    const chart = createChart(chartContainerRef.current, {
-      layout: {
-        background: { type: ColorType.Solid, color: "#ffffff" },
-        textColor: "#191919",
-      },
-      grid: {
-        vertLines: { visible: false },
-        horzLines: { visible: false },
-      },
-      width: chartContainerRef.current.clientWidth,
-      height: 300,
-      timeScale: { visible: false },
-      rightPriceScale: { visible: false },
-      crosshair: {
-        horzLine: { visible: false },
-        vertLine: { visible: false },
-      },
-    });
-
-    const series = chart.addSeries(AreaSeries, {
-      lineColor: "#00C853",
-      topColor: "rgba(0, 200, 83, 0.4)",
-      bottomColor: "rgba(0, 200, 83, 0)",
-      lineWidth: 2,
-    });
-
-    chartRef.current = chart;
-    seriesRef.current = series;
-
-    const data = generateData(selectedPeriod);
-    series.setData(data);
-    chart.timeScale().fitContent();
-
-    const handleResize = () => {
-      if (chartContainerRef.current) {
-        chart.applyOptions({
-          width: chartContainerRef.current.clientWidth,
-        });
-      }
-    };
-
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      chart.remove();
-    };
-  }, []);
-
-  // Update data on period change
-  useEffect(() => {
-    if (seriesRef.current) {
-      const data = generateData(selectedPeriod);
-      seriesRef.current.setData(data);
-      chartRef.current?.timeScale().fitContent();
-    }
-  }, [selectedPeriod]);
-
-  const periods: TimePeriod[] = ["1D", "1W", "1M", "3M", "1Y", "ALL"];
-
   return (
-    <div className="chart-wrapper">
-      <div className="chart-container">
-        <div className="chart-element" ref={chartContainerRef} />
-      </div>
+    <div className="control-pane">
+      <style>{SAMPLE_CSS}</style>
 
-      <div className="period-selector">
-        {periods.map((period) => (
-          <button
-            key={period}
-            onClick={() => setSelectedPeriod(period)}
-            className={`period-btn ${
-              selectedPeriod === period ? "active" : ""
-            }`}
-          >
-            {period}
-          </button>
-        ))}
-      </div>
+      <svg style={{ height: 0 }}>
+        <defs>
+          {themes.map((theme) => (
+            <linearGradient
+              key={theme}
+              id={`${theme}-gradient-chart`}
+              className="chart-gradient"
+              x1="0"
+              x2="0"
+              y1="0"
+              y2="1"
+            >
+              <stop offset="0"></stop>
+              <stop offset="0.3"></stop>
+              <stop offset="0.6"></stop>
+              <stop offset="1"></stop>
+            </linearGradient>
+          ))}
+        </defs>
+      </svg>
+
+      <StockChartComponent
+        id="stockchartsplinearea"
+        title="Google Stock Price"
+        load={load}
+        theme="Material3"   // ✔ Correct casing
+        primaryXAxis={{
+          valueType: "DateTime",
+          majorGridLines: { width: 0 },
+          crosshairTooltip: { enable: true }
+        }}
+        primaryYAxis={{
+          lineStyle: { color: "transparent" },
+          majorTickLines: { color: "transparent", height: 0 },
+          crosshairTooltip: { enable: true }
+        }}
+        tooltip={{
+          enable: true,
+          format:
+            "<b>${point.x}</b><br/>Stock Price: <b>${point.y}</b>",
+        }}
+        crosshair={{
+          enable: true,
+          lineType: "Both",
+          snapToData: true,
+          dashArray: "5, 5"
+        }}
+        chartArea={{ border: { width: 0 } }}
+      >
+        <Inject
+          services={[
+            DateTime,
+            SplineAreaSeries,
+            RangeTooltip,
+            Tooltip,
+            Crosshair,
+            LineSeries,
+            SplineSeries,
+            CandleSeries,
+            HiloOpenCloseSeries,
+            HiloSeries,
+            RangeAreaSeries,
+            Trendlines,
+            EmaIndicator,
+            RsiIndicator,
+            BollingerBands,
+            TmaIndicator,
+            MomentumIndicator,
+            SmaIndicator,
+            AtrIndicator,
+            Export,
+            AccumulationDistributionIndicator,
+            MacdIndicator,
+            StochasticIndicator
+          ]}
+        />
+
+        <StockChartSeriesCollectionDirective>
+          <StockChartSeriesDirective
+            dataSource={googl}
+            xName="x"
+            yName="high"
+            type="SplineArea"
+            fill="#5447cc8e"
+            border={{ 
+            width: 2, 
+           color: "#11a33dff"    
+             }}
+             opacity={.75}
+            
+          />
+        </StockChartSeriesCollectionDirective>
+      </StockChartComponent>
     </div>
   );
-}
+};
+
+export default SplineArea;

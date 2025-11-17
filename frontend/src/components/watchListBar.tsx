@@ -39,8 +39,8 @@ export default function WatchListBar() {
           >
             <div className="watchlist-item-info">
               <div>
-                <div className="stock-symbol">{stock.symbol}</div>
-                <div className="stock-price">${stock.price.toFixed(2)}</div>
+                <div className="holdings-stock-symbol">{stock.symbol}</div>
+                <div className="holdings-stock-price">${stock.price.toFixed(2)}</div>
               </div>
 
               <div className="watchlist-change-group">

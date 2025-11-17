@@ -62,6 +62,16 @@
   overflow: hidden;
 }
 
+.stock-text-box {
+  background: #f8f9fa;
+  padding: 5px;
+  border-radius: 10px;
+  color: #0a2541;
+  font-size: 1rem;
+  border: 1px solid #e1e5e9;
+}
+
+
 
 @media (max-width: 900px) {
   .main-section {

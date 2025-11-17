@@ -9,6 +9,7 @@ import NavBar from "./components/NavBar";
 import AccountSettingsPage from "./pages/AccountSettingsPage";
 import ForgotPasswordPage from './pages/forgot-password';
 import ResetPasswordPage from './pages/reset-password';
+import DisplayStockPage from "./pages/StockPage";
 
 function AppContent() {
   const location = useLocation();
@@ -27,6 +28,7 @@ function AppContent() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/browse" element={<BrowsePage />} />
+        <Route path="/stock-page" element={<DisplayStockPage />} />
       </Routes>
     </>
   );

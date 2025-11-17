@@ -1262,6 +1262,51 @@ module.exports = function (client) {
         }
     });
 
+  const axios = require("axios");
+
+router.get('/overview/:symbol', async (req, res) => {
+    let error = '';
+    const symbol = req.params.symbol?.toUpperCase();
+
+    try {
+        if (!symbol) {
+            return res.status(200).json({
+                overview: null,
+                error: 'Stock symbol is required'
+            });
+        }
+
+        console.log("🔎 Fetching overview for:", symbol);
+
+        const url = `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${symbol}&apikey=${process.env.ALPHA_VANTAGE_KEY}`;
+
+        const { data } = await axios.get(url);
+
+        // Alpha Vantage returns {} when invalid
+        if (!data || Object.keys(data).length === 0) {
+            return res.status(200).json({
+                overview: null,
+                error: "No data found for that symbol"
+            });
+        }
+
+        res.status(200).json({
+            overview: data,
+            error: ''
+        });
+
+    } catch (e) {
+        error = e.toString();
+        console.error('GET /api/overview error:', e);
+
+        res.status(200).json({
+            overview: null,
+            error: error
+        });
+    }
+});
+
+
     // UPDATE USER PROFILE
     router.patch('/user/update', async (req, res, next) => {
         // incoming: userId, firstName, lastName, email, login (optional)
