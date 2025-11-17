@@ -204,4 +204,24 @@ class ApiService {
       return {'prices': {}, 'error': e.toString()};
     }
   }
+
+  // Get portfolio value history
+  static Future<Map<String, dynamic>> getPortfolioHistory(int userId, {int days = 30}) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/portfolio/history'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'userId': userId, 'days': days}),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return {'history': [], 'error': 'Failed to fetch portfolio history'};
+      }
+    } catch (e) {
+      print('Error fetching portfolio history: $e');
+      return {'history': [], 'error': e.toString()};
+    }
+  }
 }
