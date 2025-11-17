@@ -109,11 +109,11 @@ module.exports = function (client) {
                 // register newUserin portfolio collection
                 const newPortfolio = {
                     userId: nextId,
-                    buyingPower: 0.00, // start with no buying power
-                    totalPortfolioValue: 0.00,
-                    totalInvested: 0.00,
-                    totalGain: 0.00,
-                    totalGainPercent: 0.00,
+                    buyingPower: parseDouble(0.00), // start with no buying power
+                    totalPortfolioValue: parseDouble(0.00),
+                    totalInvested: parseDouble(0.00),
+                    totalGain: parseDouble(0.00),
+                    totalGainPercent: parseDouble(0.00),
                     lastUpdated: new Date(),
                     createdAt: new Date()
                 };
@@ -425,8 +425,8 @@ module.exports = function (client) {
                     { _id: existingTrade._id },
                     { $set: {
                         quantity: newShares,
-                        purchasePrice: newPurchasePrice,
-                        totalCost: newTotalCost
+                        purchasePrice: parseDouble(newPurchasePrice),
+                        totalCost: parseDouble(newTotalCost)
                     }}
                 );
             } else {
@@ -436,10 +436,10 @@ module.exports = function (client) {
                     tickerSymbol: tickerSymbol.toUpperCase(),
                     cardName: cardName,
                     quantity: parseInt(quantity),
-                    purchasePrice: currentPrice,
-                    currentPrice: currentPrice,
-                    totalCost: totalCost,
-                    currentValue: totalCost,
+                    purchasePrice: parseDouble(currentPrice),
+                    currentPrice: parseDouble(currentPrice),
+                    totalCost: parseDouble(totalCost),
+                    currentValue: parseDouble(totalCost),
                     gain: 0.00,
                     gainPercent: 0.00,
                     purchaseDate: new Date(),
@@ -990,7 +990,7 @@ module.exports = function (client) {
                 symbol: symbolUpper,
                 name: stockName,
                 addedDate: new Date(),
-                currentPrice: price,
+                currentPrice: parseDouble(price),
                 createdAt: new Date()
             };
 
