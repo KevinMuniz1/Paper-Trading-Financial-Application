@@ -112,6 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 userId: responseData['id'],
                 firstName: responseData['firstName'] ?? '',
                 lastName: responseData['lastName'] ?? '',
+                email: responseData['email'] ?? '',
               ),
             ),
           );
@@ -694,12 +695,14 @@ class MainAppScreen extends StatefulWidget {
   final int userId;
   final String firstName;
   final String lastName;
+  final String email;
 
   const MainAppScreen({
     super.key,
     required this.userId,
     required this.firstName,
     required this.lastName,
+    required this.email,
   });
 
   @override
@@ -766,6 +769,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
         return AccountScreen(
           firstName: widget.firstName,
           lastName: widget.lastName,
+          email: widget.email,
         );
       default:
         return HomeScreen(
@@ -1135,11 +1139,13 @@ class _HomeScreenState extends State<HomeScreen> {
 class AccountScreen extends StatelessWidget {
   final String firstName;
   final String lastName;
+  final String email;
 
   const AccountScreen({
     super.key,
     required this.firstName,
     required this.lastName,
+    required this.email,
   });
 
   @override
@@ -1228,6 +1234,15 @@ class AccountScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
+                  Text(
+                    email,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.white70,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   const Text(
                     'SimpliTrade Member',
                     style: TextStyle(
@@ -1243,7 +1258,6 @@ class AccountScreen extends StatelessWidget {
             const SizedBox(height: 30),
             
             // Account Options
-            _buildAccountOption(context, 'Trading History', Icons.history, false),
             _buildAccountOption(context, 'Log Out', Icons.logout, true),
           ],
         ),
