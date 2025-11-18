@@ -5,22 +5,17 @@ import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import BrowsePage from "./pages/BrowsePage";
-import NavBar from "./components/NavBar";
 import AccountSettingsPage from "./pages/AccountSettingsPage";
 import ForgotPasswordPage from './pages/forgot-password';
 import ResetPasswordPage from './pages/reset-password';
 import DisplayStockPage from "./pages/StockPage";
-import { AuthProvider } from './context/AuthContext'; // Add this
+
+import { AuthProvider } from './context/AuthContext';
 import { PortfolioProvider } from './context/PortfolioContext';
 
 function AppContent() {
-  const location = useLocation();
-  const authPages = ['/', '/register', '/verify-email'];
-  const showNavBar = !authPages.includes(location.pathname);
-
   return (
     <>
-      {showNavBar && <NavBar />}
       <Routes>
         <Route path="/" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
@@ -40,8 +35,8 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-500 via-green-600 to-black m-0 p-0">
       <BrowserRouter>
-        <AuthProvider> {/* AuthProvider wraps everything - OUTERMOST */}
-          <PortfolioProvider> {/* PortfolioProvider can now use AuthContext */}
+        <AuthProvider>
+          <PortfolioProvider>
             <AppContent />
           </PortfolioProvider>
         </AuthProvider>

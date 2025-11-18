@@ -4,13 +4,11 @@ import WatchListBar from '../components/watchListBar';
 import '../components/DashboardPage.css';
 import '../components/NavBar.css';
 import StockChart from '../components/stockChart';
-import BuyingPowerComponent from '../components/buyingPowerButton';
 import AccountValue from '../components/totalAccountValue';
 import { useEffect, useState } from "react";
 import { useParams } from 'react-router-dom';
 import { buildPath } from '../../Path';
 import TradeStockCard from '../components/buyAndSellCard';
-
 
 const DisplayStockPage = () => {
   const { symbol } = useParams();
@@ -20,6 +18,24 @@ const DisplayStockPage = () => {
   const [isTradeModalVisible, setIsTradeModalVisible] = useState(false);
   const [isInWatchlist, setIsInWatchlist] = useState(false);
 
+  // -----------------------------
+  // REFRESH UI AFTER BUY/SELL
+  // -----------------------------
+  function refreshAfterTrade() {
+    setIsTradeModalVisible(false);
+
+    // Trigger refresh for holdings bar
+    window.dispatchEvent(new Event("refreshHoldings"));
+
+    // Trigger refresh for total portfolio value
+    window.dispatchEvent(new Event("refreshAccountValue"));
+
+    console.log("Trade completed → refreshing UI...");
+  }
+
+  // -----------------------------
+  // LOAD STOCK OVERVIEW
+  // -----------------------------
   useEffect(() => {
     if (symbol) {
       fetchOverview(symbol.toUpperCase());
@@ -30,15 +46,19 @@ const DisplayStockPage = () => {
     try {
       setLoading(true);
       setError("");
+
       const response = await fetch(buildPath(`overview/${symbol}`), {
         method: "GET",
       });
+
       const data = await response.json();
+
       if (data.error) {
         setError(data.error);
       } else {
         setOverview(data.overview);
       }
+
     } catch (err) {
       console.error("Overview fetch error:", err);
       setError("Failed to load stock information.");
@@ -47,10 +67,12 @@ const DisplayStockPage = () => {
     }
   };
 
+  // -----------------------------
+  // WATCHLIST TOGGLE
+  // -----------------------------
   const toggleWatchlist = () => {
     setIsInWatchlist(!isInWatchlist);
     console.log(isInWatchlist ? 'Removed from watchlist' : 'Added to watchlist');
-    // Add your actual watchlist logic here
   };
 
   if (!symbol) {
@@ -71,17 +93,23 @@ const DisplayStockPage = () => {
 
   return (
     <div className="layout-wrapper">  
+      {/* Header */}
       <div className='logo-navigation-combo'>
         <PageTitle />
         <NavBar/>
       </div>
+
       <main className="main-section">
-        {/* Trade Modal */}
+
+        {/* ----------------------------
+            TRADE MODAL
+        ----------------------------- */}
         {isTradeModalVisible && (
           <div className="modal-overlay" onClick={() => setIsTradeModalVisible(false)}>
             <div className="buyingPowerDiv" onClick={(e) => e.stopPropagation()}>
-              <TradeStockCard 
+              <TradeStockCard
                 onClose={() => setIsTradeModalVisible(false)}
+                onTradeSuccess={refreshAfterTrade}       // ← NEW
                 stockSymbol={overview?.Symbol || symbol}
                 stockName={overview?.Name || symbol}
                 currentPrice={150.00}
@@ -90,20 +118,18 @@ const DisplayStockPage = () => {
           </div>
         )}
 
+        {/* ----------------------------
+            MAIN LEFT PANEL
+        ----------------------------- */}
         <div className="left-panel">
-          <div>
-            <AccountValue />
-          </div>
+          <AccountValue />
+
           <StockChart symbol={symbol || ""} />
-          
-          {/* Action Buttons */}
+
+          {/* ---- Buttons ---- */}
           <div className="stock-action-buttons">
             <button 
-              onClick={() => {
-                console.log("Trade button clicked!");
-                console.log("overview:", overview);
-                setIsTradeModalVisible(true);
-              }}
+              onClick={() => setIsTradeModalVisible(true)}
               style={{
                 flex: 1,
                 padding: '0.875rem',
@@ -120,6 +146,7 @@ const DisplayStockPage = () => {
             >
               Trade
             </button>
+
             <button 
               onClick={toggleWatchlist}
               style={{
@@ -146,6 +173,7 @@ const DisplayStockPage = () => {
             </button>
           </div>
 
+          {/* Stock Text */}
           <div className="stock-text-box">
             {loading && <span>Loading {symbol}...</span>}
             {error && <span style={{ color: "red" }}>{error}</span>}

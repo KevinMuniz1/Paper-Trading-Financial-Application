@@ -1,28 +1,113 @@
 // TradeStockCard.tsx
 import { useState } from 'react';
+import { buildPath } from '../../Path';
 import "./DashboardPage.css";
 
 interface TradeStockCardProps {
   onClose: () => void;
+  onTradeSuccess: () => void;   // ← NEW: notify parent page
   stockSymbol: string;
   stockName: string;
   currentPrice: number;
 }
 
-function TradeStockCard({ onClose, stockSymbol, stockName, currentPrice }: TradeStockCardProps) {
+function TradeStockCard({ onClose, onTradeSuccess, stockSymbol, stockName, currentPrice }: TradeStockCardProps) {
   const [shares, setShares] = useState('');
   const [tradeType, setTradeType] = useState<'buy' | 'sell'>('buy');
 
-  const totalAmount = shares ? parseFloat(shares) * currentPrice : 0;
+  const userId = localStorage.getItem("userId") || "";
+  const quantity = parseInt(shares);
+  const totalAmount = shares ? quantity * currentPrice : 0;
 
+  // ---------------------------
+  // BUY STOCK → /addcard
+  // ---------------------------
+  async function buyStock() {
+    try {
+      const res = await fetch(buildPath("/addcard"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          cardName: stockName,
+          tickerSymbol: stockSymbol,
+          quantity: quantity
+        })
+      });
+
+      const data = await res.json();
+
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
+
+      onTradeSuccess();  // refresh holdings + account value
+      onClose();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to execute trade.");
+    }
+  }
+
+  // ---------------------------
+  // SELL STOCK → /sell
+  // ---------------------------
+  async function sellStock() {
+    try {
+      // Find tradeId for this symbol
+      const findRes = await fetch(buildPath("/searchcards"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, search: stockSymbol })
+      });
+
+      const findData = await findRes.json();
+      const holding = findData.results?.find((t: any) => t.symbol === stockSymbol);
+
+      if (!holding) {
+        alert(`You do not own any shares of ${stockSymbol}.`);
+        return;
+      }
+
+      const tradeId = holding.id;
+
+      const res = await fetch(buildPath("/sell"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          tradeId,
+          quantity
+        })
+      });
+
+      const data = await res.json();
+
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
+
+      onTradeSuccess();
+      onClose();
+    } catch (err) {
+      console.error(err);
+      alert("Sell failed.");
+    }
+  }
+
+  // ---------------------------
+  // MAIN HANDLER
+  // ---------------------------
   const handleTrade = () => {
-    console.log(`${tradeType}ing ${shares} shares of ${stockSymbol} for $${totalAmount.toFixed(2)}`);
-    // Add your trade logic here
-    onClose();
-  };
+    if (!shares || quantity <= 0) return;
 
-  const handleCancel = () => {
-    onClose();
+    if (tradeType === "buy") {
+      buyStock();
+    } else {
+      sellStock();
+    }
   };
 
   return (
@@ -79,13 +164,13 @@ function TradeStockCard({ onClose, stockSymbol, stockName, currentPrice }: Trade
 
       {/* Action Buttons */}
       <div className="button-row">
-        <button onClick={handleCancel} className="cancel-button">
+        <button onClick={onClose} className="cancel-button">
           Cancel
         </button>
         <button 
           onClick={handleTrade} 
           className={`trade-button ${tradeType === 'buy' ? 'buy-button' : 'sell-button'}`}
-          disabled={!shares || parseFloat(shares) <= 0}
+          disabled={!shares || quantity <= 0}
         >
           {tradeType === 'buy' ? 'Buy' : 'Sell'}
         </button>
