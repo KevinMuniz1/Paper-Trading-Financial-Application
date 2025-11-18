@@ -144,8 +144,10 @@ class _LoginScreenState extends State<LoginScreen> {
             MaterialPageRoute(
               builder: (context) => MainAppScreen(
                 userId: responseData['id'],
+                username: responseData['login'] ?? username,
                 firstName: responseData['firstName'] ?? '',
                 lastName: responseData['lastName'] ?? '',
+                email: responseData['email'] ?? '',
               ),
             ),
           );
@@ -1093,14 +1095,18 @@ class EmailVerificationScreen extends StatelessWidget {
 // Main App Screen with Bottom Navigation
 class MainAppScreen extends StatefulWidget {
   final int userId;
+  final String username;
   final String firstName;
   final String lastName;
+  final String email;
 
   const MainAppScreen({
     super.key,
     required this.userId,
+    required this.username,
     required this.firstName,
     required this.lastName,
+    required this.email,
   });
 
   @override
@@ -1166,8 +1172,11 @@ class _MainAppScreenState extends State<MainAppScreen> {
         return const NewsPage();
       case 4:
         return AccountScreen(
+          userId: widget.userId,
+          username: widget.username,
           firstName: widget.firstName,
           lastName: widget.lastName,
+          email: widget.email,
         );
       default:
         return HomeScreen(
@@ -1728,13 +1737,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
 // Account Screen
 class AccountScreen extends StatelessWidget {
+  final int userId;
+  final String username;
   final String firstName;
   final String lastName;
+  final String email;
 
   const AccountScreen({
     super.key,
+    required this.userId,
+    required this.username,
     required this.firstName,
     required this.lastName,
+    required this.email,
   });
 
   @override
@@ -1838,50 +1853,67 @@ class AccountScreen extends StatelessWidget {
             const SizedBox(height: 30),
             
             // Account Options
-            _buildAccountOption(context, 'Trading History', Icons.history, false),
-            _buildAccountOption(context, 'Log Out', Icons.logout, true),
+            _buildAccountOption(context, 'Account Details', Icons.person, false, userId, username, firstName, lastName, email),
+            _buildAccountOption(context, 'Log Out', Icons.logout, true, userId, username, firstName, lastName, email),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildAccountOption(BuildContext context, String title, IconData icon, bool isLogout) {
+  Widget _buildAccountOption(BuildContext context, String title, IconData icon, bool isLogout, int userId, String username, String firstName, String lastName, String email) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        gradient: LinearGradient(
+          colors: isLogout 
+            ? [const Color(0xFFEF4444), const Color(0xFFDC2626)]
+            : [const Color(0xFF6C5CE7), const Color(0xFF9776EC)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 5,
-            offset: const Offset(0, 2),
+            color: (isLogout ? const Color(0xFFEF4444) : const Color(0xFF6C5CE7)).withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
       child: ListTile(
         leading: Icon(
           icon, 
-          color: isLogout ? Colors.red : const Color(0xFF6C5CE7),
+          color: Colors.white,
         ),
         title: Text(
           title,
-          style: TextStyle(
-            color: isLogout ? Colors.red : Colors.black87,
-            fontWeight: isLogout ? FontWeight.w600 : FontWeight.w500,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
           ),
         ),
-        trailing: Icon(
+        trailing: const Icon(
           Icons.arrow_forward_ios, 
           size: 16,
-          color: isLogout ? Colors.red : const Color(0xFF6C5CE7),
+          color: Colors.white,
         ),
         onTap: () {
           if (isLogout) {
             _showLogoutDialog(context);
-          } else {
-            // Handle other option taps
+          } else if (title == 'Account Details') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AccountDetailsPage(
+                  userId: userId,
+                  username: username,
+                  firstName: firstName,
+                  lastName: lastName,
+                  email: email,
+                ),
+              ),
+            );
           }
         },
       ),
@@ -1923,6 +1955,272 @@ class AccountScreen extends StatelessWidget {
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (context) => const LoginScreen()),
       (Route<dynamic> route) => false,
+    );
+  }
+}
+
+// Account Details Page
+class AccountDetailsPage extends StatelessWidget {
+  final int userId;
+  final String username;
+  final String firstName;
+  final String lastName;
+  final String email;
+
+  const AccountDetailsPage({
+    super.key,
+    required this.userId,
+    required this.username,
+    required this.firstName,
+    required this.lastName,
+    required this.email,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Account Details'),
+        backgroundColor: const Color(0xFF6C5CE7),
+        foregroundColor: Colors.white,
+        centerTitle: true,
+      ),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF2D1B69),
+              Color(0xFF3D2B7A),
+            ],
+          ),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 20),
+              // Profile Icon
+              Center(
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF6C5CE7), Color(0xFF9776EC)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(60),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF6C5CE7).withOpacity(0.3),
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.person,
+                    size: 60,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 40),
+              
+              // Name Card
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF6C5CE7), Color(0xFF9776EC)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF6C5CE7).withOpacity(0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.person_outline,
+                        color: Color(0xFF6C5CE7),
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Full Name',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '$firstName $lastName',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              
+              // Username Card
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF6C5CE7), Color(0xFF9776EC)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF6C5CE7).withOpacity(0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.account_circle_outlined,
+                        color: Color(0xFF6C5CE7),
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Username',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            username,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              
+              // Email Card
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF6C5CE7), Color(0xFF9776EC)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF6C5CE7).withOpacity(0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.email_outlined,
+                        color: Color(0xFF6C5CE7),
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Email Address',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            email,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
