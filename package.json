@@ -12,14 +12,14 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
+        "@syncfusion/ej2-react-charts": "^31.2.10",
         "@types/react": "^19.2.2",
         "@types/react-dom": "^19.2.2",
         "axios": "^1.13.2",
         "cors": "^2.8.5",
         "dotenv": "^17.2.3",
         "express": "^4.18.2",
-        "mongodb": "^5.9.2",
-        "yahoo-finance2": "^2.0.0"
+        "mongodb": "^5.9.2"
     },
     "devDependencies": {
         "jest": "^29.7.0",
@@ -30,6 +30,6 @@
         "nodemon": "^3.1.10",
         "resend": "^6.4.1",
         "supertest": "^7.1.4",
-        "yahoo-finance2": "^3.10.1"
+        "yahoo-finance2": "^3.10.2"
     }
 }

@@ -398,6 +398,14 @@
     letter-spacing: 0.5px;
 }
 
+.holdings-stock-symbol {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
 .stock-change {
     font-size: 0.85rem;
     font-weight: 700;
@@ -429,6 +437,12 @@
     font-size: 1rem;
     font-weight: 600;
     color: #0a2541;
+}
+
+.holdings-stock-price{
+    font-size: 1rem;
+    font-weight: 600;
+    color: #ffffff;
 }
 
 /* Other sections placeholder */

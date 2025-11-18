@@ -1,83 +1,101 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext"; 
+import { buildPath } from "../../Path"; 
 import "./NavBar.css";
 
-interface Stock {
+interface Holding {
   id: string;
   symbol: string;
-  price: number;
-  change: number;
-  changePercent: number;
+  currentPrice: number;
+  gain: number;
+  gainPercent: number;
 }
 
 export default function WatchListBar() {
-  const [watchlist, setWatchlist] = useState<Stock[]>([
-    { id: "1", symbol: "AAPL", price: 185.32, change: 2.45, changePercent: 1.34 },
-    { id: "2", symbol: "TSLA", price: 243.55, change: -5.23, changePercent: -2.10 },
-    { id: "3", symbol: "NVDA", price: 501.76, change: 12.89, changePercent: 2.64 },
-    { id: "4", symbol: "MSFT", price: 378.91, change: -1.34, changePercent: -0.35 },
-    { id: "5", symbol: "GOOGL", price: 142.68, change: 0.89, changePercent: 0.63 },
-  ]);
+  const navigate = useNavigate();
+  const { user } = useAuth();  
+  const userId = user?.userId;
 
-  const handleRemove = (id: string) => {
-    setWatchlist(watchlist.filter((stock) => stock.id !== id));
-  };
+  const [holdings, setHoldings] = useState<Holding[]>([]);
 
-  const handleStockClick = (symbol: string) => {
-    console.log(`Clicked on ${symbol}`);
-  };
+  async function fetchHoldings() {
+    if (!userId) {
+      console.error("No userId found from AuthContext");
+      return;
+    }
+
+    try {
+      const res = await fetch(buildPath("/portfolio/summary"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId })
+      });
+
+      const data = await res.json();
+
+      if (data && data.holdings) {
+        const mapped = data.holdings.map((h: any) => ({
+          id: h.id || h._id || h.symbol,
+          symbol: h.symbol,
+          currentPrice: h.currentPrice,
+          gain: h.gain,
+          gainPercent: h.gainPercent
+        }));
+
+        setHoldings(mapped);
+      }
+
+    } catch (err) {
+      console.error("Error fetching holdings:", err);
+    }
+  }
+
+  useEffect(() => {
+    fetchHoldings();
+
+    const handler = () => fetchHoldings();
+    window.addEventListener("refreshHoldings", handler);
+
+    return () => window.removeEventListener("refreshHoldings", handler);
+  }, [userId]);
 
   return (
     <div className="watchlist-container">
       <h2 className="watchlist-title">Holdings</h2>
 
       <div className="watchlist-list">
-        {watchlist.map((stock) => (
+        {holdings.map((stock) => (
           <div
             key={stock.id}
             className="watchlist-item"
-            onClick={() => handleStockClick(stock.symbol)}
+            onClick={() => navigate(`/stock/${stock.symbol}`)}
+            style={{ cursor: "pointer" }}
           >
             <div className="watchlist-item-info">
               <div>
-                <div className="stock-symbol">{stock.symbol}</div>
-                <div className="stock-price">${stock.price.toFixed(2)}</div>
+                <div className="holdings-stock-symbol">{stock.symbol}</div>
+                <div className="holdings-stock-price">
+                  ${stock.currentPrice.toFixed(2)}
+                </div>
               </div>
 
               <div className="watchlist-change-group">
-                <div
-                  className={`stock-change ${
-                    stock.change >= 0 ? "positive" : "negative"
-                  }`}
-                >
-                  {stock.change >= 0 ? "+" : ""}
-                  {stock.change.toFixed(2)}
+                <div className={`stock-change ${stock.gain >= 0 ? "positive" : "negative"}`}>
+                  {stock.gain >= 0 ? "+" : ""}{stock.gain.toFixed(2)}
                 </div>
-                <div
-                  className={`stock-change ${
-                    stock.change >= 0 ? "positive" : "negative"
-                  }`}
-                >
-                  {stock.change >= 0 ? "+" : ""}
-                  {stock.changePercent.toFixed(2)}%
+
+                <div className={`stock-change ${stock.gain >= 0 ? "positive" : "negative"}`}>
+                  {stock.gain >= 0 ? "+" : ""}{stock.gainPercent.toFixed(2)}%
                 </div>
               </div>
             </div>
-
-            <button
-              className="remove-button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleRemove(stock.id);
-              }}
-            >
-              ×
-            </button>
           </div>
         ))}
       </div>
 
-      {watchlist.length === 0 && (
-        <div className="watchlist-empty">No stocks in your watchlist</div>
+      {holdings.length === 0 && (
+        <div className="watchlist-empty">No current holdings</div>
       )}
     </div>
   );
