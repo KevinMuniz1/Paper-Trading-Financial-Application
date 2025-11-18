@@ -2,9 +2,28 @@ import 'dart:io' show Platform;
 
 class ApiHost {
   /// Returns the base API URL appropriate for the current platform.
-  /// Priority: --dart-define API_PORT -> platform default.
-  /// Platform defaults: macOS/iOS 5050, others 5000.
+  /// Production builds (release mode) use the hosted server.
+  /// Development builds use localhost/emulator addresses.
+  /// You can override with --dart-define API_HOST for custom servers.
   static String getBaseUrl([int? overridePort]) {
+    // Check for custom host override
+    const defineHost = String.fromEnvironment('API_HOST');
+    
+    // If API_HOST is defined, use it
+    if (defineHost.isNotEmpty) {
+      final definePort = const String.fromEnvironment('API_PORT');
+      final parsed = int.tryParse(definePort);
+      final port = overridePort ?? parsed ?? 80;
+      return port == 80 ? 'http://$defineHost/api' : 'http://$defineHost:$port/api';
+    }
+
+    // In release mode, use production server
+    const isRelease = bool.fromEnvironment('dart.vm.product');
+    if (isRelease) {
+      return 'http://paper-trade-app.com/api';
+    }
+
+    // Development mode: use localhost/emulator addresses
     final definePort = const String.fromEnvironment('API_PORT');
     final parsed = int.tryParse(definePort);
     final port = overridePort ?? parsed ?? _platformDefaultPort();
