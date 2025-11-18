@@ -1,10 +1,11 @@
+
 import {StockChartComponent,StockChartSeriesCollectionDirective,StockChartSeriesDirective,Inject,Crosshair,DateTime,SplineAreaSeries,
   LineSeries,SplineSeries,CandleSeries,HiloOpenCloseSeries,HiloSeries,RangeAreaSeries,Trendlines,RangeTooltip,Tooltip,EmaIndicator,RsiIndicator,
   BollingerBands,TmaIndicator,MomentumIndicator,SmaIndicator,AtrIndicator,AccumulationDistributionIndicator,MacdIndicator,StochasticIndicator,Export,IStockChartEventArgs
 } from "@syncfusion/ej2-react-charts";
 
 import { googl } from "./stock-data";
-import "@syncfusion/ej2-base/styles/tailwind.css";
+import "@syncfusion/ej2-base/styles/material.css";
 
 
 
@@ -33,21 +34,7 @@ const borderColor = [
 
 const SplineArea = () => {
   const load = (args: IStockChartEventArgs) => {
-    // The actual chart theme → must stay EXACTLY as passed ("TailwindDark")
-    const chartTheme = args.stockChart.theme;
 
-    // Lowercase version ONLY for gradient IDs and your color array
-    const themeKey = chartTheme.toLowerCase();
-
-    // Lookup index in your lowercase themes array
-    const themeIndex = themes.indexOf(themeKey);
-
-    args.stockChart.series[0].border = {
-      width: 2,
-      color: borderColor[themeIndex],
-    };
-
-    args.stockChart.series[0].fill = `url(#${themeKey}-gradient-chart)`;
   };
 
   return (
@@ -79,7 +66,7 @@ const SplineArea = () => {
         id="stockchartsplinearea"
         title="Google Stock Price"
         load={load}
-        theme="Material3"   // ✔ Correct casing
+        theme="Material3" 
         primaryXAxis={{
           valueType: "DateTime",
           majorGridLines: { width: 0 },
@@ -88,7 +75,7 @@ const SplineArea = () => {
         primaryYAxis={{
           lineStyle: { color: "transparent" },
           majorTickLines: { color: "transparent", height: 0 },
-          crosshairTooltip: { enable: true }
+          
         }}
         tooltip={{
           enable: true,
@@ -137,10 +124,10 @@ const SplineArea = () => {
             xName="x"
             yName="high"
             type="SplineArea"
-            fill="#5447cc8e"
+            fill="#4054a5ff"
             border={{ 
             width: 2, 
-           color: "#11a33dff"    
+           color: "#1113a1ff"    
              }}
              opacity={.75}
             
