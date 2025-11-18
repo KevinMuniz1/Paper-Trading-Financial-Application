@@ -56,7 +56,7 @@ module.exports = function (client) {
             });
         } else {
             error = 'Invalid login credentials';
-            return res.status(401).json({ 
+            return res.status(400).json({ 
                 id: -1, 
                 firstName: '', 
                 lastName: '', 
