@@ -15,35 +15,40 @@ const app = express();
 const allowedOrigins = [
   'http://localhost:5050',
   'http://localhost:5173',
+  'http://localhost:5174',
   'http://paper-trade-app.com',
   'http://www.paper-trade-app.com',
+  'https://paper-trade-app.com',
+  'https://www.paper-trade-app.com'
 ];
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (e.g., mobile apps, curl)
+    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
 
-    // Allow any localhost or 127.0.0.1 origin (any port) during development
-    const isLocalhost = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+    // Allow localhost origins (with any port)
+    const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+    
     if (isLocalhost || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
+    
+    console.warn(`CORS request blocked from origin: ${origin}`);
     return callback(new Error('Not allowed by CORS'));
   },
-  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  preflightContinue: true,
+  optionsSuccessStatus: 200
 }));
 
-app.use(express.json());
+// Preflight request handler
+app.options('*', cors());
 
-// Your existing CORS headers
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
-  next();
-});
+
+app.use(express.json());
 
 const url = MONGODB_URL || process.env.MONGODB_URL || 'mongodb://localhost:27017/Finance-app';
 console.log('Connecting to MongoDB at:', url);
