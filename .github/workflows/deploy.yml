@@ -9,17 +9,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       
-      - name: Debug - List all files
-        run: |
-          echo "=== Root directory ==="
-          ls -la
-          echo "=== Context directory ==="
-          ls -la context/ || echo "No context directory"
-          echo "=== Services directory ==="
-          ls -la services/ || echo "No services directory"
-          echo "=== Frontend directory ==="
-          ls -la frontend/ || echo "No frontend directory"
-      
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -62,9 +51,9 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           port: ${{ secrets.SERVER_PORT }}
-          source: "context"
+          source: "frontend/context"
           target: "/var/paperTradeServer"
-          strip_components: 0
+          strip_components: 1
       
       - name: Clear old frontend files
         uses: appleboy/ssh-action@master

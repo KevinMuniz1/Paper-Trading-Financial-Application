@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import "./DashboardPage.css";
-import { usePortfolio } from '../context/PortfolioContext';
+import { usePortfolio } from '../../context/PortfolioContext';
 
 interface BuyingPowerCardProps {
   onClose: () => void;
