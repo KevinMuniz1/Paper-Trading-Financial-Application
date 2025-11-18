@@ -9,9 +9,10 @@ import BuyingPowerButton from '../components/buyingPowerButton';
 import AccountValue from '../components/totalAccountValue';
 import BuyingPowerCard from '../components/CardAddBuyingPower';
 import { buildPath } from '../../Path';
-
+import { useParams } from 'react-router-dom';
 const DashboardPage = () => {
   const [isCardVisible, setIsCardVisible] = useState(false);
+  const { symbol } = useParams();
   
 
   function toggleBuyingPowerCard() {
@@ -36,7 +37,7 @@ const DashboardPage = () => {
           <div>
             <AccountValue />
           </div>
-          <StockChart />
+          <StockChart symbol={symbol || ""} />
           <div onClick={toggleBuyingPowerCard} className="button-container">
             <BuyingPowerButton />
           </div>

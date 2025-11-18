@@ -7,10 +7,13 @@ import StockChart from '../components/stockChart';
 import BuyingPowerComponent from '../components/buyingPowerButton';
 import AccountValue from '../components/totalAccountValue';
 import { useEffect, useState } from "react";
+import { useParams } from 'react-router-dom';
 import { buildPath } from '../../Path';
 import TradeStockCard from '../components/buyAndSellCard';
 
+
 const DisplayStockPage = () => {
+  const { symbol } = useParams();
   const [overview, setOverview] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -18,12 +21,15 @@ const DisplayStockPage = () => {
   const [isInWatchlist, setIsInWatchlist] = useState(false);
 
   useEffect(() => {
-    fetchOverview("AAPL");
-  }, []);
+    if (symbol) {
+      fetchOverview(symbol.toUpperCase());
+    }
+  }, [symbol]);
 
   const fetchOverview = async (symbol: string) => {
     try {
       setLoading(true);
+      setError("");
       const response = await fetch(buildPath(`overview/${symbol}`), {
         method: "GET",
       });
@@ -47,6 +53,22 @@ const DisplayStockPage = () => {
     // Add your actual watchlist logic here
   };
 
+  if (!symbol) {
+    return (
+      <div className="layout-wrapper">
+        <div className='logo-navigation-combo'>
+          <PageTitle />
+          <NavBar/>
+        </div>
+        <main className="main-section">
+          <div className="left-panel">
+            <p>No stock symbol provided. Please select a stock.</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="layout-wrapper">  
       <div className='logo-navigation-combo'>
@@ -60,8 +82,8 @@ const DisplayStockPage = () => {
             <div className="buyingPowerDiv" onClick={(e) => e.stopPropagation()}>
               <TradeStockCard 
                 onClose={() => setIsTradeModalVisible(false)}
-                stockSymbol={overview?.Symbol || "AAPL"}
-                stockName={overview?.Name || "Apple Inc"}
+                stockSymbol={overview?.Symbol || symbol}
+                stockName={overview?.Name || symbol}
                 currentPrice={150.00}
               />
             </div>
@@ -72,10 +94,10 @@ const DisplayStockPage = () => {
           <div>
             <AccountValue />
           </div>
-          <StockChart />
+          <StockChart symbol={symbol || ""} />
           
           {/* Action Buttons */}
-          <div className="button-container" style={{ display: 'flex', gap: '1rem' }}>
+          <div className="stock-action-buttons">
             <button 
               onClick={() => {
                 console.log("Trade button clicked!");
@@ -125,7 +147,7 @@ const DisplayStockPage = () => {
           </div>
 
           <div className="stock-text-box">
-            {loading && <span>Loading...</span>}
+            {loading && <span>Loading {symbol}...</span>}
             {error && <span style={{ color: "red" }}>{error}</span>}
             {overview && (
               <>

@@ -10,7 +10,8 @@ import AccountSettingsPage from "./pages/AccountSettingsPage";
 import ForgotPasswordPage from './pages/forgot-password';
 import ResetPasswordPage from './pages/reset-password';
 import DisplayStockPage from "./pages/StockPage";
-import { PortfolioProvider } from './context/PortfolioContext'; // Add this import
+import { AuthProvider } from './context/AuthContext'; // Add this
+import { PortfolioProvider } from './context/PortfolioContext';
 
 function AppContent() {
   const location = useLocation();
@@ -29,7 +30,7 @@ function AppContent() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/browse" element={<BrowsePage />} />
-        <Route path="/stock-page" element={<DisplayStockPage />} />
+        <Route path="/stock/:symbol" element={<DisplayStockPage />} />
       </Routes>
     </>
   );
@@ -39,9 +40,11 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-500 via-green-600 to-black m-0 p-0">
       <BrowserRouter>
-        <PortfolioProvider> {/* Wrap AppContent with PortfolioProvider */}
-          <AppContent />
-        </PortfolioProvider> {/* Close the provider */}
+        <AuthProvider> {/* AuthProvider wraps everything - OUTERMOST */}
+          <PortfolioProvider> {/* PortfolioProvider can now use AuthContext */}
+            <AppContent />
+          </PortfolioProvider>
+        </AuthProvider>
       </BrowserRouter>
     </div>
   );

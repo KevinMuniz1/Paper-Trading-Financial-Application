@@ -4,13 +4,15 @@ const { ObjectId } = require('mongodb');
 require('dotenv').config(); 
 const { PORT, MONGODB_URL } = require('./config');
 const newsService = require('./services/newsService');
-const { generateEmailVerificationToken, generatePasswordResetToken, verifyEmailToken, verifyPasswordResetToken } = require('./services/tokenService');
+const { generateEmailVerificationToken, generatePasswordResetToken, verifyEmailToken, verifyPasswordResetToken, generateAuthToken } = require('./services/tokenService');
 const { sendVerificationEmail, sendPasswordResetEmail } = require('./services/emailService');
 const stockService = require('./services/stockService');
 const { updatePortfolioTotals, getPortfolioData, recordPortfolioSnapshot, getPortfolioHistory } = require('./services/portfolioService');
 const topMoversService = require('./services/topMoversService');
 const searchService = require('./services/searchService');
 const baseUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
+const { default: YahooFinance } = require('yahoo-finance2');
+const yahooFinance = new YahooFinance();
 
 module.exports = function (client) {
     // Initialize NewsService with DB instance
@@ -19,47 +21,61 @@ module.exports = function (client) {
 
     // LOGIN
     router.post('/login', async (req, res, next) => {
-        // incoming: login, password
-        // outgoing: id, firstName, lastName, email, login, error
-        var error = '';
-        const { login, password } = req.body;
-        const db = client.db('Finance-app');
-        try {
-            const results = await
-                db.collection('Users').find({
-                    Login: login,
-                    Password: password
-                }).toArray();
+    var error = '';
+    const { login, password } = req.body;
+    const db = client.db('Finance-app');
+    
+    try {
+        const results = await db.collection('Users').find({
+            Login: login,
+            Password: password
+        }).toArray();
 
-            var id = -1;
-            var fn = '';
-            var ln = '';
-            var em = '';
-            var lg = '';
+        console.log('Found users:', results.length); // ← Add this
+        console.log('Results:', results);
 
-            if (results.length > 0) {
-                /* 
-                uncomment this later! will require email verification to login, 
-                not included for now for testing
-                if(!results[0].isEmailVerified){ // ← Use the correct field name
-                    error = 'Please verify your email before logging in';
-                } else {*/
+        if (results.length > 0) {
+            const user = results[0];
+            
+            const token = generateAuthToken({
+                id: user.UserID,
+                email: user.Email,
+                firstName: user.FirstName,
+                lastName: user.LastName
+            });
 
-                id = results[0].UserID;
-                fn = results[0].FirstName;
-                ln = results[0].LastName;
-                em = results[0].Email;
-                lg = results[0].Login;
-            } else {
-                error = 'Invalid login credentials';
-            }
-
-            var ret = { id: id, firstName: fn, lastName: ln, email: em, login: lg, error: error };
-            res.status(200).json(ret);
-        } catch (e) {
-            res.status(200).json({ id: -1, firstName: '', lastName: '', email: '', login: '', error: e.toString() });
+            // Return token along with user info
+            return res.status(200).json({
+                id: user.UserID,
+                firstName: user.FirstName,
+                lastName: user.LastName,
+                email: user.Email,
+                login: user.Login,
+                token: token, // ← Add this!
+                error: ''
+            });
+        } else {
+            error = 'Invalid login credentials';
+            return res.status(401).json({ 
+                id: -1, 
+                firstName: '', 
+                lastName: '', 
+                email: '', 
+                login: '', 
+                error: error 
+            });
         }
-    });
+    } catch (e) {
+        res.status(500).json({ 
+            id: -1, 
+            firstName: '', 
+            lastName: '', 
+            email: '', 
+            login: '', 
+            error: e.toString() 
+        });
+    }
+});
 
     // REGISTER USERS
     router.post('/register', async (req, res, next) => {
@@ -1611,6 +1627,119 @@ router.get('/overview/:symbol', async (req, res) => {
             });
         }
     });
+
+    router.get('/stock/history/:symbol', async (req, res) => {
+    const { symbol } = req.params;
+    const { period = '1mo' } = req.query;
+    
+    try {
+        const endDate = new Date();
+        const startDate = new Date();
+        let interval = '1d'; // default
+        
+        // Set start date and interval based on period
+        switch(period) {
+            case '1d': 
+                startDate.setDate(endDate.getDate() - 1); 
+                interval = '5m'; // 5-minute intervals for 1 day
+                break;
+            case '5d': 
+                startDate.setDate(endDate.getDate() - 5); 
+                interval = '15m'; // 15-minute intervals for 5 days
+                break;
+            case '1mo': 
+                startDate.setMonth(endDate.getMonth() - 1); 
+                interval = '1d'; // daily for 1 month
+                break;
+            case '3mo': 
+                startDate.setMonth(endDate.getMonth() - 3); 
+                interval = '1d';
+                break;
+            case '6mo': 
+                startDate.setMonth(endDate.getMonth() - 6); 
+                interval = '1d';
+                break;
+            case '1y': 
+                startDate.setFullYear(endDate.getFullYear() - 1); 
+                interval = '1wk'; // weekly for 1 year
+                break;
+            case '5y': 
+                startDate.setFullYear(endDate.getFullYear() - 5); 
+                interval = '1mo'; // monthly for 5 years
+                break;
+            case 'ytd': // Year to date
+                startDate.setMonth(0); // January 1st
+                startDate.setDate(1);
+                interval = '1d';
+                break;
+            case 'max': // All available data
+                startDate.setFullYear(endDate.getFullYear() - 10); 
+                interval = '1mo';
+                break;
+            default: 
+                startDate.setMonth(endDate.getMonth() - 1);
+                interval = '1d';
+        }
+        
+        const queryOptions = {
+            period1: startDate,
+            period2: endDate,
+            interval: interval
+        };
+        
+        console.log(`🔍 Fetching history for ${symbol} - Period: ${period}, Interval: ${interval}`);
+        console.log(`📅 Query options:`, queryOptions);
+        
+        const result = await yahooFinance.chart(symbol, queryOptions);
+        
+        console.log(`📊 Result received:`, result ? 'Yes' : 'No');
+        
+        if (!result || !result.quotes || result.quotes.length === 0) {
+            console.error('❌ No quotes data in result');
+            throw new Error('No data returned from Yahoo Finance');
+        }
+        
+        const chartData = result.quotes.map(item => ({
+            x: item.date.toISOString(),
+            high: item.high,
+            low: item.low,
+            open: item.open,
+            close: item.close,
+            volume: item.volume
+        }));
+        
+        console.log(`✅ Successfully fetched ${chartData.length} data points for ${symbol}`);
+        
+        res.status(200).json({
+            data: chartData,
+            error: ''
+        });
+    } catch (error) {
+        console.error('❌ Stock history error for', symbol, ':', error);
+        res.status(500).json({
+            data: [],
+            error: `Failed to fetch stock history: ${error.message}`
+        });
+    }
+});
+// Helper function to calculate start date
+function getPeriodStartDate(period) {
+    const endDate = new Date();
+    const startDate = new Date();
+    
+    switch(period) {
+        case '1d': startDate.setDate(endDate.getDate() - 1); break;
+        case '5d': startDate.setDate(endDate.getDate() - 5); break;
+        case '1mo': startDate.setMonth(endDate.getMonth() - 1); break;
+        case '3mo': startDate.setMonth(endDate.getMonth() - 3); break;
+        case '6mo': startDate.setMonth(endDate.getMonth() - 6); break;
+        case '1y': startDate.setFullYear(endDate.getFullYear() - 1); break;
+        case '5y': startDate.setFullYear(endDate.getFullYear() - 5); break;
+        default: startDate.setMonth(endDate.getMonth() - 1);
+    }
+    
+    return startDate;
+}
 
     return router;
 }    

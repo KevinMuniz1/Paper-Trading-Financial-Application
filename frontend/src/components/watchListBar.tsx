@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom"; // ← Add this import
 import "./NavBar.css";
 
 interface Stock {
@@ -10,6 +11,8 @@ interface Stock {
 }
 
 export default function WatchListBar() {
+  const navigate = useNavigate(); // ← Add this hook
+  
   const [watchlist, setWatchlist] = useState<Stock[]>([
     { id: "1", symbol: "AAPL", price: 185.32, change: 2.45, changePercent: 1.34 },
     { id: "2", symbol: "TSLA", price: 243.55, change: -5.23, changePercent: -2.10 },
@@ -23,7 +26,7 @@ export default function WatchListBar() {
   };
 
   const handleStockClick = (symbol: string) => {
-    console.log(`Clicked on ${symbol}`);
+    navigate(`/stock/${symbol}`); // ← Navigate to stock page
   };
 
   return (
@@ -36,6 +39,7 @@ export default function WatchListBar() {
             key={stock.id}
             className="watchlist-item"
             onClick={() => handleStockClick(stock.symbol)}
+            style={{ cursor: 'pointer' }} // ← Add cursor pointer for UX
           >
             <div className="watchlist-item-info">
               <div>
@@ -66,7 +70,7 @@ export default function WatchListBar() {
             <button
               className="remove-button"
               onClick={(e) => {
-                e.stopPropagation();
+                e.stopPropagation(); // ← This prevents navigation when clicking remove
                 handleRemove(stock.id);
               }}
             >

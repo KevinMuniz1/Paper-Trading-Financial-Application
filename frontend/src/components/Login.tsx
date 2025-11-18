@@ -1,19 +1,21 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext'; // Import useAuth
 import { buildPath } from '../../Path';
-
-
 
 function Login() {
   const [message, setMessage] = useState('');
   const [loginName, setLoginName] = useState('');
   const [loginPassword, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-
+  const { login } = useAuth(); // Get login function from AuthContext
   const navigate = useNavigate();
 
   async function doLogin(event: any): Promise<void> {
     event.preventDefault();
+    setLoading(true);
+    setMessage('');
 
     const obj = { login: loginName, password: loginPassword };
     const js = JSON.stringify(obj);
@@ -26,22 +28,22 @@ function Login() {
       });
 
       const res = await response.json();
+       console.log('Login response:', res);
 
-      if (res.id <= 0) {
+      if (res.id <= 0 || !res.token) {
         setMessage(res.error || 'User/Password combination incorrect');
       } else {
-        const user = {
-          firstName: res.firstName,
-          lastName: res.lastName,
-          id: res.id,
-        };
-        localStorage.setItem('user_data', JSON.stringify(user));
+        // Use AuthContext login - automatically handles token storage and decoding
+        login(res.token);
+        
         setMessage('');
         navigate('/DashboardPage');
       }
     } catch (error: any) {
       console.error('Login error:', error);
       setMessage('Connection error. Please check if the server is running.');
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -65,6 +67,7 @@ function Login() {
             value={loginName}
             onChange={(e) => setLoginName(e.target.value)}
             required
+            disabled={loading}
           />
         </div>
         
@@ -77,11 +80,12 @@ function Login() {
             value={loginPassword}
             onChange={(e) => setPassword(e.target.value)}
             required
+            disabled={loading}
           />
         </div>
         
-        <button type="submit" id="loginButton">
-          Sign In
+        <button type="submit" id="loginButton" disabled={loading}>
+          {loading ? 'Signing In...' : 'Sign In'}
         </button>
       </form>
 

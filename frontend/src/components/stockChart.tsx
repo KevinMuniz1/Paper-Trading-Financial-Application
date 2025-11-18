@@ -1,23 +1,45 @@
-
+import { useState, useEffect } from 'react';
 import {StockChartComponent,StockChartSeriesCollectionDirective,StockChartSeriesDirective,Inject,Crosshair,DateTime,SplineAreaSeries,
   LineSeries,SplineSeries,CandleSeries,HiloOpenCloseSeries,HiloSeries,RangeAreaSeries,Trendlines,RangeTooltip,Tooltip,EmaIndicator,RsiIndicator,
   BollingerBands,TmaIndicator,MomentumIndicator,SmaIndicator,AtrIndicator,AccumulationDistributionIndicator,MacdIndicator,StochasticIndicator,Export,IStockChartEventArgs
 } from "@syncfusion/ej2-react-charts";
 
-import { googl } from "./stock-data";
+import { buildPath } from "../../Path";
 import "@syncfusion/ej2-base/styles/material.css";
 
-
-
-// Syncfusion sample gradient CSS
 const SAMPLE_CSS = `
   .chart-gradient stop[offset="0"] { stop-opacity: 0.5; }
   .chart-gradient stop[offset="0.3"] { stop-opacity: 0.4; }
   .chart-gradient stop[offset="0.6"] { stop-opacity: 0.2; }
   .chart-gradient stop[offset="1"] { stop-opacity: 0; }
+  
+  /* Control pane layout fix */
+  .control-pane {
+    text-align: left !important;
+  }
+  
+  /* Stock chart toolbar - make everything horizontal */
+  #stockchartsplinearea_stockChart_toolbar,
+  #stockchartsplinearea > div:first-child,
+  .e-stockchart-toolbar {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+  }
+  
+  /* Period selector and Indicators should be inline */
+  #stockchartsplinearea_stockChart_PeriodsSelector,
+  #stockchartsplinearea_stockChart_Indicator,
+  .e-period-selector,
+  .e-toolbar-item {
+    display: inline-block !important;
+    vertical-align: middle !important;
+  }
 `;
 
-// Syncfusion theme color arrays (required)
 const themes = [
   "bootstrap5","bootstrap5dark","tailwind","tailwinddark","material","materialdark",
   "bootstrap4","bootstrap","bootstrapdark","fabric","fabricdark","highcontrast",
@@ -25,17 +47,97 @@ const themes = [
   "fluent2dark","tailwind3","tailwind3dark"
 ];
 
-const borderColor = [
-  "#FD7E14","#FD7E14","#5A61F6","#8B5CF6","#00bdae","#9ECB08","#a16ee5","#a16ee5",
-  "#a16ee5","#4472c4","#4472c4","#79ECE4","#1AC9E6","#1AC9E6","#6355C7","#4EAAFF",
-  "#6200EE","#9BB449","#9BB449","#2F4074","#8029F1"
-];
+interface StockChartProps {
+  symbol: string;
+}
 
+interface ChartDataPoint {
+  x: Date;
+  high: number;
+  low: number;
+  open: number;
+  close: number;
+  volume: number;
+}
 
-const SplineArea = () => {
-  const load = (args: IStockChartEventArgs) => {
+const SplineArea = ({ symbol }: StockChartProps) => {
+  const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
+  useEffect(() => {
+    fetchStockHistory(symbol);
+  }, [symbol]);
+
+  const fetchStockHistory = async (ticker: string) => {
+    try {
+      setLoading(true);
+      setError("");
+      
+      // Fetch maximum data (1 year) so the period selector can filter it client-side
+      const response = await fetch(buildPath(`stock/history/${ticker}?period=1y`));
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Server returned non-JSON response");
+      }
+      
+      const data = await response.json();
+      
+      if (data.error || !data.data || data.data.length === 0) {
+        setError(data.error || "No data available");
+        setChartData([{ 
+          x: new Date(), 
+          high: 100, 
+          low: 95, 
+          open: 98, 
+          close: 99, 
+          volume: 1000000 
+        }]);
+      } else {
+        // Convert date strings back to Date objects
+        const formattedData = data.data.map((item: any) => ({
+          ...item,
+          x: new Date(item.x)
+        }));
+        setChartData(formattedData);
+      }
+    } catch (err) {
+      console.error("Error fetching stock history:", err);
+      setError("Failed to load chart data");
+      setChartData([{ 
+        x: new Date(), 
+        high: 100, 
+        low: 95, 
+        open: 98, 
+        close: 99, 
+        volume: 1000000 
+      }]);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const load = (args: IStockChartEventArgs) => {
+    // Load customizations
+  };
+
+  if (loading) {
+    return (
+      <div className="control-pane" style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '400px' 
+      }}>
+        Loading {symbol} chart...
+      </div>
+    );
+  }
 
   return (
     <div className="control-pane">
@@ -64,9 +166,12 @@ const SplineArea = () => {
 
       <StockChartComponent
         id="stockchartsplinearea"
-        title="Google Stock Price"
+        title={`${symbol} Stock Price`}
         load={load}
-        theme="Material3" 
+        theme="Material3"
+        indicatorType={[]}
+        trendlineType={[]}
+        exportType={[]}
         primaryXAxis={{
           valueType: "DateTime",
           majorGridLines: { width: 0 },
@@ -75,12 +180,10 @@ const SplineArea = () => {
         primaryYAxis={{
           lineStyle: { color: "transparent" },
           majorTickLines: { color: "transparent", height: 0 },
-          
         }}
         tooltip={{
           enable: true,
-          format:
-            "<b>${point.x}</b><br/>Stock Price: <b>${point.y}</b>",
+          format: "<b>${point.x}</b><br/>Stock Price: <b>${point.y}</b>",
         }}
         crosshair={{
           enable: true,
@@ -120,20 +223,29 @@ const SplineArea = () => {
 
         <StockChartSeriesCollectionDirective>
           <StockChartSeriesDirective
-            dataSource={googl}
+            dataSource={chartData}
             xName="x"
             yName="high"
             type="SplineArea"
             fill="#4054a5ff"
             border={{ 
-            width: 2, 
-           color: "#1113a1ff"    
-             }}
-             opacity={.75}
-            
+              width: 2, 
+              color: "#1113a1ff"    
+            }}
+            opacity={.75}
           />
         </StockChartSeriesCollectionDirective>
       </StockChartComponent>
+      
+      {error && (
+        <div style={{ 
+          color: 'red', 
+          padding: '10px', 
+          textAlign: 'center' 
+        }}>
+          {error}
+        </div>
+      )}
     </div>
   );
 };

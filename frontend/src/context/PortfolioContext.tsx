@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { buildPath } from '../../Path';
+import { useAuth } from './AuthContext';
 
 interface PortfolioContextType {
   buyingPower: number;
@@ -15,6 +16,7 @@ interface PortfolioContextType {
 const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
 
 export function PortfolioProvider({ children }: { children: ReactNode }) {
+  const { user, token } = useAuth(); // Get user and token from AuthContext
   const [buyingPower, setBuyingPower] = useState(0);
   const [totalPortfolioValue, setTotalPortfolioValue] = useState(0);
   const [totalInvested, setTotalInvested] = useState(0);
@@ -23,29 +25,37 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
 
   const fetchPortfolioData = async () => {
+    if (!user || !token) {
+      console.error('User not authenticated');
+      return;
+    }
+
     try {
       setLoading(true);
-      
-      // Get userId from localStorage (you'll need to save this on login)
-      const userId = localStorage.getItem('userId') || "41"; // Fallback to 27 for testing
 
       // Fetch buying power
       const buyingPowerRes = await fetch(buildPath("/portfolio/buying-power"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: userId })
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ userId: user.userId })
       });
       const buyingPowerData = await buyingPowerRes.json();
 
-      // Fetch portfolio summary (includes all portfolio data)
+      // Fetch portfolio summary
       const summaryRes = await fetch(buildPath("/portfolio/summary"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: userId })
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ userId: user.userId })
       });
       const summaryData = await summaryRes.json();
 
-      // Update all state
+      // Update state
       if (!buyingPowerData.error) {
         setBuyingPower(buyingPowerData.buyingPower || 0);
       }
@@ -65,8 +75,10 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    fetchPortfolioData();
-  }, []);
+    if (user) {
+      fetchPortfolioData();
+    }
+  }, [user]);
 
   return (
     <PortfolioContext.Provider value={{ 
