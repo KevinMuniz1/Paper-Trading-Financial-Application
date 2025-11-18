@@ -1,30 +1,27 @@
 name: Deploy MERN Application
-
 on:
   push:
     branches: [ main ]
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
+      
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '22.18'
-
+      
       - name: Install frontend dependencies
         working-directory: ./frontend
         run: npm ci
-
+      
       - name: Build frontend
         working-directory: ./frontend
         run: npm run build
-
+      
       - name: Deploy backend to server
         uses: appleboy/scp-action@v0.1.5
         with:
@@ -32,11 +29,11 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           port: ${{ secrets.SERVER_PORT }}
-          source: "package.json,package-lock.json,server.js,config.js,api.js,services/**,frontend/src/**"
+          source: "package.json,package-lock.json,server.js,config.js,api.js,services/**,frontend/src/**,context/**"
           target: "/var/paperTradeServer"
           exclude: "frontend/**"
           strip_components: 0
-
+      
       - name: Clear old frontend files
         uses: appleboy/ssh-action@master
         with:
@@ -46,7 +43,7 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           script: |
             rm -rf /var/www/html/*
-
+      
       - name: Deploy frontend to server
         uses: appleboy/scp-action@v0.1.5
         with:
@@ -57,7 +54,7 @@ jobs:
           source: "frontend/dist/*"
           target: "/var/www/frontend/dist"
           strip_components: 2
-
+      
       - name: Install backend dependencies and restart services
         uses: appleboy/ssh-action@master
         with:
