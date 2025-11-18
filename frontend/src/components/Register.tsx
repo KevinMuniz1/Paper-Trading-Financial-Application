@@ -30,8 +30,6 @@ function Register() {
         headers: { 'Content-Type': 'application/json' }
       });
 
-      console.log(fetch(buildPath("register"))); 
-
       const res = await response.json();
 
       if (res.id <= 0) {

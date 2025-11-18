@@ -73,6 +73,9 @@ async function updatePortfolioTotals(userId, db) {
             }
         );
 
+        // Record a snapshot for historical tracking
+        await recordPortfolioSnapshot(userId, db);
+
         console.log(`Portfolio updated for user ${userId}: $${totalPortfolioValue.toFixed(2)}`);
     } catch (error) {
         console.error('Error updating portfolio totals:', error.message);
@@ -88,9 +91,24 @@ async function getPortfolioData(userId, db) {
             .sort({ purchaseDate: -1 })
             .toArray();
 
+        // Format holdings to include proper field names for mobile compatibility
+        const formattedHoldings = trades.map(trade => ({
+            id: trade._id,
+            symbol: trade.tickerSymbol,
+            name: trade.cardName, // Map cardName to name for mobile app
+            quantity: trade.quantity,
+            purchasePrice: trade.purchasePrice,
+            currentPrice: trade.currentPrice,
+            totalCost: trade.totalCost,
+            currentValue: trade.currentValue,
+            gain: trade.gain,
+            gainPercent: trade.gainPercent,
+            purchaseDate: trade.purchaseDate
+        }));
+
         return {
             portfolio: portfolio,
-            holdings: trades
+            holdings: formattedHoldings
         };
     } catch (error) {
         console.error('Error getting portfolio data:', error.message);
@@ -98,7 +116,78 @@ async function getPortfolioData(userId, db) {
     }
 }
 
+// Record portfolio value snapshot for history tracking
+async function recordPortfolioSnapshot(userId, db) {
+    try {
+        const portfolio = await db.collection('Portfolio').findOne({ userId: parseInt(userId) });
+        
+        if (!portfolio) {
+            console.log(`No portfolio found for user ${userId}`);
+            return;
+        }
+
+        const snapshot = {
+            userId: parseInt(userId),
+            timestamp: new Date(),
+            totalPortfolioValue: portfolio.totalPortfolioValue || 0,
+            buyingPower: portfolio.buyingPower || 0,
+            totalValue: (portfolio.totalPortfolioValue || 0) + (portfolio.buyingPower || 0),
+            totalGain: portfolio.totalGain || 0,
+            totalGainPercent: portfolio.totalGainPercent || 0
+        };
+
+        await db.collection('PortfolioHistory').insertOne(snapshot);
+        
+        // Keep only the last 100 snapshots per user to prevent database bloat
+        const count = await db.collection('PortfolioHistory').countDocuments({ userId: parseInt(userId) });
+        if (count > 100) {
+            const oldSnapshots = await db.collection('PortfolioHistory')
+                .find({ userId: parseInt(userId) })
+                .sort({ timestamp: 1 })
+                .limit(count - 100)
+                .toArray();
+            
+            const idsToDelete = oldSnapshots.map(s => s._id);
+            await db.collection('PortfolioHistory').deleteMany({ _id: { $in: idsToDelete } });
+        }
+
+        console.log(`Portfolio snapshot recorded for user ${userId}`);
+    } catch (error) {
+        console.error('Error recording portfolio snapshot:', error.message);
+    }
+}
+
+// Get portfolio value history
+async function getPortfolioHistory(userId, db, days = 30) {
+    try {
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - days);
+
+        const history = await db.collection('PortfolioHistory')
+            .find({
+                userId: parseInt(userId),
+                timestamp: { $gte: startDate }
+            })
+            .sort({ timestamp: 1 })
+            .toArray();
+
+        return history.map(snapshot => ({
+            timestamp: snapshot.timestamp,
+            totalValue: snapshot.totalValue,
+            totalPortfolioValue: snapshot.totalPortfolioValue,
+            buyingPower: snapshot.buyingPower,
+            totalGain: snapshot.totalGain,
+            totalGainPercent: snapshot.totalGainPercent
+        }));
+    } catch (error) {
+        console.error('Error getting portfolio history:', error.message);
+        throw error;
+    }
+}
+
 module.exports = {
     updatePortfolioTotals,
-    getPortfolioData
+    getPortfolioData,
+    recordPortfolioSnapshot,
+    getPortfolioHistory
 };

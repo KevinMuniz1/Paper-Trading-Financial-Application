@@ -36,7 +36,8 @@
   align-items: center;
   justify-content: center;
   height: 1.5rem;
-  width: 1.5rem;
+  width: auto;
+  gap: 0.5rem;
 }
 
 .search-icon svg {
@@ -44,8 +45,22 @@
   transition: color 0.2s ease;
   margin: 0;
   padding: 0;
-  width: 100%;
-  height: 100%;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+}
+
+.search-text {
+  color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 500;
+  transition: color 0.2s ease;
+  white-space: nowrap;
+}
+
+.search-icon:hover .search-text {
+  color: #00C853;
+  text-shadow: 0 0 4px rgba(0, 255, 149, 0.6);
 }
 
 .nav-item {
@@ -65,11 +80,6 @@
 .navigation-bar-button:hover {
   color: #00C853;
   text-shadow: 0 0 4px rgba(0, 255, 149, 0.6);
-}
-
-.search-icon:hover svg {
-  color: #00C853;
-  filter: drop-shadow(0 0 4px rgba(0, 255, 149, 0.6));
 }
 
 /* Responsive tweak */

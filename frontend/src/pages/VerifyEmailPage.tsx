@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import PageTitle from '../components/PageTitle';
+import { buildPath } from '../components/Path';
 
 const VerifyEmailPage = () => {
     const [searchParams] = useSearchParams();
@@ -18,7 +19,7 @@ const VerifyEmailPage = () => {
             }
 
             try {
-                const response = await fetch('http://localhost:5000/api/verify-email', {
+                const response = await fetch(buildPath('verify-email'), {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -34,7 +35,7 @@ const VerifyEmailPage = () => {
                     
                     // Redirect to dashboard after 2 seconds
                     setTimeout(() => {
-                        navigate('/dashboard');
+                        navigate('/DashboardPage');
                     }, 2000);
                 } else {
                     setMessage(`Verification failed: ${data.error}`);
