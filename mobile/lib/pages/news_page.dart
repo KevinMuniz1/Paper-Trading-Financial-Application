@@ -35,6 +35,7 @@ class _NewsPageState extends State<NewsPage> {
 	@override
 	Widget build(BuildContext context) {
 		return Scaffold(
+			backgroundColor: const Color(0xFF2D1B69), // Dark purple background
 			appBar: AppBar(
 				title: const Text('News'),
 				backgroundColor: const Color(0xFF6C5CE7),

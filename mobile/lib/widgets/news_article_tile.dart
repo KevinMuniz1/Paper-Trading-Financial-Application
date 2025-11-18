@@ -14,9 +14,23 @@ class NewsArticleTile extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     return InkWell(
       onTap: onTap ?? () => _open(article.url),
-      child: Card(
-        elevation: 0.5,
+      child: Container(
         margin: EdgeInsets.zero,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF6C5CE7), Color(0xFF9776EC)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF6C5CE7).withOpacity(0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
@@ -30,7 +44,10 @@ class NewsArticleTile extends StatelessWidget {
                       article.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                      style: textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Row(
@@ -39,13 +56,13 @@ class NewsArticleTile extends StatelessWidget {
                           child: Text(
                             article.source,
                             overflow: TextOverflow.ellipsis,
-                            style: textTheme.bodySmall?.copyWith(color: Colors.grey[700]),
+                            style: textTheme.bodySmall?.copyWith(color: Colors.white70),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Text(
                           _formatDate(article.publishedAt),
-                          style: textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+                          style: textTheme.bodySmall?.copyWith(color: Colors.white60),
                         ),
                       ],
                     ),
@@ -53,7 +70,7 @@ class NewsArticleTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 6),
-              const Icon(Icons.chevron_right, color: Colors.grey),
+              const Icon(Icons.chevron_right, color: Color(0xFF7ED321)),
             ],
           ),
         ),

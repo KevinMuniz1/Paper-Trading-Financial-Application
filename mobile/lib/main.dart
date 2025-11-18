@@ -19,6 +19,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'SimpliTrade Mobile',
       theme: ThemeData(
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xFF2D1B69), // Dark purple background
         primarySwatch: MaterialColor(0xFF6C5CE7, {
           50: const Color(0xFFEDE8FF),
           100: const Color(0xFFD3C6FF),
@@ -31,21 +33,52 @@ class MyApp extends StatelessWidget {
           800: const Color(0xFF452E95),
           900: const Color(0xFF331B6F),
         }),
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF6C5CE7),
+        colorScheme: ColorScheme.dark(
+          surface: const Color(0xFF2D1B69),
           primary: const Color(0xFF6C5CE7),
           secondary: const Color(0xFF7ED321),
+          tertiary: const Color(0xFF9776EC),
+          onSurface: Colors.white,
+          onPrimary: Colors.white,
         ),
         appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFF6C5CE7),
           foregroundColor: Colors.white,
           centerTitle: true,
         ),
+        cardTheme: CardThemeData(
+          color: const Color(0xFF3D2B7A), // Lighter purple for cards with good contrast
+          elevation: 4,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF7ED321),
             foregroundColor: Colors.white,
           ),
+        ),
+        textTheme: const TextTheme(
+          bodyLarge: TextStyle(color: Colors.white),
+          bodyMedium: TextStyle(color: Colors.white),
+          bodySmall: TextStyle(color: Colors.white70),
+          titleLarge: TextStyle(color: Colors.white),
+          titleMedium: TextStyle(color: Colors.white),
+          titleSmall: TextStyle(color: Colors.white),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: const Color(0xFF3D2B7A),
+          hintStyle: const TextStyle(color: Colors.white60),
+          labelStyle: const TextStyle(color: Colors.white),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+        ),
+        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+          backgroundColor: Color(0xFF3D2B7A),
+          selectedItemColor: Color(0xFF7ED321),
+          unselectedItemColor: Colors.white60,
         ),
       ),
       home: const LoginScreen(),
@@ -239,6 +272,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             child: TextField(
                               controller: _usernameController,
+                              style: const TextStyle(color: Colors.black87),
                               decoration: const InputDecoration(
                                 hintText: 'Username',
                                 prefixIcon: Icon(Icons.person, color: Color(0xFF6C5CE7)),
@@ -271,6 +305,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: TextField(
                               controller: _passwordController,
                               obscureText: true,
+                              style: const TextStyle(color: Colors.black87),
                               decoration: const InputDecoration(
                                 hintText: 'Password',
                                 prefixIcon: Icon(Icons.lock, color: Color(0xFF6C5CE7)),
@@ -305,6 +340,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
+                                color: Colors.white,
                               ),
                             ),
                           ),
@@ -557,11 +593,15 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       // First Name Field
                       TextField(
                         controller: _firstNameController,
+                        style: const TextStyle(color: Colors.black87),
                         decoration: const InputDecoration(
                           hintText: 'First Name',
-                          prefixIcon: Icon(Icons.person),
+                          hintStyle: TextStyle(color: Colors.black54),
+                          prefixIcon: Icon(Icons.person, color: Color(0xFF6C5CE7)),
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          fillColor: Colors.white,
+                          filled: true,
                         ),
                         textInputAction: TextInputAction.next,
                         textCapitalization: TextCapitalization.words,
@@ -571,11 +611,15 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       // Last Name Field
                       TextField(
                         controller: _lastNameController,
+                        style: const TextStyle(color: Colors.black87),
                         decoration: const InputDecoration(
                           hintText: 'Last Name',
-                          prefixIcon: Icon(Icons.person_outline),
+                          hintStyle: TextStyle(color: Colors.black54),
+                          prefixIcon: Icon(Icons.person_outline, color: Color(0xFF6C5CE7)),
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          fillColor: Colors.white,
+                          filled: true,
                         ),
                         textInputAction: TextInputAction.next,
                         textCapitalization: TextCapitalization.words,
@@ -585,12 +629,17 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       // Email Field
                       TextField(
                         controller: _emailController,
+                        style: const TextStyle(color: Colors.black87),
                         decoration: const InputDecoration(
                           hintText: 'Email',
-                          prefixIcon: Icon(Icons.email),
+                          hintStyle: TextStyle(color: Colors.black54),
+                          prefixIcon: Icon(Icons.email, color: Color(0xFF6C5CE7)),
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                           helperText: 'We\'ll use this for account verification',
+                          helperStyle: TextStyle(color: Colors.black54),
+                          fillColor: Colors.white,
+                          filled: true,
                         ),
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.next,
@@ -600,12 +649,17 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       // Username Field
                       TextField(
                         controller: _usernameController,
+                        style: const TextStyle(color: Colors.black87),
                         decoration: const InputDecoration(
                           hintText: 'Username',
-                          prefixIcon: Icon(Icons.account_circle),
+                          hintStyle: TextStyle(color: Colors.black54),
+                          prefixIcon: Icon(Icons.account_circle, color: Color(0xFF6C5CE7)),
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                           helperText: 'This will be your login username',
+                          helperStyle: TextStyle(color: Colors.black54),
+                          fillColor: Colors.white,
+                          filled: true,
                         ),
                         textInputAction: TextInputAction.next,
                       ),
@@ -615,12 +669,17 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       TextField(
                         controller: _passwordController,
                         obscureText: true,
+                        style: const TextStyle(color: Colors.black87),
                         decoration: const InputDecoration(
                           hintText: 'Password',
-                          prefixIcon: Icon(Icons.lock),
+                          hintStyle: TextStyle(color: Colors.black54),
+                          prefixIcon: Icon(Icons.lock, color: Color(0xFF6C5CE7)),
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                           helperText: 'At least 6 characters',
+                          helperStyle: TextStyle(color: Colors.black54),
+                          fillColor: Colors.white,
+                          filled: true,
                         ),
                         textInputAction: TextInputAction.next,
                       ),
@@ -630,11 +689,15 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       TextField(
                         controller: _confirmPasswordController,
                         obscureText: true,
+                        style: const TextStyle(color: Colors.black87),
                         decoration: const InputDecoration(
                           hintText: 'Confirm Password',
-                          prefixIcon: Icon(Icons.lock_outline),
+                          hintStyle: TextStyle(color: Colors.black54),
+                          prefixIcon: Icon(Icons.lock_outline, color: Color(0xFF6C5CE7)),
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          fillColor: Colors.white,
+                          filled: true,
                         ),
                         textInputAction: TextInputAction.done,
                         onSubmitted: (_) => _handleRegistration(),
@@ -658,6 +721,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
+                            color: Colors.white,
                           ),
                         ),
                       ),
@@ -1075,39 +1139,60 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: () async {
                 final amount = double.tryParse(amountController.text);
                 if (amount != null && amount > 0) {
-                  Navigator.of(context).pop();
+                  // Capture navigator and messenger before closing dialog
+                  final dialogNavigator = Navigator.of(context);
+                  final messenger = ScaffoldMessenger.of(context);
                   
-                  // Show loading
+                  dialogNavigator.pop();
+                  
+                  // Show loading - capture the root navigator for closing later
                   if (!mounted) return;
+                  
+                  final rootNavigator = Navigator.of(context);
+                  
                   showDialog(
                     context: context,
                     barrierDismissible: false,
                     builder: (context) => const Center(child: CircularProgressIndicator()),
                   );
                   
-                  final result = await ApiService.addFunds(widget.userId, amount);
-                  
-                  // Always close loading dialog first, even if widget is unmounted
-                  Navigator.of(context).pop(); // Close loading
-                  
-                  if (!mounted) return;
-                  
-                  if (result['success'] == true) {
-                    // Reload full portfolio data to update all values
-                    await _loadPortfolioData();
-                    ScaffoldMessenger.of(context).showSnackBar(
+                  try {
+                    final result = await ApiService.addFunds(widget.userId, amount);
+                    
+                    if (result['success'] == true) {
+                      // Reload full portfolio data to update all values
+                      await _loadPortfolioData();
+                      
+                      if (!mounted) return;
+                      messenger.showSnackBar(
+                        SnackBar(
+                          content: Text(result['message'] ?? 'Funds added successfully!'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    } else {
+                      if (!mounted) return;
+                      messenger.showSnackBar(
+                        SnackBar(
+                          content: Text(result['error'] ?? 'Failed to add funds'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    print('Error in addFunds: $e');
+                    if (!mounted) return;
+                    messenger.showSnackBar(
                       SnackBar(
-                        content: Text(result['message'] ?? 'Funds added successfully!'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(result['error'] ?? 'Failed to add funds'),
+                        content: Text('Error: ${e.toString()}'),
                         backgroundColor: Colors.red,
                       ),
                     );
+                  } finally {
+                    // Always close loading dialog in finally block
+                    if (mounted) {
+                      rootNavigator.pop();
+                    }
                   }
                 }
               },
@@ -1154,8 +1239,15 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: () async {
                 final amount = double.tryParse(amountController.text);
                 if (amount != null && amount > 0) {
+                  // Capture navigator and messenger before any navigation
+                  final dialogNavigator = Navigator.of(context);
+                  final messenger = ScaffoldMessenger.of(context);
+                  
                   if (amount > _buyingPower) {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    dialogNavigator.pop(); // Close dialog first
+                    
+                    if (!mounted) return;
+                    messenger.showSnackBar(
                       const SnackBar(
                         content: Text('Cannot decrease more than current balance'),
                         backgroundColor: Colors.red,
@@ -1164,39 +1256,56 @@ class _HomeScreenState extends State<HomeScreen> {
                     return;
                   }
                   
-                  Navigator.of(context).pop();
+                  dialogNavigator.pop();
                   
-                  // Show loading
+                  // Show loading - capture the root navigator for closing later
                   if (!mounted) return;
+                  
+                  final rootNavigator = Navigator.of(context);
+                  
                   showDialog(
                     context: context,
                     barrierDismissible: false,
                     builder: (context) => const Center(child: CircularProgressIndicator()),
                   );
                   
-                  final result = await ApiService.decreaseFunds(widget.userId, amount);
-                  
-                  // Always close loading dialog first, even if widget is unmounted
-                  Navigator.of(context).pop(); // Close loading
-                  
-                  if (!mounted) return;
-                  
-                  if (result['success'] == true) {
-                    // Reload full portfolio data to update all values
-                    await _loadPortfolioData();
-                    ScaffoldMessenger.of(context).showSnackBar(
+                  try {
+                    final result = await ApiService.decreaseFunds(widget.userId, amount);
+                    
+                    if (result['success'] == true) {
+                      // Reload full portfolio data to update all values
+                      await _loadPortfolioData();
+                      
+                      if (!mounted) return;
+                      messenger.showSnackBar(
+                        SnackBar(
+                          content: Text('Successfully decreased buying power by \$${amount.toStringAsFixed(2)}'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    } else {
+                      if (!mounted) return;
+                      messenger.showSnackBar(
+                        SnackBar(
+                          content: Text(result['error'] ?? 'Failed to decrease funds'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    print('Error in decreaseFunds: $e');
+                    if (!mounted) return;
+                    messenger.showSnackBar(
                       SnackBar(
-                        content: Text('Successfully decreased buying power by \$${amount.toStringAsFixed(2)}'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(result['error'] ?? 'Failed to decrease funds'),
+                        content: Text('Error: ${e.toString()}'),
                         backgroundColor: Colors.red,
                       ),
                     );
+                  } finally {
+                    // Always close loading dialog in finally block
+                    if (mounted) {
+                      rootNavigator.pop();
+                    }
                   }
                 }
               },
@@ -1267,11 +1376,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         'Welcome back,',
                         style: TextStyle(
                           fontSize: 16,
-                          color: Colors.grey[600],
+                          color: Colors.white,
                         ),
                       ),
                       Text(
@@ -1279,7 +1388,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF6C5CE7),
+                          color: Colors.white,
                         ),
                       ),
                     ],
@@ -1869,14 +1978,14 @@ class _TradePageState extends State<TradePage> {
                       children: [
                         const Text(
                           'Available Cash',
-                          style: TextStyle(fontSize: 16, color: Color(0xFF6C5CE7)),
+                          style: TextStyle(fontSize: 16, color: Colors.white),
                         ),
                         Text(
                           '\$${_buyingPower.toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF6C5CE7),
+                            color: Colors.white,
                           ),
                         ),
                       ],
@@ -1890,29 +1999,50 @@ class _TradePageState extends State<TradePage> {
                         final stock = _availableStocks[index];
                         final holding = _userHoldings[stock.symbol];
                         final isPositive = stock.change >= 0;
-                        final color = isPositive ? Colors.green : Colors.red;
+                        final color = isPositive ? const Color(0xFF22C55E) : const Color(0xFFEF4444); // Darker green and bright red
 
-                        return Card(
+                        return Container(
                           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF6C5CE7), Color(0xFF9776EC)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF6C5CE7).withOpacity(0.3),
+                                blurRadius: 10,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
                           child: ListTile(
                             leading: CircleAvatar(
-                              backgroundColor: const Color(0xFF6C5CE7).withOpacity(0.1),
+                              backgroundColor: Colors.white.withOpacity(0.2),
                               child: Text(
                                 stock.symbol.substring(0, 2),
                                 style: const TextStyle(
-                                  color: Color(0xFF6C5CE7),
+                                  color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
                             title: Text(
                               stock.symbol,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(stock.name),
+                                Text(
+                                  stock.name,
+                                  style: TextStyle(color: Colors.white.withOpacity(0.8)),
+                                ),
                                 if (holding != null)
                                   Text(
                                     'Owned: ${holding['quantity'].toStringAsFixed(2)} shares',
@@ -1933,21 +2063,29 @@ class _TradePageState extends State<TradePage> {
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
+                                    color: Colors.white,
                                   ),
                                 ),
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      isPositive ? Icons.arrow_upward : Icons.arrow_downward,
-                                      color: color,
-                                      size: 16,
-                                    ),
-                                    Text(
-                                      '${isPositive ? '+' : ''}${stock.changePercent.toStringAsFixed(2)}%',
-                                      style: TextStyle(color: color, fontSize: 12),
-                                    ),
-                                  ],
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        isPositive ? Icons.arrow_upward : Icons.arrow_downward,
+                                        color: color,
+                                        size: 16,
+                                      ),
+                                      Text(
+                                        '${isPositive ? '+' : ''}${stock.changePercent.toStringAsFixed(2)}%',
+                                        style: TextStyle(color: color, fontSize: 12),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),
@@ -2083,7 +2221,11 @@ class _TradePageState extends State<TradePage> {
                   Navigator.of(context).pop();
                   await _executeBuy(stock, quantity);
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  final navigator = Navigator.of(context);
+                  final messenger = ScaffoldMessenger.of(context);
+                  navigator.pop();
+                  
+                  messenger.showSnackBar(
                     const SnackBar(
                       content: Text('Please enter a valid quantity'),
                       backgroundColor: Colors.red,
@@ -2147,7 +2289,11 @@ class _TradePageState extends State<TradePage> {
                   Navigator.of(context).pop();
                   await _executeSell(stock, holding, quantity);
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  final navigator = Navigator.of(context);
+                  final messenger = ScaffoldMessenger.of(context);
+                  navigator.pop();
+                  
+                  messenger.showSnackBar(
                     SnackBar(
                       content: Text('Please enter a valid quantity (1-${maxShares.toStringAsFixed(0)})'),
                       backgroundColor: Colors.red,
@@ -2165,6 +2311,10 @@ class _TradePageState extends State<TradePage> {
   }
 
   Future<void> _executeBuy(Stock stock, int quantity) async {
+    // Capture navigator and messenger before showing loading dialog
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    
     // Show loading
     showDialog(
       context: context,
@@ -2180,13 +2330,9 @@ class _TradePageState extends State<TradePage> {
         quantity,
       );
 
-      // Always close loading dialog first, even if widget is unmounted
-      Navigator.of(context).pop(); // Close loading
-      
-      if (!mounted) return;
-
       if (result['error'] == null || result['error'].toString().isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        if (!mounted) return;
+        messenger.showSnackBar(
           SnackBar(
             content: Text(result['message'] ?? 'Successfully bought $quantity shares of ${stock.symbol}'),
             backgroundColor: Colors.green,
@@ -2194,7 +2340,8 @@ class _TradePageState extends State<TradePage> {
         );
         await _loadData(); // Refresh data
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
+        if (!mounted) return;
+        messenger.showSnackBar(
           SnackBar(
             content: Text(result['error']),
             backgroundColor: Colors.red,
@@ -2202,21 +2349,27 @@ class _TradePageState extends State<TradePage> {
         );
       }
     } catch (e) {
-      // Always close loading dialog first, even if widget is unmounted
-      Navigator.of(context).pop(); // Close loading
-      
+      print('Error in _executeBuy: $e');
       if (!mounted) return;
-      
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
           content: Text('Error: $e'),
           backgroundColor: Colors.red,
         ),
       );
+    } finally {
+      // Always close loading dialog
+      if (mounted) {
+        navigator.pop();
+      }
     }
   }
 
   Future<void> _executeSell(Stock stock, dynamic holding, int quantity) async {
+    // Capture navigator and messenger before showing loading dialog
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    
     // Show loading
     showDialog(
       context: context,
@@ -2231,13 +2384,9 @@ class _TradePageState extends State<TradePage> {
         quantity,
       );
 
-      // Always close loading dialog first, even if widget is unmounted
-      Navigator.of(context).pop(); // Close loading
-      
-      if (!mounted) return;
-
       if (result['success'] == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        if (!mounted) return;
+        messenger.showSnackBar(
           SnackBar(
             content: Text(result['message'] ?? 'Successfully sold $quantity shares of ${stock.symbol}'),
             backgroundColor: Colors.green,
@@ -2245,7 +2394,8 @@ class _TradePageState extends State<TradePage> {
         );
         await _loadData(); // Refresh data
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
+        if (!mounted) return;
+        messenger.showSnackBar(
           SnackBar(
             content: Text(result['error'] ?? 'Failed to sell stock'),
             backgroundColor: Colors.red,
@@ -2253,21 +2403,27 @@ class _TradePageState extends State<TradePage> {
         );
       }
     } catch (e) {
-      // Always close loading dialog first, even if widget is unmounted
-      Navigator.of(context).pop(); // Close loading
-      
+      print('Error in _executeSell: $e');
       if (!mounted) return;
-      
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
           content: Text('Error: $e'),
           backgroundColor: Colors.red,
         ),
       );
+    } finally {
+      // Always close loading dialog
+      if (mounted) {
+        navigator.pop();
+      }
     }
   }
 
   Future<void> _executeSellAll(Stock stock, dynamic holding) async {
+    // Capture navigator and messenger before showing loading dialog
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    
     // Show loading
     showDialog(
       context: context,
@@ -2281,13 +2437,9 @@ class _TradePageState extends State<TradePage> {
         stock.symbol,
       );
 
-      // Always close loading dialog first, even if widget is unmounted
-      Navigator.of(context).pop(); // Close loading
-      
-      if (!mounted) return;
-
       if (result['success'] == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        if (!mounted) return;
+        messenger.showSnackBar(
           SnackBar(
             content: Text(result['message'] ?? 'Successfully sold all shares of ${stock.symbol}'),
             backgroundColor: Colors.green,
@@ -2295,7 +2447,8 @@ class _TradePageState extends State<TradePage> {
         );
         await _loadData(); // Refresh data
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
+        if (!mounted) return;
+        messenger.showSnackBar(
           SnackBar(
             content: Text(result['error'] ?? 'Failed to sell stock'),
             backgroundColor: Colors.red,
@@ -2303,17 +2456,19 @@ class _TradePageState extends State<TradePage> {
         );
       }
     } catch (e) {
-      // Always close loading dialog first, even if widget is unmounted
-      Navigator.of(context).pop(); // Close loading
-      
+      print('Error in _executeSellAll: $e');
       if (!mounted) return;
-      
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
           content: Text('Error: $e'),
           backgroundColor: Colors.red,
         ),
       );
+    } finally {
+      // Always close loading dialog
+      if (mounted) {
+        navigator.pop();
+      }
     }
   }
 }
@@ -2463,12 +2618,12 @@ class PortfolioChartPainter extends CustomPainter {
     if (points.isEmpty) return;
 
     final paint = Paint()
-      ..color = Colors.blue
+      ..color = const Color(0xFF7ED321)
       ..strokeWidth = 2.0
       ..style = PaintingStyle.stroke;
 
     final fillPaint = Paint()
-      ..color = Colors.blue.withOpacity(0.1)
+      ..color = const Color(0xFF7ED321).withOpacity(0.2)
       ..style = PaintingStyle.fill;
 
     final path = Path();
@@ -2501,7 +2656,7 @@ class PortfolioChartPainter extends CustomPainter {
 
     // Draw points
     final pointPaint = Paint()
-      ..color = Colors.blue
+      ..color = const Color(0xFF7ED321)
       ..style = PaintingStyle.fill;
 
     for (int i = 0; i < points.length; i++) {
@@ -2633,16 +2788,21 @@ class _PortfolioChartState extends State<PortfolioChart> {
     final change = currentValue - firstValue;
     final changePercent = firstValue > 0 ? (change / firstValue) * 100 : 0;
     final isPositive = change >= 0;
+    final color = isPositive ? const Color(0xFF22C55E) : const Color(0xFFEF4444); // Darker green and bright red
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        gradient: const LinearGradient(
+          colors: [Color(0xFF6C5CE7), Color(0xFF9776EC)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: const Color(0xFF6C5CE7).withOpacity(0.3),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -2662,7 +2822,7 @@ class _PortfolioChartState extends State<PortfolioChart> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
-                      color: Colors.black87,
+                      color: Colors.white,
                     ),
                   ),
                   Text(
@@ -2670,7 +2830,7 @@ class _PortfolioChartState extends State<PortfolioChart> {
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                      color: Colors.white,
                     ),
                   ),
                 ],
@@ -2678,27 +2838,44 @@ class _PortfolioChartState extends State<PortfolioChart> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Row(
-                    children: [
-                      Icon(
-                        isPositive ? Icons.trending_up : Icons.trending_down,
-                        color: isPositive ? Colors.green : Colors.red,
-                        size: 20,
-                      ),
-                      Text(
-                        '${isPositive ? '+' : ''}\$${change.abs().toStringAsFixed(2)}',
-                        style: TextStyle(
-                          color: isPositive ? Colors.green : Colors.red,
-                          fontWeight: FontWeight.bold,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          isPositive ? Icons.trending_up : Icons.trending_down,
+                          color: color,
+                          size: 20,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 4),
+                        Text(
+                          '${isPositive ? '+' : ''}\$${change.abs().toStringAsFixed(2)}',
+                          style: TextStyle(
+                            color: color,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  Text(
-                    '${isPositive ? '+' : ''}${changePercent.toStringAsFixed(2)}%',
-                    style: TextStyle(
-                      color: isPositive ? Colors.green : Colors.red,
-                      fontSize: 12,
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '${isPositive ? '+' : ''}${changePercent.toStringAsFixed(2)}%',
+                      style: TextStyle(
+                        color: color,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ],
@@ -2722,19 +2899,17 @@ class _PortfolioChartState extends State<PortfolioChart> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                _history.length > 1 
-                    ? _formatDate(_history.first.timestamp)
-                    : 'Today',
-                style: const TextStyle(
+                'Start',
+                style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey,
+                  color: Colors.white.withOpacity(0.7),
                 ),
               ),
               Text(
                 'Now',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey,
+                  color: Colors.white.withOpacity(0.7),
                 ),
               ),
             ],
@@ -2742,21 +2917,6 @@ class _PortfolioChartState extends State<PortfolioChart> {
         ],
       ),
     );
-  }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date).inDays;
-    
-    if (difference == 0) {
-      return 'Today';
-    } else if (difference == 1) {
-      return 'Yesterday';
-    } else if (difference < 7) {
-      return '${difference}d ago';
-    } else {
-      return '${(difference / 7).round()}w ago';
-    }
   }
 }
 
@@ -3159,19 +3319,22 @@ class _StockDetailPageState extends State<StockDetailPage> {
               onPressed: () async {
                 final amount = double.tryParse(amountController.text);
                 if (amount != null && amount > 0) {
+                  final navigator = Navigator.of(context);
+                  final messenger = ScaffoldMessenger.of(context);
+                  
                   final success = await PortfolioManager.buyStock(widget.stock, amount);
-                  Navigator.of(context).pop();
+                  navigator.pop();
                   
                   if (success) {
                     final shares = amount / widget.stock.price;
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       SnackBar(
                         content: Text('Successfully bought ${shares.toStringAsFixed(4)} shares of ${widget.stock.symbol} for \$${amount.toStringAsFixed(2)}'),
                         backgroundColor: Colors.green,
                       ),
                     );
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       const SnackBar(
                         content: Text('Insufficient buying power'),
                         backgroundColor: Colors.red,
@@ -3224,19 +3387,22 @@ class _StockDetailPageState extends State<StockDetailPage> {
               onPressed: () async {
                 final amount = double.tryParse(amountController.text);
                 if (amount != null && amount > 0) {
+                  final navigator = Navigator.of(context);
+                  final messenger = ScaffoldMessenger.of(context);
+                  
                   final success = await PortfolioManager.sellStock(widget.stock, amount);
-                  Navigator.of(context).pop();
+                  navigator.pop();
                   
                   if (success) {
                     final shares = amount / widget.stock.price;
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       SnackBar(
                         content: Text('Successfully sold ${shares.toStringAsFixed(4)} shares of ${widget.stock.symbol} for \$${amount.toStringAsFixed(2)}'),
                         backgroundColor: Colors.green,
                       ),
                     );
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       const SnackBar(
                         content: Text('Insufficient shares to sell'),
                         backgroundColor: Colors.red,
@@ -3596,87 +3762,117 @@ class _PortfolioPageState extends State<PortfolioPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Portfolio Summary
-                    Card(
-                      elevation: 4,
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Portfolio Summary',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF6C5CE7), Color(0xFF9776EC)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF6C5CE7).withOpacity(0.3),
+                            blurRadius: 10,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Portfolio Summary',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
                             ),
-                            const SizedBox(height: 15),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Total Value',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey,
-                                      ),
+                          ),
+                          const SizedBox(height: 15),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Total Value',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.white.withOpacity(0.8),
                                     ),
-                                    Text(
-                                      '\$${_totalPortfolioValue.toStringAsFixed(2)}',
-                                      style: const TextStyle(
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                  ),
+                                  Text(
+                                    '\$${_totalPortfolioValue.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
                                     ),
-                                  ],
-                                ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    const Text(
-                                      'Total Gain/Loss',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey,
-                                      ),
+                                  ),
+                                ],
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    'Total Gain/Loss',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.white.withOpacity(0.8),
                                     ),
-                                    Text(
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
                                       '${_totalGain >= 0 ? '+' : ''}\$${_totalGain.toStringAsFixed(2)} (${_totalGainPercent >= 0 ? '+' : ''}${_totalGainPercent.toStringAsFixed(2)}%)',
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
-                                        color: _totalGain >= 0 ? Colors.green : Colors.red,
+                                        color: _totalGain >= 0 ? const Color(0xFF22C55E) : const Color(0xFFEF4444),
                                       ),
                                     ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 15),
-                            Row(
-                              children: [
-                                const Text(
-                                  'Buying Power: ',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.grey,
                                   ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 15),
+                          Row(
+                            children: [
+                              Text(
+                                'Buying Power: ',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white.withOpacity(0.8),
                                 ),
-                                Text(
-                                  '\$${_buyingPower.toStringAsFixed(2)}',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF7ED321),
-                                  ),
+                              ),
+                              const Text(
+                                '\$',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
                                 ),
-                              ],
-                            ),
-                          ],
-                        ),
+                              ),
+                              Text(
+                                _buyingPower.toStringAsFixed(2),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -3752,11 +3948,25 @@ class _PortfolioPageState extends State<PortfolioPage> {
     final purchasePrice = (holding['purchasePrice'] ?? 0).toDouble();
     
     final isPositive = gain >= 0;
-    final color = isPositive ? Colors.green : Colors.red;
+    final color = isPositive ? const Color(0xFF22C55E) : const Color(0xFFEF4444); // Darker green and bright red
     
-    return Card(
-      elevation: 2,
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF6C5CE7), Color(0xFF9776EC)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF6C5CE7).withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -3773,13 +3983,14 @@ class _PortfolioPageState extends State<PortfolioPage> {
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
                     ),
                     Text(
                       name,
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.grey.shade600,
+                        color: Colors.white.withOpacity(0.8),
                       ),
                     ),
                   ],
@@ -3792,25 +4003,33 @@ class _PortfolioPageState extends State<PortfolioPage> {
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
                     ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          isPositive ? Icons.arrow_upward : Icons.arrow_downward,
-                          color: color,
-                          size: 16,
-                        ),
-                        Text(
-                          '${isPositive ? '+' : ''}\$${gain.toStringAsFixed(2)} (${isPositive ? '+' : ''}${gainPercent.toStringAsFixed(2)}%)',
-                          style: TextStyle(
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isPositive ? Icons.arrow_upward : Icons.arrow_downward,
                             color: color,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
+                            size: 16,
                           ),
-                        ),
-                      ],
+                          Text(
+                            '${isPositive ? '+' : ''}\$${gain.toStringAsFixed(2)} (${isPositive ? '+' : ''}${gainPercent.toStringAsFixed(2)}%)',
+                            style: TextStyle(
+                              color: color,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -3824,21 +4043,21 @@ class _PortfolioPageState extends State<PortfolioPage> {
                   'Shares: ${quantity.toStringAsFixed(2)}',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey.shade600,
+                    color: Colors.white.withOpacity(0.8),
                   ),
                 ),
                 Text(
                   'Avg Cost: \$${purchasePrice.toStringAsFixed(2)}',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey.shade600,
+                    color: Colors.white.withOpacity(0.8),
                   ),
                 ),
                 Text(
                   'Current: \$${currentPrice.toStringAsFixed(2)}',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey.shade600,
+                    color: Colors.white.withOpacity(0.8),
                   ),
                 ),
               ],
