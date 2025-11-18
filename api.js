@@ -31,7 +31,7 @@ module.exports = function (client) {
             Password: password
         }).toArray();
 
-        console.log('Found users:', results.length); // ← Add this
+        console.log('Found users:', results.length);
         console.log('Results:', results);
 
         if (results.length > 0) {
@@ -51,7 +51,7 @@ module.exports = function (client) {
                 lastName: user.LastName,
                 email: user.Email,
                 login: user.Login,
-                token: token, // ← Add this!
+                token: token,
                 error: ''
             });
         } else {
@@ -1695,7 +1695,6 @@ router.get('/overview/:symbol', async (req, res) => {
         console.log(`📊 Result received:`, result ? 'Yes' : 'No');
         
         if (!result || !result.quotes || result.quotes.length === 0) {
-            console.error('❌ No quotes data in result');
             throw new Error('No data returned from Yahoo Finance');
         }
         
@@ -1708,14 +1707,12 @@ router.get('/overview/:symbol', async (req, res) => {
             volume: item.volume
         }));
         
-        console.log(`✅ Successfully fetched ${chartData.length} data points for ${symbol}`);
         
         res.status(200).json({
             data: chartData,
             error: ''
         });
     } catch (error) {
-        console.error('❌ Stock history error for', symbol, ':', error);
         res.status(500).json({
             data: [],
             error: `Failed to fetch stock history: ${error.message}`
