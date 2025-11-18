@@ -35,7 +35,7 @@ const VerifyEmailPage = () => {
                     
                     // Redirect to dashboard after 2 seconds
                     setTimeout(() => {
-                        navigate('/dashboard');
+                        navigate('/DashboardPage');
                     }, 2000);
                 } else {
                     setMessage(`Verification failed: ${data.error}`);
