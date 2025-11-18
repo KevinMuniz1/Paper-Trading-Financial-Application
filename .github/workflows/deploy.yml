@@ -32,8 +32,9 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           port: ${{ secrets.SERVER_PORT }}
-          source: "server.js,package.json,package-lock.json,config.js,api.js,services/**"
+          source: "package.json,package-lock.json,server.js,config.js,api.js,services/**"
           target: "/var/paperTradeServer"
+          exclude: "frontend/**"
           strip_components: 0
 
       - name: Clear old frontend files
