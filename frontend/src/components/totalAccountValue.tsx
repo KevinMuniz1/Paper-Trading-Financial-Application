@@ -1,6 +1,6 @@
 
 
-import { usePortfolio } from '../context/PortfolioContext';
+import { usePortfolio } from '../../context/PortfolioContext';
 import "./DashboardPage.css";
 
 function AccountValue(){
