@@ -68,17 +68,21 @@ connectDB();
 const createApiRouter = require('./api.js');
 const apiRouter = createApiRouter(client);
 
-// Mount the API routes on the /api path
+// Mount the API routes on the /api path FIRST (before the catch-all)
 app.use('/api', apiRouter);
 
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, 'frontend/dist')));
 
-
 // The "catchall" handler: for any request that doesn't match one above,
 // send back React's index.html file.
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'frontend/dist/index.html'));
+  const indexPath = path.join(__dirname, 'frontend/dist/index.html');
+  if (require('fs').existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(404).json({ error: 'Frontend build not found. Run npm run build in frontend directory.' });
+  }
 });
 
 // Only serve static files in production
