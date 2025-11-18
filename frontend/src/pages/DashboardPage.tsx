@@ -12,6 +12,7 @@ import { buildPath } from '../../Path';
 
 const DashboardPage = () => {
   const [isCardVisible, setIsCardVisible] = useState(false);
+  
 
   function toggleBuyingPowerCard() {
     setIsCardVisible(!isCardVisible);

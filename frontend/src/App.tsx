@@ -10,6 +10,7 @@ import AccountSettingsPage from "./pages/AccountSettingsPage";
 import ForgotPasswordPage from './pages/forgot-password';
 import ResetPasswordPage from './pages/reset-password';
 import DisplayStockPage from "./pages/StockPage";
+import { PortfolioProvider } from './context/PortfolioContext'; // Add this import
 
 function AppContent() {
   const location = useLocation();
@@ -38,7 +39,9 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-500 via-green-600 to-black m-0 p-0">
       <BrowserRouter>
-        <AppContent />
+        <PortfolioProvider> {/* Wrap AppContent with PortfolioProvider */}
+          <AppContent />
+        </PortfolioProvider> {/* Close the provider */}
       </BrowserRouter>
     </div>
   );
