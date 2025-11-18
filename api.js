@@ -386,7 +386,7 @@ module.exports = function (client) {
             const result = await db.collection('Portfolio').updateOne(
                 { userId: parseInt(userId) },
                 { 
-                    $inc: { buyingPower: addAmount },
+                    $inc: { buyingPower: addAmount, totalPortfolioValue: addAmount },
                     $set: { lastUpdated: new Date() }
                 }
             );
@@ -409,7 +409,7 @@ module.exports = function (client) {
                 success: true, 
                 error: error,
                 newBalance: updatedPortfolio.buyingPower,
-                message: `Successfully ${addAmount > 0 ? 'added' : 'decreased'} $${absAmount.toFixed(2)} ${addAmount > 0 ? 'to' : 'from'} your account. New balance: $${updatedPortfolio.buyingPower.toFixed(2)}`
+                message: `Successfully ${addAmount > 0 ? 'added' : 'decreased'} $${absAmount.toFixed(2)} ${addAmount > 0 ? 'to' : 'from'} your account. New balance: $${updatedPortfolio.buyingPower.toFixed(2)}. new portfolio value: $${updatedPortfolio.totalPortfolioValue.toFixed(2)} `
             };
             res.status(200).json(ret);
 
@@ -421,8 +421,8 @@ module.exports = function (client) {
         }
     });
 
-    // ADD TRADES CARD 
-    router.post('/addcard', async (req, res, next) => {
+    // ADD TRADE/STOCK 
+    router.post('/addstock', async (req, res, next) => {
         const { userId, cardName, tickerSymbol, quantity = 1 } = req.body;
         var error = '';
 
@@ -511,14 +511,14 @@ module.exports = function (client) {
         }
         catch (e) {
             error = e.toString();
-            console.error('Add card error:', e);
+            console.error('Add stock error:', e);
             var ret = { error: error };
             res.status(200).json(ret);
         }
     });
 
-    // SEARCH TRADES CARDS
-    router.post('/searchcards', async (req, res, next) => {
+    // SEARCH TRADES/STOCKS
+    router.post('/searchstocks', async (req, res, next) => {
         // incoming: userId, search
         // outgoing: results[], error
         var error = '';
@@ -585,7 +585,7 @@ module.exports = function (client) {
 
         } catch (e) {
             error = e.toString();
-            console.error('Search cards error:', e);
+            console.error('Search trades error:', e);
             var ret = { 
                 results: [], 
                 error: error 
@@ -1602,7 +1602,7 @@ router.get('/overview/:symbol', async (req, res) => {
                 });
             }
             
-            // Delete user's trades/cards first
+            // Delete user's trades/stocks first
             await db.collection('Trades').deleteMany({ userId: parseInt(userId) });
             
             // Delete user

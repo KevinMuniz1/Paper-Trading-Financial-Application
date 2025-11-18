@@ -4,9 +4,10 @@
     "description": "",
     "main": "server.js",
     "scripts": {
-        "test": "jest",
-        "start": "nodemon server.js",
-        "test:watch": "jest --watch"
+      "start": "nodemon server.js",
+      "test": "npm run test:website && npm run test:mobile",
+      "test:website": "jest --testPathPattern=tests/website --verbose",
+      "test:mobile": "jest --testPathPattern=tests/mobile --verbose"
     },
     "author": "",
     "license": "ISC",
