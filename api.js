@@ -1801,7 +1801,6 @@ router.post('/portfolio/performance', async (req, res) => {
 
         const db = client.db('Finance-app');
         
-        // Get all user trades
         const trades = await db.collection('Trades')
             .find({ userId: parseInt(userId) })
             .toArray();
@@ -1810,14 +1809,11 @@ router.post('/portfolio/performance', async (req, res) => {
             return res.status(200).json({ performance: [], error: 'No holdings found' });
         }
 
-        // Get portfolio for buying power
         const portfolio = await db.collection('Portfolio').findOne({ userId: parseInt(userId) });
         const buyingPower = portfolio ? portfolio.buyingPower : 0;
 
-        // Get unique symbols
         const symbols = [...new Set(trades.map(t => t.tickerSymbol))];
         
-        // Determine date range and interval based on period
         const endDate = new Date();
         const startDate = new Date();
         let interval = '5m';
@@ -1849,7 +1845,6 @@ router.post('/portfolio/performance', async (req, res) => {
                 interval = '1d';
                 break;
             case 'all':
-                // Find earliest trade
                 const earliestTrade = trades.reduce((earliest, trade) => 
                     new Date(trade.purchaseDate) < new Date(earliest.purchaseDate) ? trade : earliest
                 );
@@ -1863,7 +1858,6 @@ router.post('/portfolio/performance', async (req, res) => {
 
         console.log(`Fetching ${period} performance for ${symbols.length} symbols...`);
 
-        // Fetch historical prices for all symbols
         const symbolHistoricalData = {};
         for (const symbol of symbols) {
             try {
@@ -1881,7 +1875,6 @@ router.post('/portfolio/performance', async (req, res) => {
             }
         }
 
-        // Find all unique timestamps across all stocks
         const timestampSet = new Set();
         Object.values(symbolHistoricalData).forEach(quotes => {
             quotes.forEach(quote => {
@@ -1891,30 +1884,34 @@ router.post('/portfolio/performance', async (req, res) => {
 
         const sortedTimestamps = Array.from(timestampSet).sort((a, b) => a - b);
 
-        // Calculate portfolio value at each timestamp
         const performanceData = sortedTimestamps.map(timestamp => {
             const date = new Date(timestamp);
             let totalStockValue = 0;
             let totalInvested = 0;
 
-            // For each trade
             trades.forEach(trade => {
-                // Only include if trade was purchased before this timestamp
-                if (new Date(trade.purchaseDate) <= date) {
+                const tradePurchaseDate = new Date(trade.purchaseDate);
+                
+                // ✅ KEY FIX: Only include if trade was purchased BEFORE this timestamp
+                if (tradePurchaseDate <= date) {
                     totalInvested += trade.totalCost;
 
-                    // Find the price at this timestamp for this symbol
                     const symbolQuotes = symbolHistoricalData[trade.tickerSymbol];
                     if (symbolQuotes) {
-                        // Find the closest quote to this timestamp
-                        const quote = symbolQuotes.reduce((closest, current) => {
-                            const currentDiff = Math.abs(current.date.getTime() - timestamp);
-                            const closestDiff = Math.abs(closest.date.getTime() - timestamp);
-                            return currentDiff < closestDiff ? current : closest;
-                        });
+                        // ✅ KEY FIX: Only use quotes from AFTER the purchase date
+                        const validQuotes = symbolQuotes.filter(q => q.date >= tradePurchaseDate);
+                        
+                        if (validQuotes.length > 0) {
+                            // Find the closest quote to this timestamp
+                            const quote = validQuotes.reduce((closest, current) => {
+                                const currentDiff = Math.abs(current.date.getTime() - timestamp);
+                                const closestDiff = Math.abs(closest.date.getTime() - timestamp);
+                                return currentDiff < closestDiff ? current : closest;
+                            });
 
-                        if (quote) {
-                            totalStockValue += quote.close * trade.quantity;
+                            if (quote) {
+                                totalStockValue += quote.close * trade.quantity;
+                            }
                         }
                     }
                 }

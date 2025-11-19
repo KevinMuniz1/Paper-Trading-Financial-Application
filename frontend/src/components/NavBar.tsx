@@ -31,7 +31,6 @@ const NavBar = () => {
 
   const notifications = [
     "AAPL up 2.5% today",
-    "BTC dropped 1.2%",
     "Market news available",
     "Portfolio +4.3% this week",
   ];
