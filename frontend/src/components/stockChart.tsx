@@ -59,15 +59,15 @@ const SplineArea = ({ symbol }: StockChartProps) => {
   useEffect(() => {
     fetchStockHistory(symbol, selectedPeriod, true);
     fetchCurrentPrice(symbol);
-    
+
     // Auto-refresh every 5 seconds for real-time price updates
     const interval = setInterval(() => {
       fetchCurrentPrice(symbol);
       fetchStockHistory(symbol, selectedPeriod, false); // Silent refresh
     }, 5000);
-    
+
     return () => clearInterval(interval);
-  }, [symbol]);
+  }, [symbol, selectedPeriod]);
 
   const fetchCurrentPrice = async (ticker: string) => {
     try {
