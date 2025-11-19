@@ -440,13 +440,23 @@ module.exports = function (client) {
 
             const totalCost = currentPrice * quantity;
 
-            // check buying power
-            const portfolio = await db.collection('Portfolio').findOne({ userId: parseInt(userId) });
+            // check buying power - create portfolio if doesn't exist
+            let portfolio = await db.collection('Portfolio').findOne({ userId: parseInt(userId) });
             if (!portfolio) {
-                error = 'Portfolio not found';
-                var ret = { error: error };
-                res.status(200).json(ret);
-                return;
+                // Create a new portfolio for this user
+                const newPortfolio = {
+                    userId: parseInt(userId),
+                    buyingPower: parseFloat(0.00),
+                    totalPortfolioValue: parseFloat(0.00),
+                    totalInvested: parseFloat(0.00),
+                    totalGain: parseFloat(0.00),
+                    totalGainPercent: parseFloat(0.00),
+                    lastUpdated: new Date(),
+                    createdAt: new Date()
+                };
+                await db.collection('Portfolio').insertOne(newPortfolio);
+                portfolio = newPortfolio;
+                console.log(`Created portfolio for user ${userId}`);
             }
 
             if (portfolio.buyingPower < totalCost) {
