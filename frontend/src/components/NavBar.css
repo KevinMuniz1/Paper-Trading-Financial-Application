@@ -221,41 +221,57 @@
 .watchlist-container {
   width: 100%;
   height: 100%;
-  padding: 24px;
+  padding: 0;
   overflow-y: scroll;
   scrollbar-width: none;
   font-family: system-ui, -apple-system, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .watchlist-title {
   font-size: 24px;
   font-weight: 600;
-  margin-bottom: 24px;
+  margin: 16px 0 20px 0;
   color: #000000;
+  text-align: center;
+  width: 100%;
 }
 
 .watchlist-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  width: 100%;
+  align-items: center;
+  padding: 0 20px 20px 20px;
 }
 
 .watchlist-item {
-  background-color: #252547;
-  border-radius: 8px;
-  padding: 16px;
+  background-color: #4054a5;
+  border-radius: 10px;
+  padding: 12px 14px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
+  width: calc(100% - 24px);
+  max-width: calc(100% - 24px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  margin: 0 auto;
 }
 
 .watchlist-item:hover {
-  background-color: rgb(84, 100, 249);  /* blue hover */
+  background-color: #4e67c1;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
 }
 
 .watchlist-item-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
+  gap: 12px;
 }
 
 .holdings-stock-symbol,

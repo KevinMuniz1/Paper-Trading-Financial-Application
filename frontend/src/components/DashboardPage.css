@@ -757,6 +757,7 @@ a[href*="tradingview.com"] {
 }
 
 .watchlist-item:hover {
-  background: #f5f5f5;
-  transform: translateX(3px);
+  background-color: #4e67c1;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
 }
