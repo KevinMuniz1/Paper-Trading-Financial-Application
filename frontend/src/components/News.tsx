@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { buildPath } from '../../Path';
+import NavBar from './NavBar';
+import "./DashboardPage.css";
 import './News.css';
 
 interface Article {
@@ -109,7 +111,10 @@ const News = () => {
 
     return (
         <div className="news-page">
+            <div className='logo-navigation-combo'>
             <h1 className="page-heading">News</h1>
+            <NavBar />
+            </div>
             <div className="news-container">
                 <div className="articles-grid">
                     {articles.map((article, index) => (

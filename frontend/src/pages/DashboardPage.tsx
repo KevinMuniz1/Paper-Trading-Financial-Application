@@ -6,7 +6,6 @@ import '../components/DashboardPage.css';
 import '../components/NavBar.css';
 import PortfolioChartAdvanced from '../components/portfolioChart';
 import BuyingPowerButton from '../components/buyingPowerButton';
-import AccountValue from '../components/totalAccountValue';
 import BuyingPowerCard from '../components/CardAddBuyingPower';
 import { useAuth } from '../context/AuthContext';
 
@@ -38,9 +37,6 @@ const DashboardPage = () => {
         )}
         
         <div className="left-panel">
-          <div>
-            <AccountValue />
-          </div>
           
           {/* Portfolio Chart - displays historical portfolio performance */}
           {userId ? (

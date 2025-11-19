@@ -57,10 +57,10 @@ export default function WatchListBar() {
   useEffect(() => {
     fetchHoldings();
 
-    // Auto-refresh every 30 seconds
+    // Auto-refresh every 5 seconds
     intervalRef.current = setInterval(() => {
       fetchHoldings();
-    }, 30000);
+    }, 5000);
 
     // Listen for manual refresh events
     const handler = () => fetchHoldings();

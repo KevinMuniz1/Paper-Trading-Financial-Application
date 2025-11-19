@@ -4,7 +4,6 @@ import WatchListBar from '../components/watchListBar';
 import '../components/DashboardPage.css';
 import '../components/NavBar.css';
 import StockChart from '../components/stockChart';
-import AccountValue from '../components/totalAccountValue';
 import { useEffect, useState } from "react";
 import { useParams } from 'react-router-dom';
 import { buildPath } from '../../Path';
@@ -122,7 +121,6 @@ const DisplayStockPage = () => {
             MAIN LEFT PANEL
         ----------------------------- */}
         <div className="left-panel">
-          <AccountValue />
 
           <StockChart symbol={symbol || ""} />
 
