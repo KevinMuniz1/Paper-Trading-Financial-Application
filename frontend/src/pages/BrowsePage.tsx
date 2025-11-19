@@ -100,31 +100,31 @@ const BrowsePage = () => {
 
     const getTickerColor = (ticker: string) => {
         const colorMap: Record<string, string> = {
-            AAPL: '#000000',
-            MSFT: '#00A4EF',
-            GOOGL: '#4285F4',
-            AMZN: '#FF9900',
-            NVDA: '#76B900',
-            META: '#0866FF',
-            TSLA: '#E82127',
-            JPM: '#117ACA',
-            V: '#1A1F71',
-            MA: '#EB001B',
-            NFLX: '#E50914',
-            DIS: '#113CCF',
-            SBUX: '#00704A',
-            NKE: '#000000',
-            MCD: '#FFC72C',
-            KO: '#F40009',
-            PEP: '#004B93',
-            AMD: '#ED1C24',
-            INTC: '#0071C5',
-            PYPL: '#003087',
-            UBER: '#000000',
-            ABNB: '#FF5A5F',
-            COIN: '#0052FF',
-            WMT: '#0071CE',
-            COST: '#0D6EFD',
+            AAPL: '#1a1a1a',
+            MSFT: '#0066cc',
+            GOOGL: '#1a5cc8',
+            AMZN: '#854301ff',
+            NVDA: '#426603ff',
+            META: '#0052ff',
+            TSLA: '#cc0000',
+            JPM: '#003d99',
+            V: '#0a1f5c',
+            MA: '#b30000',
+            NFLX: '#cc0000',
+            DIS: '#004d9e',
+            SBUX: '#003d1a',
+            NKE: '#1a1a1a',
+            MCD: '#cc6600',
+            KO: '#b30000',
+            PEP: '#00264d',
+            AMD: '#cc0000',
+            INTC: '#0052cc',
+            PYPL: '#000f4d',
+            UBER: '#1a1a1a',
+            ABNB: '#ff0000',
+            COIN: '#0033ff',
+            WMT: '#0052cc',
+            COST: '#0052cc',
         };
         return colorMap[ticker] || '#1a7221';
     };
@@ -172,13 +172,14 @@ const BrowsePage = () => {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
-                    <button type="submit" className="search-button">
+                    <button type="submit" className="search-button" aria-label="Search for stocks">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
                              stroke="currentColor" strokeWidth="2"
                              strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="11" cy="11" r="8" />
                             <path d="m21 21-4.35-4.35" />
                         </svg>
+                        <span>Search</span>
                     </button>
                 </form>
 
