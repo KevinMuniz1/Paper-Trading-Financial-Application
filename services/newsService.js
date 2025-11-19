@@ -136,20 +136,23 @@ class NewsService {
     const headers = { 'X-Api-Key': this.API_KEY };
     const pageSize = 50;
     const all = [];
+    console.log('[NEWS] _fetchHeadlinesFallback: Using API key:', this.API_KEY.substring(0, 5) + '...');
     for (let page = 1; page <= this.MAX_PAGES_HEADLINES; page++) {
       const params = { category: 'business', country: 'us', pageSize, page };
       try {
         const r = await axios.get(this.TOP_HEADLINES_URL, { params, headers });
         const items = r.data?.articles || [];
         all.push(...items.map(a => this._norm(a)));
+        console.log('[NEWS] _fetchHeadlinesFallback page', page, ':', items.length, 'articles');
         if (items.length < pageSize) break;
       } catch (err) {
         const msg = err.response?.data?.message || err.message;
         const status = err.response?.data?.status || err.response?.status;
-        console.error('NewsAPI headlines error (page', page, '):', status, msg);
+        console.error('[NEWS] _fetchHeadlinesFallback error (page', page, '):', status, msg);
         break;
       }
     }
+    console.log('[NEWS] _fetchHeadlinesFallback total:', all.length, 'articles');
     return all;
   }
 

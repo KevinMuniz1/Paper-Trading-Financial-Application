@@ -584,7 +584,11 @@ router.post('/addstock', async (req, res, next) => {
 
             // Get current prices for all symbols in search results
             const symbols = [...new Set(trades.map(trade => trade.tickerSymbol))];
-            const currentPrices = await stockService.getMultiplePrices(symbols);
+            const multiPrices = await stockService.getMultiplePrices(symbols);
+            const currentPrices = multiPrices.prices ? multiPrices.prices : multiPrices;
+            if (multiPrices.warnings && multiPrices.warnings.length) {
+                error = multiPrices.warnings.join('; ');
+            }
 
             // Format results with detailed information including quantities
             var _ret = [];
@@ -1211,7 +1215,11 @@ router.post('/addstock', async (req, res, next) => {
 
             // Get current prices for all watchlist items
             const symbols = watchlistItems.map(item => item.symbol);
-            const currentPrices = await stockService.getMultiplePrices(symbols);
+            const multiPrices = await stockService.getMultiplePrices(symbols);
+            const currentPrices = multiPrices.prices ? multiPrices.prices : multiPrices;
+            if (multiPrices.warnings && multiPrices.warnings.length) {
+                error = multiPrices.warnings.join('; ');
+            }
 
             // Update watchlist with current prices and calculate changes
             const updatedWatchlist = watchlistItems.map(item => {
@@ -1298,10 +1306,12 @@ router.post('/addstock', async (req, res, next) => {
 
         try {
             const result = await topMoversService.getTopMovers();
+            // result may include meta information if fallback or API note was used
+            const metaMsg = result.meta && result.meta.usedFallback ? (result.meta.message || 'Using fallback data') : '';
             res.status(200).json({
-                gainers: result.gainers,
-                losers: result.losers,
-                error: ''
+                gainers: result.gainers || [],
+                losers: result.losers || [],
+                error: metaMsg
             });
         } catch (e) {
             error = e.toString();
@@ -1363,11 +1373,13 @@ router.post('/addstock', async (req, res, next) => {
             }
 
             // Fetch prices from Yahoo Finance API
-            const prices = await stockService.getMultiplePrices(symbols);
-            
+            const multi = await stockService.getMultiplePrices(symbols);
+            const prices = multi.prices ? multi.prices : multi;
+            const warn = multi.warnings && multi.warnings.length ? multi.warnings.join('; ') : '';
+
             res.status(200).json({
                 prices: prices,
-                error: ''
+                error: warn
             });
         } catch (e) {
             error = e.toString();

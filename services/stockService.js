@@ -33,24 +33,44 @@ class StockService {
             return price;
         } catch (error) {
             console.error(`Error fetching price for ${symbol}:`, error.message);
-            return await this.fallbackPrice(symbol);
+            // Keep existing behaviour (return numeric fallback) but log reason
+            const fb = await this.fallbackPrice(symbol);
+            console.log(`[FALLBACK] ${symbol}: $${fb} (reason: ${error.message})`);
+            return fb;
         }
     }
 
     async getMultiplePrices(symbols) {
         try {
             const prices = {};
-            
-            // Fetch prices for all symbols
+            const warnings = [];
+
+            // Fetch prices for all symbols, include metadata per-call to detect fallbacks
             for (const symbol of symbols) {
-                const price = await this.getCurrentPrice(symbol);
-                prices[symbol] = price;
+                try {
+                    // Use the single-call method which logs fallback; we can still detect fallback by
+                    // checking cache first here to see if value comes from cache (best-effort)
+                    const cached = priceCache.get(symbol);
+                    if (cached) {
+                        prices[symbol] = cached;
+                        warnings.push(`${symbol}: price returned from cache`);
+                        continue;
+                    }
+
+                    const price = await this.getCurrentPrice(symbol);
+                    prices[symbol] = price;
+                } catch (innerErr) {
+                    console.error(`Error fetching ${symbol}:`, innerErr.message);
+                    const fb = await this.fallbackPrice(symbol);
+                    prices[symbol] = fb;
+                    warnings.push(`${symbol}: using fallback price (${innerErr.message})`);
+                }
             }
-            
-            return prices;
+
+            return { prices, warnings };
         } catch (error) {
             console.error('Error fetching multiple prices:', error.message);
-            return {};
+            return { prices: {}, warnings: [error.message] };
         }
     }
     

@@ -14,7 +14,8 @@ class TopMoversService {
             const cached = moversCache.get('topMovers');
             if (cached) {
                 console.log('[CACHE] Returning cached top movers');
-                return cached;
+                // Indicate cached source so caller can show a warning if desired
+                return { ...cached, meta: { usedFallback: false, source: 'cache', message: 'Returning cached top movers' } };
             }
 
             console.log('[API] Fetching top movers from Alpha Vantage...');
@@ -25,12 +26,13 @@ class TopMoversService {
             const response = await axios.get(url);
             const data = response.data;
 
-            // Check for API errors
+            // Check for API errors or notices (rate limits)
             if (data['Error Message'] || data['Note']) {
                 const errorMsg = data['Error Message'] || data['Note'];
-                console.error('Alpha Vantage API error:', errorMsg);
+                console.error('Alpha Vantage API error or note:', errorMsg);
                 console.error('Full response:', JSON.stringify(data, null, 2));
-                return this.getFallbackMovers();
+                const fallback = this.getFallbackMovers();
+                return { ...fallback, meta: { usedFallback: true, source: 'alphavantage', message: `Alpha Vantage returned an error/note: ${errorMsg}. Showing fallback data.` } };
             }
             
             // Check if response is empty or missing expected data
@@ -81,14 +83,16 @@ class TopMoversService {
                 console.log(`Top loser: ${losers[0]?.symbol} (${losers[0]?.changePercent.toFixed(2)}%)`);
             }
 
-            return result;
+            // Normal successful result - include empty meta to indicate success
+            return { ...result, meta: { usedFallback: false, source: 'alphavantage', message: '' } };
 
         } catch (error) {
             console.error('Error fetching top movers:', error.message);
             console.error('Error stack:', error.stack);
 
-            // Return fallback data
-            return this.getFallbackMovers();
+            // Return fallback data with message so caller can inform the user
+            const fallback = this.getFallbackMovers();
+            return { ...fallback, meta: { usedFallback: true, source: 'exception', message: `Failed to fetch top movers: ${error.message}. Showing fallback data.` } };
         }
     }
 

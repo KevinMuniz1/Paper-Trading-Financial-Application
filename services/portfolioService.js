@@ -27,7 +27,11 @@ async function updatePortfolioTotals(userId, db) {
 
         // Get current prices for all symbols
         const symbols = [...new Set(trades.map(trade => trade.tickerSymbol))];
-        const currentPrices = await stockService.getMultiplePrices(symbols);
+        const multiPrices = await stockService.getMultiplePrices(symbols);
+        const currentPrices = multiPrices.prices ? multiPrices.prices : multiPrices;
+        if (multiPrices.warnings && multiPrices.warnings.length) {
+            console.warn('Price warnings:', multiPrices.warnings.join('; '));
+        }
 
         let totalInvested = 0;
         let totalPortfolioValue = 0;
