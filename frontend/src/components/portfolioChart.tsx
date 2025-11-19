@@ -1,4 +1,4 @@
-import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { useState, useEffect, forwardRef, useImperativeHandle, useMemo, memo, useRef } from 'react';
 import {
   StockChartComponent,
   StockChartSeriesCollectionDirective,
@@ -25,12 +25,10 @@ const SAMPLE_CSS = `
   .chart-gradient stop[offset="0.6"] { stop-opacity: 0.2; }
   .chart-gradient stop[offset="1"] { stop-opacity: 0; }
   
-  /* Control pane layout fix */
   .control-pane {
     text-align: left !important;
   }
   
-  /* HIDE ALL SYNCFUSION TOOLBAR ELEMENTS */
   #portfoliochart_stockChart_toolbar,
   #portfoliochart_stockChart_PeriodsSelector,
   #portfoliochart_stockChart_Indicator,
@@ -109,36 +107,40 @@ const PortfolioChartAdvanced = forwardRef(({ userId }: PortfolioChartProps, ref)
   const [stats, setStats] = useState<PortfolioStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [selectedPeriod, setSelectedPeriod] = useState('1d');
+  const [isTransitioning, setIsTransitioning] = useState(false); // Track period transitions
+  
+  const [selectedPeriod, setSelectedPeriod] = useState(() => {
+    return localStorage.getItem('portfolioChartPeriod') || '1d';
+  });
 
-  // Expose refresh function to parent component
+  // Use refs to track previous values and avoid unnecessary re-renders
+  const chartDataRef = useRef<ChartDataPoint[]>([]);
+  const statsRef = useRef<PortfolioStats | null>(null);
+
   useImperativeHandle(ref, () => ({
     refresh: () => {
-      fetchPortfolioData(selectedPeriod, false); // Silent refresh - no loading screen
+      fetchPortfolioData(selectedPeriod, false);
     }
   }));
 
   useEffect(() => {
-    fetchPortfolioData(selectedPeriod, true); // Show loading on initial load
+    fetchPortfolioData(selectedPeriod, true);
     
-    // Auto-refresh every 30 seconds for real-time updates (NO loading state)
     const interval = setInterval(() => {
-      fetchPortfolioData(selectedPeriod, false); // Silent refresh
+      fetchPortfolioData(selectedPeriod, false);
     }, 10000);
     
     return () => clearInterval(interval);
-  }, [userId]); // Only re-run if userId changes, not period
+  }, [userId, selectedPeriod]);
 
-  const fetchPortfolioData = async (period: string = '1d', showLoading: boolean = true) => {
+  const fetchPortfolioData = async (period: string = '1d', showLoading: boolean = true): Promise<void> => {
     
     try {
-      // Only show loading on initial load, not on refresh
       if (showLoading) {
         setLoading(true);
       }
       setError("");
       
-      // Fetch real-time performance data
       const performanceResponse = await fetch(buildPath('portfolio/performance'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -146,9 +148,7 @@ const PortfolioChartAdvanced = forwardRef(({ userId }: PortfolioChartProps, ref)
       });
       
       const performanceData = await performanceResponse.json();
-      
 
-      // Fetch current portfolio summary
       const summaryResponse = await fetch(buildPath('portfolio/summary'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -162,7 +162,6 @@ const PortfolioChartAdvanced = forwardRef(({ userId }: PortfolioChartProps, ref)
         return;
       }
 
-      // Process performance data
       if (performanceData.performance && performanceData.performance.length > 0) {
         const formattedData = performanceData.performance.map((item: any) => ({
           x: new Date(item.timestamp),
@@ -171,8 +170,25 @@ const PortfolioChartAdvanced = forwardRef(({ userId }: PortfolioChartProps, ref)
           gain: item.gain
         }));
 
+        // More robust comparison - check if data actually changed
+        let shouldUpdate = false;
         
-        setChartData(formattedData);
+        if (chartDataRef.current.length !== formattedData.length) {
+          shouldUpdate = true;
+        } else if (formattedData.length > 0 && chartDataRef.current.length > 0) {
+          const lastPrev = chartDataRef.current[chartDataRef.current.length - 1];
+          const lastNew = formattedData[formattedData.length - 1];
+          
+          if (lastPrev.portfolioValue !== lastNew.portfolioValue ||
+              lastPrev.totalInvested !== lastNew.totalInvested) {
+            shouldUpdate = true;
+          }
+        }
+
+        if (shouldUpdate) {
+          chartDataRef.current = formattedData;
+          setChartData(formattedData);
+        }
       } else {
         const now = new Date();
         setChartData([{
@@ -183,21 +199,41 @@ const PortfolioChartAdvanced = forwardRef(({ userId }: PortfolioChartProps, ref)
         }]);
       }
 
-      // Set stats with safe parsing
       if (summaryData.portfolio) {
-        setStats({
+        const newStats = {
           currentValue: parseFloat(summaryData.portfolio.totalPortfolioValue) || 0,
           totalInvested: parseFloat(summaryData.portfolio.totalInvested) || 0,
           totalGain: parseFloat(summaryData.portfolio.totalGain) || 0,
           totalGainPercent: parseFloat(summaryData.portfolio.totalGainPercent) || 0,
           buyingPower: parseFloat(summaryData.portfolio.buyingPower) || 0
-        });
+        };
+
+        // Check if stats actually changed using refs
+        let statsChanged = false;
+        
+        if (!statsRef.current) {
+          statsChanged = true;
+        } else {
+          if (statsRef.current.currentValue !== newStats.currentValue ||
+              statsRef.current.totalGain !== newStats.totalGain ||
+              statsRef.current.buyingPower !== newStats.buyingPower ||
+              statsRef.current.totalInvested !== newStats.totalInvested) {
+            statsChanged = true;
+          }
+        }
+
+        if (statsChanged) {
+          statsRef.current = newStats;
+          setStats(newStats);
+        }
       }
 
     } catch (err) {
       setError("Failed to load portfolio data");
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   };
 
@@ -205,12 +241,16 @@ const PortfolioChartAdvanced = forwardRef(({ userId }: PortfolioChartProps, ref)
     // Load customizations if needed
   };
 
-  // Handle period selection
   const handlePeriodChange = (period: string) => {
     setSelectedPeriod(period);
-    // Silent refresh for smooth period transitions
-    fetchPortfolioData(period, false);
+    localStorage.setItem('portfolioChartPeriod', period);
+    setIsTransitioning(true); // Mark as transitioning
+    fetchPortfolioData(period, false).then(() => {
+      setIsTransitioning(false); // Done transitioning
+    });
   };
+
+  const memoizedChartData = useMemo(() => chartData, [chartData]);
 
   if (loading) {
     return (
@@ -229,7 +269,6 @@ const PortfolioChartAdvanced = forwardRef(({ userId }: PortfolioChartProps, ref)
     <div className="control-pane">
       <style>{SAMPLE_CSS}</style>
 
-      {/* Portfolio Stats Summary */}
       {stats && (
         <div className="portfolio-stats">
           <div className="stat-card">
@@ -260,7 +299,6 @@ const PortfolioChartAdvanced = forwardRef(({ userId }: PortfolioChartProps, ref)
         </div>
       )}
 
-      {/* Period Selector Buttons */}
       <div style={{ 
         display: 'flex', 
         gap: '10px', 
@@ -271,15 +309,17 @@ const PortfolioChartAdvanced = forwardRef(({ userId }: PortfolioChartProps, ref)
           <button
             key={period}
             onClick={() => handlePeriodChange(period)}
+            disabled={isTransitioning}
             style={{
               padding: '8px 16px',
               borderRadius: '6px',
               border: selectedPeriod === period ? '2px solid #4054a5ff' : '1px solid #ccc',
               background: selectedPeriod === period ? '#4054a5ff' : 'white',
               color: selectedPeriod === period ? 'white' : '#333',
-              cursor: 'pointer',
+              cursor: isTransitioning ? 'wait' : 'pointer',
               fontWeight: selectedPeriod === period ? '600' : '400',
-              transition: 'all 0.2s'
+              transition: 'all 0.2s',
+              opacity: isTransitioning ? 0.6 : 1
             }}
           >
             {period.toUpperCase()}
@@ -357,9 +397,8 @@ const PortfolioChartAdvanced = forwardRef(({ userId }: PortfolioChartProps, ref)
         />
 
         <StockChartSeriesCollectionDirective>
-          {/* Portfolio Value - Main area chart */}
           <StockChartSeriesDirective
-            dataSource={chartData}
+            dataSource={memoizedChartData}
             xName="x"
             yName="portfolioValue"
             type="SplineArea"
@@ -370,12 +409,11 @@ const PortfolioChartAdvanced = forwardRef(({ userId }: PortfolioChartProps, ref)
               color: "#1113a1ff"
             }}
             opacity={0.75}
-            animation={{ enable: true }}
+            animation={{ enable: false }}
           />
 
-          {/* Total Invested - Baseline reference */}
           <StockChartSeriesDirective
-            dataSource={chartData}
+            dataSource={memoizedChartData}
             xName="x"
             yName="totalInvested"
             type="Spline"
@@ -386,6 +424,7 @@ const PortfolioChartAdvanced = forwardRef(({ userId }: PortfolioChartProps, ref)
               color: "#ff6b6b",
               dashArray: "5,5"
             }}
+            animation={{ enable: false }}
           />
         </StockChartSeriesCollectionDirective>
       </StockChartComponent>
@@ -413,4 +452,6 @@ const PortfolioChartAdvanced = forwardRef(({ userId }: PortfolioChartProps, ref)
   );
 });
 
-export default PortfolioChartAdvanced;
+PortfolioChartAdvanced.displayName = 'PortfolioChartAdvanced';
+
+export default memo(PortfolioChartAdvanced);
