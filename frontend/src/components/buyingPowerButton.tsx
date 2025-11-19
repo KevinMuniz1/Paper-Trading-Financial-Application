@@ -1,7 +1,7 @@
 import "./DashboardPage.css";
 import { useState, useEffect } from "react";
 import { buildPath } from "../../Path";
-import { usePortfolio } from '../../context/PortfolioContext';
+import { usePortfolio } from '../context/PortfolioContext';
 
 function BuyingPowerButton() {
   const { buyingPower, totalPortfolioValue, totalInvested} = usePortfolio();
