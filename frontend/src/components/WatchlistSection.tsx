@@ -10,6 +10,51 @@ interface WatchlistItem {
   currentPrice: number;
   change: number;
   changePercent: number;
+  dailyPriceChange?: number;
+  dailyPercentChange?: number;
+}
+
+interface DailyChange {
+  symbol: string;
+  priceChange: number;
+  percentChange: number;
+  currentPrice: number;
+  previousClose: number;
+}
+
+async function fetchDailyStockChange(symbol: string): Promise<DailyChange | null> {
+  try {
+    console.log(`Fetching daily change for ${symbol}...`);
+    
+    const response = await fetch(buildPath("/api/stock/daily-change"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ symbol })
+    });
+    
+    if (!response.ok) {
+      return null;
+    }
+    
+    const data = await response.json();
+    
+    if (data.error) {
+      return null;
+    }
+    
+    console.log(`${symbol} - Current: $${data.currentPrice}, Change: $${data.priceChange.toFixed(2)} (${data.percentChange.toFixed(2)}%)`);
+    
+    return {
+      symbol: data.symbol,
+      priceChange: data.priceChange,
+      percentChange: data.percentChange,
+      currentPrice: data.currentPrice,
+      previousClose: data.previousClose
+    };
+  } catch (error) {
+   
+    return null;
+  }
 }
 
 export default function WatchlistSection() {
@@ -35,7 +80,28 @@ export default function WatchlistSection() {
       const data = await res.json();
 
       if (data && data.watchlist) {
-        setWatchlist(data.watchlist);
+        
+        
+        // Fetch daily changes for each watchlist item
+        const watchlistWithDailyChange = await Promise.all(
+          data.watchlist.map(async (item: any) => {
+           
+            const dailyChange = await fetchDailyStockChange(item.symbol);
+            
+            return {
+              symbol: item.symbol,
+              name: item.name,
+              currentPrice: dailyChange?.currentPrice || item.currentPrice,
+              change: item.change,
+              changePercent: item.changePercent,
+              dailyPriceChange: dailyChange?.priceChange || 0,
+              dailyPercentChange: dailyChange?.percentChange || 0
+            };
+          })
+        );
+
+        
+        setWatchlist(watchlistWithDailyChange);
       }
     } catch (err) {
       console.error("Error fetching watchlist:", err);
@@ -86,11 +152,13 @@ export default function WatchlistSection() {
                 </div>
 
                 <div className="watchlist-change-group">
-                  <div className={`stock-change ${stock.change >= 0 ? "positive" : "negative"}`}>
-                    {stock.change >= 0 ? "+" : ""}{stock.change.toFixed(2)}
+                  <div className={`stock-change ${(stock.dailyPriceChange ?? 0) >= 0 ? "positive" : "negative"}`}>
+                    {(stock.dailyPriceChange ?? 0) >= 0 ? "$+" : "$"}
+                    {stock.dailyPriceChange?.toFixed(2) || "0.00"}
                   </div>
-                  <div className={`stock-change-percent ${stock.change >= 0 ? "positive" : "negative"}`}>
-                    {stock.change >= 0 ? "+" : ""}{stock.changePercent.toFixed(2)}%
+                  <div className={`stock-change-percent ${(stock.dailyPercentChange ?? 0) >= 0 ? "positive" : "negative"}`}>
+                    {(stock.dailyPercentChange ?? 0) >= 0 ? "+" : ""}
+                    {stock.dailyPercentChange?.toFixed(2) || "0.00"}%
                   </div>
                 </div>
               </div>

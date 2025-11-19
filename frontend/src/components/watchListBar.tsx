@@ -4,28 +4,84 @@ import { useAuth } from "../context/AuthContext";
 import { buildPath } from "../../Path"; 
 import "./NavBar.css";
 
+
 interface Holding {
   id: string;
   symbol: string;
   currentPrice: number;
-  currentValue: number;  // Total value of this holding
-  quantity: number;       // Number of shares
+  currentValue: number;
+  quantity: number;
   gain: number;
   gainPercent: number;
+  dailyPriceChange?: number;
+  dailyPercentChange?: number;
 }
 
-export default function WatchListBar() {
+interface DailyChange {
+  symbol: string;
+  priceChange: number;
+  percentChange: number;
+  currentPrice: number;
+  previousClose: number;
+}
+
+async function fetchDailyStockChange(symbol: string): Promise<DailyChange | null> {
+  try {
+    console.log(`🔍 Fetching daily change for ${symbol}...`);
+    
+    // Call YOUR backend instead of Yahoo Finance directly
+    const response = await fetch(buildPath("/api/stock/daily-change"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ symbol })
+    });
+    
+    if (!response.ok) {
+      return null;
+    }
+    
+    const data = await response.json();
+    
+    if (data.error) {
+      return null;
+    }
+    
+    
+    return {
+      symbol: data.symbol,
+      priceChange: data.priceChange,
+      percentChange: data.percentChange,
+      currentPrice: data.currentPrice,
+      previousClose: data.previousClose
+    };
+  } catch (error) {
+    return null;
+  }
+}
+
+export default function HoldingsBar() {
+  console.log("🎨 HoldingsBar component rendering!");
+  
   const navigate = useNavigate();
-  const { user } = useAuth();  
+  const { user, loading } = useAuth();
   const userId = user?.userId;
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  console.log("🔍 HoldingsBar render - loading:", loading, "userId:", userId, "user:", user);
+
   async function fetchHoldings() {
-    if (!userId) {
-      console.error("No userId found from AuthContext");
+    
+    if (loading) {
+      console.log("⏸️ Skipping fetch - auth still loading");
       return;
     }
+    
+    if (!userId) {
+      return;
+    }
+
+    console.log("🔄 Starting to fetch holdings for userId:", userId);
 
     try {
       const res = await fetch(buildPath("/portfolio/summary"), {
@@ -35,35 +91,58 @@ export default function WatchListBar() {
       });
 
       const data = await res.json();
+      console.log("📦 Portfolio data received:", data);
 
       if (data && data.holdings) {
-        const mapped = data.holdings.map((h: any) => ({
-          id: h.id || h._id || h.symbol,
-          symbol: h.symbol,
-          currentPrice: h.currentPrice,
-          currentValue: h.currentValue,
-          quantity: h.quantity,
-          gain: h.gain,
-          gainPercent: h.gainPercent
-        }));
+        console.log(`📊 Processing ${data.holdings.length} holdings...`);
+        
+        // Fetch daily changes for each holding
+        const holdingsWithDailyChange = await Promise.all(
+          data.holdings.map(async (h: any) => {
+            const dailyChange = await fetchDailyStockChange(h.symbol);
+            
+            const holding = {
+              id: h.id || h._id || h.symbol,
+              symbol: h.symbol,
+              currentPrice: h.currentPrice,
+              currentValue: h.currentValue,
+              quantity: h.quantity,
+              gain: h.gain,
+              gainPercent: h.gainPercent,
+              dailyPriceChange: dailyChange?.priceChange || 0,
+              dailyPercentChange: dailyChange?.percentChange || 0
+            };
+            
+            return holding;
+          })
+        );
 
-        setHoldings(mapped);
+        setHoldings(holdingsWithDailyChange);
+      } else {
       }
     } catch (err) {
-      console.error("Error fetching holdings:", err);
     }
   }
 
   useEffect(() => {
+    
+    if (loading) {
+      return;
+    }
+
+    if (!userId) {
+      return;
+    }
+
     fetchHoldings();
 
-    // Auto-refresh every 5 seconds
     intervalRef.current = setInterval(() => {
       fetchHoldings();
     }, 5000);
 
-    // Listen for manual refresh events
-    const handler = () => fetchHoldings();
+    const handler = () => {
+      fetchHoldings();
+    };
     window.addEventListener("refreshHoldings", handler);
 
     return () => {
@@ -72,7 +151,28 @@ export default function WatchListBar() {
       }
       window.removeEventListener("refreshHoldings", handler);
     };
-  }, [userId]);
+  }, [userId, loading]);
+
+
+  if (loading) {
+    console.log("🔄 Rendering loading state");
+    return (
+      <div className="watchlist-container">
+        <h2 className="watchlist-title">Holdings</h2>
+        <div className="watchlist-empty">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!userId) {
+    return (
+      <div className="watchlist-container">
+        <h2 className="watchlist-title">Holdings</h2>
+        <div className="watchlist-empty">Please log in to view holdings</div>
+      </div>
+    );
+  }
+
 
   return (
     <div className="watchlist-container">
@@ -107,11 +207,13 @@ export default function WatchListBar() {
                 </div>
                 
                 <div className="watchlist-change-group">
-                  <div className={`stock-change ${stock.gain >= 0 ? "positive" : "negative"}`}>
-                    {stock.gain >= 0 ? "+" : ""}{stock.gain.toFixed(2)}
+                  <div className={`stock-change ${(stock.dailyPriceChange ?? 0) >= 0 ? "positive" : "negative"}`}>
+                    {(stock.dailyPriceChange ?? 0) >= 0 ? "+$" : "$"}
+                    {stock.dailyPriceChange?.toFixed(2) || "0.00"}
                   </div>
-                  <div className={`stock-change-percent ${stock.gain >= 0 ? "positive" : "negative"}`}>
-                    {stock.gain >= 0 ? "+" : ""}{stock.gainPercent.toFixed(2)}%
+                  <div className={`stock-change-percent ${(stock.dailyPercentChange ?? 0) >= 0 ? "positive" : "negative"}`}>
+                    {(stock.dailyPercentChange ?? 0) >= 0 ? "+" : ""}
+                    {stock.dailyPercentChange?.toFixed(2) || "0.00"}%
                   </div>
                 </div>
               </div>

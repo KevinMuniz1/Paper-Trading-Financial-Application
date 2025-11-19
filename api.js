@@ -1729,6 +1729,62 @@ router.get('/overview/:symbol', async (req, res) => {
         });
     }
 });
+// GET STOCK DAILY CHANGE (for Yahoo Finance CORS proxy)
+router.post('/api/stock/daily-change', async (req, res) => {
+    // incoming: symbol
+    // outgoing: symbol, priceChange, percentChange, currentPrice, previousClose, error
+    var error = '';
+    const { symbol } = req.body;
+
+    try {
+        if (!symbol) {
+            error = 'Stock symbol is required';
+            return res.status(200).json({ error: error });
+        }
+
+        console.log(`🔍 Fetching daily change for ${symbol}...`);
+        
+        const response = await fetch(
+            `https://query1.finance.yahoo.com/v8/finance/chart/${symbol.toUpperCase()}?interval=1d&range=5d`
+        );
+        
+        if (!response.ok) {
+            error = `Yahoo Finance API error: ${response.status}`;
+            return res.status(200).json({ error: error });
+        }
+        
+        const data = await response.json();
+        
+        if (data.chart?.result?.[0]) {
+            const result = data.chart.result[0];
+            const meta = result.meta;
+            
+            const currentPrice = meta.regularMarketPrice;
+            const previousClose = meta.chartPreviousClose;
+            
+            const priceChange = currentPrice - previousClose;
+            const percentChange = (priceChange / previousClose) * 100;
+            
+            console.log(`✅ ${symbol} - Current: $${currentPrice}, Previous: $${previousClose}, Change: $${priceChange.toFixed(2)} (${percentChange.toFixed(2)}%)`);
+            
+            res.status(200).json({
+                symbol: symbol.toUpperCase(),
+                priceChange: priceChange,
+                percentChange: percentChange,
+                currentPrice: currentPrice,
+                previousClose: previousClose,
+                error: ''
+            });
+        } else {
+            error = 'No data found for symbol';
+            res.status(200).json({ error: error });
+        }
+    } catch (e) {
+        error = e.toString();
+        console.error(`❌ Error fetching daily change for ${symbol}:`, e);
+        res.status(200).json({ error: error });
+    }
+});
 // Helper function to calculate start date
 function getPeriodStartDate(period) {
     const endDate = new Date();
