@@ -249,7 +249,7 @@
 }
 
 .watchlist-item {
-  background-color: #4054a5;
+  background-color: #1c2c6b;
   border-radius: 10px;
   padding: 12px 14px;
   cursor: pointer;
@@ -261,12 +261,13 @@
 }
 
 .watchlist-item:hover {
-  background-color: #4e67c1;
+  background-color: #263980;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
   transform: translateY(-2px);
 }
 
 .watchlist-item-info {
+  color: white;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -278,13 +279,13 @@
 .stock-symbol {
   font-size: 18px;
   font-weight: 600;
-  color: #fff;
+  color: #ffffff;
 }
 
 .stock-price {
   font-size: 20px;
   font-weight: 500;
-  color: #fff;
+  color: #ffffff;
 }
 
 .watchlist-change-group {
@@ -323,3 +324,40 @@
     font-size: 0.9rem;
   }
 }
+
+/* HOLDINGS SPECIFIC STYLES */
+.holdings-left .holdings-stock-symbol {
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  color: #ffffff !important;
+}
+
+.holdings-left .holdings-quantity {
+  font-size: 0.75rem !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.holdings-prices {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.holdings-prices .holdings-stock-price {
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  color: #ffffff !important;
+}
+
+.holdings-prices .holdings-total-value {
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* WATCHLIST PRICE COLOR FIX */
+.watchlist-list .holdings-stock-price {
+  color: #ffffff !important;
+}
+

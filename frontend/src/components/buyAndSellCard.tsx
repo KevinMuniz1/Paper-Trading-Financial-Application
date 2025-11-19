@@ -1,33 +1,60 @@
 // TradeStockCard.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { buildPath } from '../../Path';
 import "./DashboardPage.css";
 
 interface TradeStockCardProps {
   onClose: () => void;
-  onTradeSuccess: () => void;   // ← NEW: notify parent page
+  onTradeSuccess: () => void;
   stockSymbol: string;
   stockName: string;
-  currentPrice: number;
+  currentPrice?: number; // Make it optional since we'll fetch it
 }
 
-function TradeStockCard({ onClose, onTradeSuccess, stockSymbol, stockName, currentPrice }: TradeStockCardProps) {
+function TradeStockCard({ onClose, onTradeSuccess, stockSymbol, stockName, currentPrice: initialPrice }: TradeStockCardProps) {
   const [shares, setShares] = useState('');
   const [tradeType, setTradeType] = useState<'buy' | 'sell'>('buy');
+  const [currentPrice, setCurrentPrice] = useState(initialPrice || 0);
+  const [loading, setLoading] = useState(!initialPrice);
 
   const { user } = useAuth();
   const userId = user?.userId || 0;
   const quantity = parseInt(shares);
   const totalAmount = shares ? quantity * currentPrice : 0;
 
+  // Fetch current price on component mount
+  useEffect(() => {
+    fetchCurrentPrice();
+  }, [stockSymbol]);
+
+  const fetchCurrentPrice = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(buildPath('stock/prices'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ symbols: [stockSymbol.toUpperCase()] })
+      });
+      
+      const data = await response.json();
+      
+      if (data.prices && data.prices[stockSymbol.toUpperCase()]) {
+        setCurrentPrice(data.prices[stockSymbol.toUpperCase()]);
+      }
+    } catch (err) {
+      console.error("Error fetching current price:", err);
+      // Keep the initial price if fetch fails
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // ---------------------------
   // BUY STOCK → /addstock
   // ---------------------------
   async function buyStock() {
     try {
-
-      //const parsedUserId = parseInt(userId);
       console.log("=== BUY STOCK DEBUG ===");
       console.log("Raw userId from localStorage:", userId);
       console.log("Parsed userId:", userId);
@@ -42,7 +69,6 @@ function TradeStockCard({ onClose, onTradeSuccess, stockSymbol, stockName, curre
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          //userId: parseInt(userId),
           userId: userId,
           cardName: stockName,
           tickerSymbol: stockSymbol,
@@ -129,6 +155,14 @@ function TradeStockCard({ onClose, onTradeSuccess, stockSymbol, stockName, curre
       sellStock();
     }
   };
+
+  if (loading) {
+    return (
+      <div className="trade-card">
+        <h2 className="trade-title">Loading...</h2>
+      </div>
+    );
+  }
 
   return (
     <div className="trade-card">

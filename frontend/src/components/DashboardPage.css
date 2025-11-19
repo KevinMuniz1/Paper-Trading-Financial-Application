@@ -507,7 +507,7 @@ a[href*="tradingview.com"] {
 }
 
 .stock-info-display {
-  background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+  background: linear-gradient(135deg, #4187ff 0%, #4187ff 100%);
   border-radius: 12px;
   padding: 1.5rem;
   text-align: center;
@@ -515,6 +515,7 @@ a[href*="tradingview.com"] {
 }
 
 .stock-name {
+  color:white;
   font-size: 0.875rem;
   font-weight: 500;
   opacity: 0.9;
@@ -542,10 +543,10 @@ a[href*="tradingview.com"] {
   padding: 0.75rem;
   font-size: 1rem;
   font-weight: 600;
-  border: none;
+  border: 1;
   border-radius: 8px;
   background: transparent;
-  color: #718096;
+  color: #000000;
   cursor: pointer;
   transition: all 0.2s;
 }

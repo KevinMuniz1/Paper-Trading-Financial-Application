@@ -71,12 +71,11 @@ export default function WatchlistSection() {
             key={stock.symbol}
             className="watchlist-item"
             onClick={() => navigate(`/stock/${stock.symbol}`)}
-            style={{ cursor: "pointer" }}
           >
             <div className="watchlist-item-info">
               <div className="holdings-left">
                 <div className="holdings-stock-symbol">{stock.symbol}</div>
-                <div className="holdings-quantity" style={{ fontSize: '0.75rem', color: '#666' }}>
+                <div className="holdings-quantity">
                   {stock.name}
                 </div>
               </div>

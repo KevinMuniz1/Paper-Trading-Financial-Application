@@ -83,12 +83,13 @@
 
 .search-result-item {
     padding: 1rem;
+    background-color: black;
     border-bottom: 1px solid rgba(0,0,0,0.1);
     cursor: pointer;
 }
 
 .search-result-item:hover {
-    background: rgba(26, 114, 33, 0.1);
+    background: rgb(22, 136, 56);
 }
 
 /* SECTION HEADERS */
