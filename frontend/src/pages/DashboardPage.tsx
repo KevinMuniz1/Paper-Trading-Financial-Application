@@ -4,16 +4,18 @@ import NavBar from '../components/NavBar';
 import WatchListBar from '../components/watchListBar';
 import '../components/DashboardPage.css';
 import '../components/NavBar.css';
-import StockChart from '../components/stockChart';
+import PortfolioChartAdvanced from '../components/portfolioChart';
 import BuyingPowerButton from '../components/buyingPowerButton';
 import AccountValue from '../components/totalAccountValue';
 import BuyingPowerCard from '../components/CardAddBuyingPower';
-import { buildPath } from '../../Path';
-import { useParams } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+
 const DashboardPage = () => {
   const [isCardVisible, setIsCardVisible] = useState(false);
-  const { symbol } = useParams();
+  const { user } = useAuth();
   
+  // Get userId from AuthContext (note: property is 'userId' not 'id')
+  const userId = user?.userId;
 
   function toggleBuyingPowerCard() {
     setIsCardVisible(!isCardVisible);
@@ -25,6 +27,7 @@ const DashboardPage = () => {
         <PageTitle />
         <NavBar/>
       </div>
+      
       <main className="main-section">
         {isCardVisible && (
           <div className="modal-overlay" onClick={() => setIsCardVisible(false)}>
@@ -33,15 +36,30 @@ const DashboardPage = () => {
             </div>
           </div>
         )}
+        
         <div className="left-panel">
           <div>
             <AccountValue />
           </div>
-          <StockChart symbol={symbol || ""} />
+          
+          {/* Portfolio Chart - displays historical portfolio performance */}
+          {userId ? (
+            <PortfolioChartAdvanced userId={userId} />
+          ) : (
+            <div style={{ 
+              padding: '20px', 
+              textAlign: 'center', 
+              color: '#666' 
+            }}>
+              Please log in to view your portfolio
+            </div>
+          )}
+          
           <div onClick={toggleBuyingPowerCard} className="button-container">
             <BuyingPowerButton />
           </div>
         </div>
+        
         <div className="right-panel">
           <WatchListBar />
         </div>

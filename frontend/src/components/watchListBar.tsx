@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext"; 
 import { buildPath } from "../../Path"; 
@@ -8,6 +8,8 @@ interface Holding {
   id: string;
   symbol: string;
   currentPrice: number;
+  currentValue: number;  // Total value of this holding
+  quantity: number;       // Number of shares
   gain: number;
   gainPercent: number;
 }
@@ -16,8 +18,8 @@ export default function WatchListBar() {
   const navigate = useNavigate();
   const { user } = useAuth();  
   const userId = user?.userId;
-
   const [holdings, setHoldings] = useState<Holding[]>([]);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   async function fetchHoldings() {
     if (!userId) {
@@ -39,13 +41,14 @@ export default function WatchListBar() {
           id: h.id || h._id || h.symbol,
           symbol: h.symbol,
           currentPrice: h.currentPrice,
+          currentValue: h.currentValue,
+          quantity: h.quantity,
           gain: h.gain,
           gainPercent: h.gainPercent
         }));
 
         setHoldings(mapped);
       }
-
     } catch (err) {
       console.error("Error fetching holdings:", err);
     }
@@ -54,16 +57,26 @@ export default function WatchListBar() {
   useEffect(() => {
     fetchHoldings();
 
+    // Auto-refresh every 30 seconds
+    intervalRef.current = setInterval(() => {
+      fetchHoldings();
+    }, 30000);
+
+    // Listen for manual refresh events
     const handler = () => fetchHoldings();
     window.addEventListener("refreshHoldings", handler);
 
-    return () => window.removeEventListener("refreshHoldings", handler);
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+      window.removeEventListener("refreshHoldings", handler);
+    };
   }, [userId]);
 
   return (
     <div className="watchlist-container">
       <h2 className="watchlist-title">Holdings</h2>
-
       <div className="watchlist-list">
         {holdings.map((stock) => (
           <div
@@ -73,27 +86,39 @@ export default function WatchListBar() {
             style={{ cursor: "pointer" }}
           >
             <div className="watchlist-item-info">
-              <div>
+              <div className="holdings-left">
                 <div className="holdings-stock-symbol">{stock.symbol}</div>
-                <div className="holdings-stock-price">
-                  ${stock.currentPrice.toFixed(2)}
+                <div className="holdings-quantity">
+                  {stock.quantity} {stock.quantity === 1 ? 'share' : 'shares'}
                 </div>
               </div>
-
-              <div className="watchlist-change-group">
-                <div className={`stock-change ${stock.gain >= 0 ? "positive" : "negative"}`}>
-                  {stock.gain >= 0 ? "+" : ""}{stock.gain.toFixed(2)}
+              
+              <div className="holdings-right">
+                <div className="holdings-prices">
+                  <div className="holdings-stock-price">
+                    ${stock.currentPrice.toFixed(2)}
+                  </div>
+                  <div className="holdings-total-value">
+                    ${stock.currentValue.toLocaleString('en-US', { 
+                      minimumFractionDigits: 2, 
+                      maximumFractionDigits: 2 
+                    })}
+                  </div>
                 </div>
-
-                <div className={`stock-change ${stock.gain >= 0 ? "positive" : "negative"}`}>
-                  {stock.gain >= 0 ? "+" : ""}{stock.gainPercent.toFixed(2)}%
+                
+                <div className="watchlist-change-group">
+                  <div className={`stock-change ${stock.gain >= 0 ? "positive" : "negative"}`}>
+                    {stock.gain >= 0 ? "+" : ""}{stock.gain.toFixed(2)}
+                  </div>
+                  <div className={`stock-change-percent ${stock.gain >= 0 ? "positive" : "negative"}`}>
+                    {stock.gain >= 0 ? "+" : ""}{stock.gainPercent.toFixed(2)}%
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         ))}
       </div>
-
       {holdings.length === 0 && (
         <div className="watchlist-empty">No current holdings</div>
       )}
