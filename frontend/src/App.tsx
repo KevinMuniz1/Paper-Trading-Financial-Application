@@ -10,8 +10,8 @@ import ForgotPasswordPage from './pages/forgot-password';
 import ResetPasswordPage from './pages/reset-password';
 import DisplayStockPage from "./pages/StockPage";
 
-import { AuthProvider } from '../context/AuthContext';
-import { PortfolioProvider } from '../context/PortfolioContext';
+import { AuthProvider } from './context/AuthContext';
+import { PortfolioProvider } from './context/PortfolioContext';
 
 function AppContent() {
   return (
