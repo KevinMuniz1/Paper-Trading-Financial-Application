@@ -29,8 +29,8 @@ export default function HoldingsBar() {
     try {
       const res = await fetch(buildPath("/portfolio/summary"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId })
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({  })
       });
 
       const data = await res.json();
@@ -71,7 +71,7 @@ export default function HoldingsBar() {
       }
       window.removeEventListener("refreshHoldings", handler);
     };
-  }, [userId]);
+  }, [token]);
 
   return (
     <div className="watchlist-container">
