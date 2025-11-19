@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import "./DashboardPage.css";
 import { usePortfolio } from '../context/PortfolioContext';
+import { useAuth } from '../context/AuthContext';
+import { buildPath } from '../../Path';
 
 interface BuyingPowerCardProps {
   onClose: () => void;
@@ -8,11 +10,44 @@ interface BuyingPowerCardProps {
 
 function BuyingPowerCard({ onClose }: BuyingPowerCardProps) {
   const [amountToAdd, setAmountToAdd] = useState('');
-  const { buyingPower, totalPortfolioValue, totalInvested} = usePortfolio();
+  const { buyingPower, fetchPortfolioData } = usePortfolio();
+  const { user } = useAuth();
 
-  const handleAdd = () => {
-    console.log('Adding:', amountToAdd);
-    onClose();
+  const handleAdd = async () => {
+    if (!user?.userId) {
+      alert('User not found');
+      return;
+    }
+
+    const amount = parseFloat(amountToAdd);
+    if (isNaN(amount) || amount <= 0) {
+      alert('Please enter a valid amount greater than 0');
+      return;
+    }
+
+    try {
+      const response = await fetch(buildPath('portfolio/add-funds'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.userId,
+          amount: amount
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert(data.message || `Successfully added $${amount.toFixed(2)} to your account`);
+        await fetchPortfolioData(); // Refresh portfolio to show updated balance
+        onClose();
+      } else {
+        alert(data.error || 'Failed to add buying power');
+      }
+    } catch (error) {
+      console.error('Error adding buying power:', error);
+      alert('Failed to add buying power');
+    }
   };
 
   const handleCancel = () => {

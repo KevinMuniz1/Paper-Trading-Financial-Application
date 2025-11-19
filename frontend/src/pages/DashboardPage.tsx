@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import PageTitle from '../components/PageTitle';
 import NavBar from '../components/NavBar';
-import WatchListBar from '../components/watchListBar';
+import HoldingsBar from '../components/HoldingsBar';
+import WatchlistSection from '../components/WatchlistSection';
 import '../components/DashboardPage.css';
 import '../components/NavBar.css';
 import PortfolioChartAdvanced from '../components/portfolioChart';
@@ -57,7 +58,12 @@ const DashboardPage = () => {
         </div>
         
         <div className="right-panel">
-          <WatchListBar />
+          <div className="holdings-box">
+            <HoldingsBar />
+          </div>
+          <div className="watchlist-box">
+            <WatchlistSection />
+          </div>
         </div>
       </main>
     </div>
