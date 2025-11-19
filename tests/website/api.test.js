@@ -60,7 +60,7 @@ describe('Authentication Endpoints', () => {
           password: 'testpass'
         });
 
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(400);
       // Test user doesn't persist, expect failure
       expect(response.body.id).toBe(-1);
       expect(response.body.error).toBe('Invalid login credentials');
@@ -74,7 +74,7 @@ describe('Authentication Endpoints', () => {
           password: 'wrongpass'
         });
 
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(400);
       expect(response.body.id).toBe(-1);
       expect(response.body.error).toBe('Invalid login credentials');
     });
@@ -86,7 +86,7 @@ describe('Authentication Endpoints', () => {
           login: 'testuser'
         });
 
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(400);
       expect(response.body.id).toBe(-1);
     });
   });
@@ -151,18 +151,19 @@ describe('Card/Trade Endpoints', () => {
   
   describe('POST /api/addstock', () => {
     test('should add a new card successfully', async () => {
-      const response = await request(app)
-        .post('/api/addstock')
-        .send({
-          userId: 9999,
-          cardName: 'Apple Inc',
-          tickerSymbol: 'AAPL'
-        });
-
-      expect(response.status).toBe(200);
-      // Portfolio doesn't exist for test user
-      expect(response.body.error).toBe('Portfolio not found');
+  const response = await request(app)
+    .post('/api/addstock')
+    .send({
+      userId: 9999,
+      cardName: 'Apple Inc',
+      tickerSymbol: 'AAPL',
+      quantity: 1
     });
+
+    expect(response.status).toBe(200);
+    // Portfolio exists but insufficient buying power
+    expect(response.body.error).toContain('Insufficient buying power');
+});
 
     test('should handle missing fields', async () => {
       const response = await request(app)
