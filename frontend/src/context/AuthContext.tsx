@@ -19,12 +19,13 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+
 // Helper to decode JWT
 const decodeToken = (token: string): User | null => {
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
     return {
-      userId: payload.userId,
+      userId: payload.id || payload.userId,  // FIX: Check both id and userId
       email: payload.email,
       firstName: payload.firstName,
       lastName: payload.lastName
