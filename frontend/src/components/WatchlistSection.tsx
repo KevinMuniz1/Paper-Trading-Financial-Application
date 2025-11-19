@@ -113,7 +113,7 @@ export default function WatchlistSection() {
     // Auto-refresh every 10 seconds
     intervalRef.current = setInterval(() => {
       fetchWatchlist();
-    }, 10000);
+    }, 1000);
 
     // Listen for manual refresh events
     const handler = () => fetchWatchlist();
@@ -166,7 +166,7 @@ export default function WatchlistSection() {
         ))}
       </div>
       {watchlist.length === 0 && (
-        <div className="watchlist-empty">No stocks in watchlist</div>
+        <div className="watchlist-empty" style={{ padding: "12px", textAlign: "center", color: "black" }}>No stocks in watchlist</div>
       )}
     </div>
   );

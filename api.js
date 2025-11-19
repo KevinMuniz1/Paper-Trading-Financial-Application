@@ -446,111 +446,137 @@ module.exports = function (client) {
     });
 
     // ADD TRADE/STOCK 
+    // ADD TRADE/STOCK 
     router.post('/addstock', authenticateToken, async (req, res, next) => {
         const userId = req.user.userId;
         const { cardName, tickerSymbol, quantity = 1 } = req.body;
         var error = '';
 
-        try {
-            const db = client.db('Finance-app');
-            
-            // get current stock price
-            const currentPrice = await stockService.getCurrentPrice(tickerSymbol);
-            if (!currentPrice) {
-                error = 'Could not fetch stock price';
-                var ret = { error: error };
-                res.status(200).json(ret);
-                return;
-            }
+        console.log('=== ADD STOCK DEBUG ===');
+        console.log('Request body:', req.body);
+        console.log('userId:', userId, 'type:', typeof userId);
+        console.log('tickerSymbol:', tickerSymbol);
+        console.log('quantity:', quantity);
 
-            const totalCost = currentPrice * quantity;
-
-            // check buying power - create portfolio if doesn't exist
-            let portfolio = await db.collection('Portfolio').findOne({ userId: parseInt(userId) });
-            if (!portfolio) {
-                // Create a new portfolio for this user
-                const newPortfolio = {
-                    userId: parseInt(userId),
-                    buyingPower: parseFloat(0.00),
-                    totalPortfolioValue: parseFloat(0.00),
-                    totalInvested: parseFloat(0.00),
-                    totalGain: parseFloat(0.00),
-                    totalGainPercent: parseFloat(0.00),
-                    lastUpdated: new Date(),
-                    createdAt: new Date()
-                };
-                await db.collection('Portfolio').insertOne(newPortfolio);
-                portfolio = newPortfolio;
-                console.log(`Created portfolio for user ${userId}`);
-            }
-
-            if (portfolio.buyingPower < totalCost) {
-                error = `Insufficient buying power. Need $${totalCost.toFixed(2)}, have $${portfolio.buyingPower.toFixed(2)}`;
-                var ret = { error: error };
-                res.status(200).json(ret);
-                return;
-            }
-            
-            // check if tickersymbol is in portfolio already + update share val 
-            const existingTrade = await db.collection('Trades').findOne({ userId: parseInt(userId), tickerSymbol: tickerSymbol.toUpperCase() });
-            if (existingTrade) {
-                const newShares = existingTrade.quantity + parseInt(quantity);
-                const newTotalCost = existingTrade.totalCost + totalCost;
-                const newPurchasePrice = newTotalCost / newShares;
-                await db.collection('Trades').updateOne(
-                    { _id: existingTrade._id },
-                    { $set: {
-                        quantity: newShares,
-                        purchasePrice: parseFloat(newPurchasePrice),
-                        totalCost: parseFloat(newTotalCost)
-                    }}
-                );
-            } else {
-                // create trade in Trades collection
-                const newTrade = {
-                    userId: parseInt(userId),
-                    tickerSymbol: tickerSymbol.toUpperCase(),
-                    cardName: cardName,
-                    quantity: parseInt(quantity),
-                    purchasePrice: parseFloat(currentPrice),
-                    currentPrice: parseFloat(currentPrice),
-                    totalCost: parseFloat(totalCost),
-                    currentValue: parseFloat(totalCost),
-                    gain: 0.00,
-                    gainPercent: 0.00,
-                    purchaseDate: new Date(),
-                    createdAt: new Date()
-                };
-
-                await db.collection('Trades').insertOne(newTrade);
-                console.log(`Trade created: ${quantity} ${tickerSymbol} for user ${userId}`);
-            }
-
-            // update buying power
-            await db.collection('Portfolio').updateOne(
-                { userId: parseInt(userId) },
-                { 
-                    $inc: { buyingPower: -totalCost },
-                    $set: { lastUpdated: new Date() }
-                }
-            );
-
-            // update portfolio totals 
-            await updatePortfolioTotals(userId, db);
-
-            var ret = { 
-                error: error,
-                message: `Successfully purchased ${quantity} share(s) of ${tickerSymbol} for $${totalCost.toFixed(2)}`
-            };
-            res.status(200).json(ret);
-        }
-        catch (e) {
-            error = e.toString();
-            console.error('Add stock error:', e);
+    try {
+        const db = client.db('Finance-app');
+        
+        // get current stock price
+        console.log('Fetching current price for', tickerSymbol);
+        const currentPrice = await stockService.getCurrentPrice(tickerSymbol);
+        console.log('Current price:', currentPrice);
+        
+        if (!currentPrice) {
+            error = 'Could not fetch stock price';
             var ret = { error: error };
             res.status(200).json(ret);
+            return;
         }
-    });
+
+        const totalCost = currentPrice * quantity;
+        console.log('Total cost:', totalCost);
+
+        // check buying power - create portfolio if doesn't exist
+        let portfolio = await db.collection('Portfolio').findOne({ userId: parseInt(userId) });
+        console.log('Portfolio found:', portfolio ? 'YES' : 'NO');
+        console.log('Buying power:', portfolio?.buyingPower);
+        
+        if (!portfolio) {
+            console.log('Creating new portfolio for user', userId);
+            const newPortfolio = {
+                userId: parseInt(userId),
+                buyingPower: parseFloat(0.00),
+                totalPortfolioValue: parseFloat(0.00),
+                totalInvested: parseFloat(0.00),
+                totalGain: parseFloat(0.00),
+                totalGainPercent: parseFloat(0.00),
+                lastUpdated: new Date(),
+                createdAt: new Date()
+            };
+            await db.collection('Portfolio').insertOne(newPortfolio);
+            portfolio = newPortfolio;
+        }
+
+        if (portfolio.buyingPower < totalCost) {
+            error = `Insufficient buying power. Need $${totalCost.toFixed(2)}, have $${portfolio.buyingPower.toFixed(2)}`;
+            var ret = { error: error };
+            res.status(200).json(ret);
+            return;
+        }
+        
+        // check if tickersymbol is in portfolio already + update share val 
+        console.log('Checking for existing trade...');
+        const existingTrade = await db.collection('Trades').findOne({ 
+            userId: parseInt(userId), 
+            tickerSymbol: tickerSymbol.toUpperCase() 
+        });
+        console.log('Existing trade found:', existingTrade ? 'YES' : 'NO');
+        
+        if (existingTrade) {
+            console.log('Updating existing trade...');
+            const newShares = existingTrade.quantity + parseInt(quantity);
+            const newTotalCost = existingTrade.totalCost + totalCost;
+            const newPurchasePrice = newTotalCost / newShares;
+            
+            const updateResult = await db.collection('Trades').updateOne(
+                { _id: existingTrade._id },
+                { $set: {
+                    quantity: newShares,
+                    purchasePrice: parseFloat(newPurchasePrice),
+                    totalCost: parseFloat(newTotalCost)
+                }}
+            );
+        } else {
+            // create trade in Trades collection
+            console.log('Creating new trade...');
+            const newTrade = {
+                userId: parseInt(userId),
+                tickerSymbol: tickerSymbol.toUpperCase(),
+                cardName: cardName,
+                quantity: parseInt(quantity),
+                purchasePrice: parseFloat(currentPrice),
+                currentPrice: parseFloat(currentPrice),
+                totalCost: parseFloat(totalCost),
+                currentValue: parseFloat(totalCost),
+                gain: 0.00,
+                gainPercent: 0.00,
+                purchaseDate: new Date(),
+                createdAt: new Date()
+            };
+
+            console.log('New trade object:', newTrade);
+            const insertResult = await db.collection('Trades').insertOne(newTrade);
+        }
+
+        // update buying power
+        console.log('Updating buying power...');
+        const portfolioUpdateResult = await db.collection('Portfolio').updateOne(
+            { userId: parseInt(userId) },
+            { 
+                $inc: { buyingPower: -totalCost },
+                $set: { lastUpdated: new Date() }
+            }
+        );
+
+        // update portfolio totals 
+        console.log('Updating portfolio totals...');
+        await updatePortfolioTotals(userId, db);
+
+        var ret = { 
+            error: error,
+            message: `Successfully purchased ${quantity} share(s) of ${tickerSymbol} for $${totalCost.toFixed(2)}`
+        };
+        console.log('=== ADD STOCK SUCCESS ===');
+        res.status(200).json(ret);
+    }
+    catch (e) {
+        error = e.toString();
+        console.error('❌ ADD STOCK ERROR:', e);
+        console.error('Error stack:', e.stack);
+        var ret = { error: error };
+        res.status(200).json(ret);
+    }
+});
 
     // SEARCH TRADES/STOCKS
     router.post('/searchstocks', authenticateToken, async (req, res, next) => {
@@ -1442,7 +1468,6 @@ router.get('/overview/:symbol', async (req, res) => {
             });
         }
 
-        console.log("🔎 Fetching overview for:", symbol);
 
         const url = `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${symbol}&apikey=${process.env.ALPHA_VANTAGE_KEY}`;
 
@@ -1734,12 +1759,9 @@ router.get('/overview/:symbol', async (req, res) => {
             interval: interval
         };
         
-        console.log(`🔍 Fetching history for ${symbol} - Period: ${period}, Interval: ${interval}`);
-        console.log(`📅 Query options:`, queryOptions);
         
         const result = await yahooFinance.chart(symbol, queryOptions);
         
-        console.log(`📊 Result received:`, result ? 'Yes' : 'No');
         
         if (!result || !result.quotes || result.quotes.length === 0) {
             throw new Error('No data returned from Yahoo Finance');
@@ -1766,60 +1788,229 @@ router.get('/overview/:symbol', async (req, res) => {
         });
     }
 });
-// GET STOCK DAILY CHANGE (for Yahoo Finance CORS proxy)
-router.post('/stock/daily-change', async (req, res) => {
-    // incoming: symbol
-    // outgoing: symbol, priceChange, percentChange, currentPrice, previousClose, error
+// GET REAL-TIME PORTFOLIO PERFORMANCE
+router.post('/portfolio/performance', async (req, res) => {
+    const { userId, period = '1d' } = req.body;
     var error = '';
+
+    try {
+        if (!userId) {
+            error = 'User ID is required';
+            return res.status(200).json({ performance: [], error: error });
+        }
+
+        const db = client.db('Finance-app');
+        
+        // Get all user trades
+        const trades = await db.collection('Trades')
+            .find({ userId: parseInt(userId) })
+            .toArray();
+
+        if (trades.length === 0) {
+            return res.status(200).json({ performance: [], error: 'No holdings found' });
+        }
+
+        // Get portfolio for buying power
+        const portfolio = await db.collection('Portfolio').findOne({ userId: parseInt(userId) });
+        const buyingPower = portfolio ? portfolio.buyingPower : 0;
+
+        // Get unique symbols
+        const symbols = [...new Set(trades.map(t => t.tickerSymbol))];
+        
+        // Determine date range and interval based on period
+        const endDate = new Date();
+        const startDate = new Date();
+        let interval = '5m';
+        
+        switch(period) {
+            case '1d': 
+                startDate.setDate(endDate.getDate() - 1); 
+                interval = '5m';
+                break;
+            case '5d': 
+                startDate.setDate(endDate.getDate() - 5); 
+                interval = '15m';
+                break;
+            case '1mo': 
+                startDate.setMonth(endDate.getMonth() - 1); 
+                interval = '1h';
+                break;
+            case '3mo': 
+                startDate.setMonth(endDate.getMonth() - 3); 
+                interval = '1d';
+                break;
+            case '1y': 
+                startDate.setFullYear(endDate.getFullYear() - 1); 
+                interval = '1d';
+                break;
+            case 'ytd': 
+                startDate.setMonth(0);
+                startDate.setDate(1);
+                interval = '1d';
+                break;
+            case 'all':
+                // Find earliest trade
+                const earliestTrade = trades.reduce((earliest, trade) => 
+                    new Date(trade.purchaseDate) < new Date(earliest.purchaseDate) ? trade : earliest
+                );
+                startDate.setTime(new Date(earliestTrade.purchaseDate).getTime());
+                interval = '1d';
+                break;
+            default: 
+                startDate.setDate(endDate.getDate() - 1);
+                interval = '5m';
+        }
+
+        console.log(`Fetching ${period} performance for ${symbols.length} symbols...`);
+
+        // Fetch historical prices for all symbols
+        const symbolHistoricalData = {};
+        for (const symbol of symbols) {
+            try {
+                const result = await yahooFinance.chart(symbol, {
+                    period1: startDate,
+                    period2: endDate,
+                    interval: interval
+                });
+                
+                if (result && result.quotes) {
+                    symbolHistoricalData[symbol] = result.quotes;
+                }
+            } catch (err) {
+                console.error(`Error fetching ${symbol}:`, err.message);
+            }
+        }
+
+        // Find all unique timestamps across all stocks
+        const timestampSet = new Set();
+        Object.values(symbolHistoricalData).forEach(quotes => {
+            quotes.forEach(quote => {
+                timestampSet.add(quote.date.getTime());
+            });
+        });
+
+        const sortedTimestamps = Array.from(timestampSet).sort((a, b) => a - b);
+
+        // Calculate portfolio value at each timestamp
+        const performanceData = sortedTimestamps.map(timestamp => {
+            const date = new Date(timestamp);
+            let totalStockValue = 0;
+            let totalInvested = 0;
+
+            // For each trade
+            trades.forEach(trade => {
+                // Only include if trade was purchased before this timestamp
+                if (new Date(trade.purchaseDate) <= date) {
+                    totalInvested += trade.totalCost;
+
+                    // Find the price at this timestamp for this symbol
+                    const symbolQuotes = symbolHistoricalData[trade.tickerSymbol];
+                    if (symbolQuotes) {
+                        // Find the closest quote to this timestamp
+                        const quote = symbolQuotes.reduce((closest, current) => {
+                            const currentDiff = Math.abs(current.date.getTime() - timestamp);
+                            const closestDiff = Math.abs(closest.date.getTime() - timestamp);
+                            return currentDiff < closestDiff ? current : closest;
+                        });
+
+                        if (quote) {
+                            totalStockValue += quote.close * trade.quantity;
+                        }
+                    }
+                }
+            });
+
+            const totalPortfolioValue = totalStockValue + buyingPower;
+            const gain = totalStockValue - totalInvested;
+            const gainPercent = totalInvested > 0 ? (gain / totalInvested) * 100 : 0;
+
+            return {
+                timestamp: date.toISOString(),
+                portfolioValue: Math.round(totalPortfolioValue * 100) / 100,
+                stockValue: Math.round(totalStockValue * 100) / 100,
+                buyingPower: Math.round(buyingPower * 100) / 100,
+                totalInvested: Math.round(totalInvested * 100) / 100,
+                gain: Math.round(gain * 100) / 100,
+                gainPercent: Math.round(gainPercent * 100) / 100
+            };
+        });
+
+        console.log(`Generated ${performanceData.length} data points`);
+
+        res.status(200).json({
+            performance: performanceData,
+            period: period,
+            error: ''
+        });
+
+    } catch (e) {
+        error = e.toString();
+        console.error('Portfolio performance error:', e);
+        res.status(200).json({ 
+            performance: [], 
+            error: error 
+        });
+    }
+});
+// GET STOCK DAILY CHANGE (for Yahoo Finance CORS proxy)
+// GET STOCK DAILY CHANGE (from today's open, not yesterday's close)
+// GET STOCK DAILY CHANGE - Enhanced with Yahoo Finance quote data
+// GET STOCK DAILY CHANGE - With detailed debugging
+// GET STOCK DAILY CHANGE - Using yahoo-finance2 quote method
+// GET STOCK DAILY CHANGE - FIXED
+router.post('/stock/daily-change', async (req, res) => {
     const { symbol } = req.body;
 
     try {
         if (!symbol) {
-            error = 'Stock symbol is required';
-            return res.status(200).json({ error: error });
+            return res.status(200).json({ error: 'Symbol required' });
         }
 
-        console.log(`🔍 Fetching daily change for ${symbol}...`);
         
-        const response = await fetch(
-            `https://query1.finance.yahoo.com/v8/finance/chart/${symbol.toUpperCase()}?interval=1d&range=5d`
-        );
-        
-        if (!response.ok) {
-            error = `Yahoo Finance API error: ${response.status}`;
-            return res.status(200).json({ error: error });
+        const quote = await yahooFinance.quoteSummary(symbol.toUpperCase(), {
+            modules: ['price']
+        });
+
+        if (!quote || !quote.price) {
+            return res.status(200).json({ error: 'No data' });
         }
+
+        const priceData = quote.price;
         
-        const data = await response.json();
+        console.log(' Price data:', {
+            regularMarketPrice: priceData.regularMarketPrice,
+            regularMarketOpen: priceData.regularMarketOpen,
+            regularMarketChange: priceData.regularMarketChange,
+            regularMarketChangePercent: priceData.regularMarketChangePercent
+        });
+
+        const currentPrice = priceData.regularMarketPrice;
+        const openPrice = priceData.regularMarketOpen;
         
-        if (data.chart?.result?.[0]) {
-            const result = data.chart.result[0];
-            const meta = result.meta;
-            
-            const currentPrice = meta.regularMarketPrice;
-            const previousClose = meta.chartPreviousClose;
-            
-            const priceChange = currentPrice - previousClose;
-            const percentChange = (priceChange / previousClose) * 100;
-            
-            console.log(`✅ ${symbol} - Current: $${currentPrice}, Previous: $${previousClose}, Change: $${priceChange.toFixed(2)} (${percentChange.toFixed(2)}%)`);
-            
-            res.status(200).json({
-                symbol: symbol.toUpperCase(),
-                priceChange: priceChange,
-                percentChange: percentChange,
-                currentPrice: currentPrice,
-                previousClose: previousClose,
-                error: ''
-            });
-        } else {
-            error = 'No data found for symbol';
-            res.status(200).json({ error: error });
-        }
+        // Use Yahoo's values directly - they already calculated it correctly
+        const priceChange = priceData.regularMarketChange;
+        const percentChange = priceData.regularMarketChangePercent * 100; // Convert decimal to percentage
+
+        console.log(`${symbol}: $${currentPrice.toFixed(2)} (${priceChange >= 0 ? '+' : ''}$${priceChange.toFixed(2)}, ${priceChange >= 0 ? '+' : ''}${percentChange.toFixed(2)}%)`);
+
+        res.status(200).json({
+            symbol: symbol.toUpperCase(),
+            priceChange: priceChange,
+            percentChange: percentChange,
+            currentPrice: currentPrice,
+            openPrice: openPrice,
+            previousClose: priceData.regularMarketPreviousClose,
+            error: ''
+        });
+
     } catch (e) {
-        error = e.toString();
-        console.error(`❌ Error fetching daily change for ${symbol}:`, e);
-        res.status(200).json({ error: error });
+        res.status(200).json({ 
+            error: e.message,
+            priceChange: 0,
+            percentChange: 0,
+            currentPrice: 0,
+            openPrice: 0
+        });
     }
 });
 // Helper function to calculate start date

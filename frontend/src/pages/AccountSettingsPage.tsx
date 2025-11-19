@@ -79,10 +79,7 @@ const AccountSettingsPage = () => {
     setMessage("");
 
     try {
-      const userData = localStorage.getItem("user_data");
       if (!user || !token) {
-        setMessageType("error");
-        setMessage("Please log in first");
         setIsSaving(false);
         return;
       }
@@ -166,10 +163,7 @@ const AccountSettingsPage = () => {
     }
 
     try {
-      //const userData = localStorage.getItem("user_data");
       if (!user || !token) {
-        setPasswordMessage("Please log in first");
-        setPasswordMessageType("error");
         return;
       }
 
@@ -244,9 +238,7 @@ const AccountSettingsPage = () => {
     }
 
     try {
-      //const userData = localStorage.getItem("user_data");
       if (!user || !token) {
-        setDeleteMessage("Please log in first");
         return;
       }
 
@@ -292,10 +284,7 @@ const AccountSettingsPage = () => {
     // Fetch user data from API
     const fetchUserData = async () => {
       try {
-        //const userData = localStorage.getItem("user_data");
         if (!user || !token) {
-          setMessage("Please log in first");
-          setMessageType("error");
           setIsLoading(false);
           return;
         }
