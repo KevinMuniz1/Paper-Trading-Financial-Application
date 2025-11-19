@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import PageTitle from '../components/PageTitle';
 import NavBar from '../components/NavBar';
-import HoldingsBar from '../components/HoldingsBar';
+import HoldingsBar from '../components/watchListBar';
 import WatchlistSection from '../components/WatchlistSection';
 import '../components/DashboardPage.css';
 import '../components/NavBar.css';
@@ -12,13 +12,35 @@ import { useAuth } from '../context/AuthContext';
 
 const DashboardPage = () => {
   const [isCardVisible, setIsCardVisible] = useState(false);
-  const { user } = useAuth();
+  const { user, loading } = useAuth();  // GET LOADING STATE
   
-  // Get userId from AuthContext (note: property is 'userId' not 'id')
   const userId = user?.userId;
 
   function toggleBuyingPowerCard() {
     setIsCardVisible(!isCardVisible);
+  }
+
+  // Show loading state while auth is initializing
+  if (loading) {
+    return (
+      <div className="layout-wrapper">  
+        <div className='logo-navigation-combo'>
+          <PageTitle />
+          <NavBar/>
+        </div>
+        
+        <main className="main-section">
+          <div style={{ 
+            padding: '20px', 
+            textAlign: 'center', 
+            color: '#666',
+            gridColumn: '1 / -1'
+          }}>
+            Loading...
+          </div>
+        </main>
+      </div>
+    );
   }
 
   return (

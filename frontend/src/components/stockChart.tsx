@@ -64,10 +64,30 @@ const SplineArea = ({ symbol }: StockChartProps) => {
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentPrice, setCurrentPrice] = useState<number | null>(null);
 
   useEffect(() => {
     fetchStockHistory(symbol);
+    fetchCurrentPrice(symbol);
   }, [symbol]);
+
+  const fetchCurrentPrice = async (ticker: string) => {
+    try {
+      const response = await fetch(buildPath('stock/prices'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ symbols: [ticker.toUpperCase()] })
+      });
+      
+      const data = await response.json();
+      
+      if (data.prices && data.prices[ticker.toUpperCase()]) {
+        setCurrentPrice(data.prices[ticker.toUpperCase()]);
+      }
+    } catch (err) {
+      console.error("Error fetching current price:", err);
+    }
+  };
 
   const fetchStockHistory = async (ticker: string) => {
     try {
@@ -105,6 +125,12 @@ const SplineArea = ({ symbol }: StockChartProps) => {
           x: new Date(item.x)
         }));
         setChartData(formattedData);
+        
+        // If price API failed, use last close price from chart data
+        if (!currentPrice && formattedData.length > 0) {
+          const latestData = formattedData[formattedData.length - 1];
+          setCurrentPrice(latestData.close);
+        }
       }
     } catch (err) {
       console.error("Error fetching stock history:", err);
@@ -166,7 +192,13 @@ const SplineArea = ({ symbol }: StockChartProps) => {
 
       <StockChartComponent
         id="stockchartsplinearea"
-        title={`${symbol} Stock Price`}
+        title={currentPrice ? `${symbol} - $${currentPrice.toFixed(2)}` : `${symbol} Stock Price`}
+        titleStyle={{
+        fontFamily: 'Segoe UI',
+        fontWeight: '600',
+        size: '24px',  // Change this value to make it bigger or smaller
+        color: '#19005eff'
+        }}
         load={load}
         theme="Material3"
         indicatorType={[]}
