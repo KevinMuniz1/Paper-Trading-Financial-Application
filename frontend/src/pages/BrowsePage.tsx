@@ -292,7 +292,8 @@ const BrowsePage = () => {
                 ) : (
                     <div className="movers-scroll">
                         {losers.map((stock, i) => (
-                            <div key={i} className="stock-card loser">
+                            <div key={i} className="stock-card loser"
+                                onClick={() => navigate(`/stock/${stock.symbol}`)}>
                                 <div className="stock-content">
                                     <div className="stock-header">
                                         <div className="stock-symbol">{stock.symbol}</div>
