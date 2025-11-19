@@ -1,4 +1,4 @@
-
+/* NAVIGATION BAR */
 .navigation-Bar {
   position: fixed;     
   top: 3rem;             
@@ -30,6 +30,12 @@
   white-space: nowrap;
 }
 
+.navigation-bar-button:hover {
+  color: #00C853;
+  text-shadow: 0 0 4px rgba(0, 255, 149, 0.6);
+}
+
+/* SEARCH ICON */
 .search-icon {
   padding: 0;
   display: flex;
@@ -47,15 +53,12 @@
   padding: 0;
   width: 1.5rem;
   height: 1.5rem;
-  flex-shrink: 0;
 }
 
 .search-text {
   color: #ffffff;
   font-size: 1.1rem;
   font-weight: 500;
-  transition: color 0.2s ease;
-  white-space: nowrap;
 }
 
 .search-icon:hover .search-text {
@@ -63,52 +66,79 @@
   text-shadow: 0 0 4px rgba(0, 255, 149, 0.6);
 }
 
-.nav-item {
-  display: flex;
+/* DROPDOWN */
+.dropdown {
+  position: relative;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+.dropbtn {
+  background-color: transparent;
+  color: white;
+  padding: 0;
+  font-size: 1.1rem;
+  border: none;
+  cursor: pointer;
+  margin: 0;
   height: auto;
-}
-
-.nav-item a {
+  line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  white-space: nowrap;
+  transition: color 0.2s ease;
 }
 
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #101010 !important;   /* FIXED: no more white */
+  border: 1px solid #222;
+  min-width: 175px;
+  box-shadow: 0px 8px 16px rgba(0,0,0,0.4);
+  border-radius: 6px;
+  padding: 8px 0;
+  z-index: 100;
+  left: 50%;
+  transform: translateX(-50%);
+  top: calc(115%);
+}
 
-.navigation-bar-button:hover {
+.dropdown-content.show {
+  display: block;
+}
+
+.dropdown-content a {
+  color: #ddd;          /* FIXED */
+  padding: 10px 16px;
+  text-decoration: none;
+  display: block;
+}
+
+.dropdown-content a:hover {
+  background-color: #1a1a1a !important;   /* FIXED */
+  color: #00ff66;
+}
+
+.dropdown:hover .dropbtn {
   color: #00C853;
   text-shadow: 0 0 4px rgba(0, 255, 149, 0.6);
 }
 
-/* Responsive tweak */
-@media (max-width: 768px) {
-  .navigation-Bar {
-    top: 0.5rem;
-    right: 1rem;
-    gap: 1rem;
-  }
-
-  .navigation-bar-button {
-    font-size: 0.9rem;
-  }
-}
-
-
+/* NOTIFICATION POPOVER */
 .has-dropdown {
   position: relative;
-  display: inline-block;
 }
-
 
 .notif-popover {
   position: absolute;
-  top: calc(100% + 8px);  
+  top: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
   width: 280px;
-  background: #111;
+  background: #111;               /* FIXED */
   border: 1px solid #333;
   border-radius: 10px;
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
@@ -116,7 +146,6 @@
   overflow: hidden;
   animation: notifIn 160ms ease-out;
 }
-
 
 .notif-popover::before {
   content: "";
@@ -126,7 +155,7 @@
   transform: translateX(-50%) rotate(45deg);
   width: 12px;
   height: 12px;
-  background: #111;
+  background: #111;           /* FIXED */
   border-left: 1px solid #333;
   border-top: 1px solid #333;
 }
@@ -161,12 +190,11 @@
   border-bottom: 1px solid #222;
   color: #eaeaea;
   font-size: 0.95rem;
- 
 }
+
 .notif-item:hover {
   background: #1a1a1a;
 }
-
 
 .notif-footer {
   padding: 0.6rem 0.9rem;
@@ -177,7 +205,7 @@
   background: #121212;
 }
 
-/* Entry animation */
+/* ANIMATION */
 @keyframes notifIn {
   from {
     opacity: 0;
@@ -189,7 +217,7 @@
   }
 }
 
-
+/* WATCHLIST */
 .watchlist-container {
   width: 100%;
   height: 100%;
@@ -203,7 +231,7 @@
   font-size: 24px;
   font-weight: 600;
   margin-bottom: 24px;
-  color: #000;
+  color: #fff;
 }
 
 .watchlist-list {
@@ -213,16 +241,15 @@
 }
 
 .watchlist-item {
-  background-color: #252547ff;
+  background-color: #252547;
   border-radius: 8px;
   padding: 16px;
   cursor: pointer;
-  position: relative;
   transition: background-color 0.2s ease;
 }
 
 .watchlist-item:hover {
-  background-color: #545cabff;
+  background-color: rgb(84, 100, 249);  /* blue hover */
 }
 
 .watchlist-item-info {
@@ -231,11 +258,11 @@
   align-items: center;
 }
 
+.holdings-stock-symbol,
 .stock-symbol {
   font-size: 18px;
   font-weight: 600;
   color: #fff;
-  margin-bottom: 4px;
 }
 
 .stock-price {
@@ -261,95 +288,22 @@
   color: #ff3b30;
 }
 
-.remove-button {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: none;
-  border: none;
-  color: #666;
-  font-size: 18px;
-  cursor: pointer;
-  padding: 4px 8px;
-  transition: color 0.2s ease;
-}
-
-.remove-button:hover {
-  color: #ff3b30;
-}
-
 .watchlist-empty {
   text-align: center;
-  color: #666;
+  color: #ccc;
   margin-top: 40px;
   font-size: 16px;
 }
 
-.dropdown {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: auto;
-}
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .navigation-Bar {
+    top: 0.5rem;
+    right: 1rem;
+    gap: 1rem;
+  }
 
-.dropbtn {
-  background-color: transparent;
-  color: white;
-  padding: 0;
-  font-size: 1.1rem;
-  border: none;
-  cursor: pointer;
-  margin: 0;
-  height: auto;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;
-  transition: color 0.2s ease;
-}
-
-.dropdown-content {
-  display: none;
-  position: absolute;
-  background-color: #ffffff;
-  min-width: 175px;
-  box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
-  border-radius: 6px;
-  padding: 8px 0;
-  
-  z-index: 100;
-  left: 50%;
-  transform: translateX(-50%);
-  top: calc(115%);
-  pointer-events: auto;
-}
-
-.dropdown-content.show {
-  display: block;
-}
-
-.dropdown-content a {
-  color: black;
-  padding: 10px 16px;
-  text-decoration: none;
-  display: block;
-}
-
-.dropdown-content a:hover {
-  background-color: #f1f1f1;
-}
-
-.dropdown:hover .dropdown-content {
-  display: block;
-}
-
-.dropdown {
-  pointer-events: auto;
-}
-
-.dropdown:hover .dropbtn {
-  color: #00C853;
-  text-shadow: 0 0 4px rgba(0, 255, 149, 0.6);
+  .navigation-bar-button {
+    font-size: 0.9rem;
+  }
 }

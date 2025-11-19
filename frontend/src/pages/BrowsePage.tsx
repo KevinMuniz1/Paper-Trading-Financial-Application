@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { buildPath } from "../../Path";
+import NavBar from '../components/NavBar';
 import './BrowsePage.css';
 
 interface Article {
@@ -196,7 +197,10 @@ const BrowsePage = () => {
 
     return (
         <div className="browse-page">
+            <div className='logo-navigation-combo'>
             <h1 className="page-title">Browse</h1>
+            <NavBar/>
+            </div>
 
             {/* Search Bar */}
             <div className="search-wrapper">

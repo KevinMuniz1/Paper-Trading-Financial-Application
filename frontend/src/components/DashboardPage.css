@@ -65,8 +65,15 @@
 }
 
 /* ===========================
-   CHART WRAPPER
+   CHART SECTION & WRAPPER
    =========================== */
+.chart-section {
+  position: relative;
+  margin-bottom: 20px;
+  flex: 1;
+  min-height: 0;
+}
+
 .chart-wrapper {
   flex: 1;           
   min-height: 0;    
@@ -92,6 +99,74 @@
 /* Hide TradingView branding */
 a[href*="tradingview.com"] {
   display: none !important;
+}
+
+/* ===========================
+   CHART VIEW TOGGLE
+   =========================== */
+.chart-view-toggle {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  padding: 10px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  justify-content: center;
+}
+
+.toggle-btn {
+  padding: 12px 24px;
+  border-radius: 6px;
+  border: 2px solid #e0e0e0;
+  background: white;
+  color: #333;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toggle-btn:hover {
+  border-color: #4054a5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(64, 84, 165, 0.2);
+}
+
+.toggle-btn.active {
+  background: #4054a5;
+  color: white;
+  border-color: #4054a5;
+  box-shadow: 0 4px 8px rgba(64, 84, 165, 0.3);
+}
+
+.toggle-btn.active:hover {
+  background: #1113a1;
+  border-color: #1113a1;
+}
+
+.toggle-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(64, 84, 165, 0.2);
+}
+
+/* Animation for chart switching */
+.chart-section > div {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ===========================
@@ -566,4 +641,117 @@ a[href*="tradingview.com"] {
     width: 90%;
     height: auto;
   }
+
+  .chart-view-toggle {
+    flex-direction: column;
+  }
+  
+  .toggle-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Enhanced Holdings Display Styles */
+
+.watchlist-item-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 10px;
+}
+
+.holdings-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 80px;
+}
+
+.holdings-stock-symbol {
+  font-weight: 700;
+  font-size: 16px;
+  color: #000;
+}
+
+.holdings-quantity {
+  font-size: 11px;
+  color: #666;
+  font-weight: 500;
+}
+
+.holdings-right {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.holdings-prices {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  min-width: 80px;
+}
+
+.holdings-stock-price {
+  font-weight: 600;
+  font-size: 15px;
+  color: #333;
+}
+
+.holdings-total-value {
+  font-size: 13px;
+  color: #666;
+  font-weight: 500;
+}
+
+.watchlist-change-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  min-width: 70px;
+}
+
+.stock-change {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.stock-change.positive {
+  color: #00C853;
+}
+
+.stock-change.negative {
+  color: #FF3B30;
+}
+
+.stock-change-percent {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.stock-change-percent.positive {
+  color: #00C853;
+}
+
+.stock-change-percent.negative {
+  color: #FF3B30;
+}
+
+/* Hover effect for watchlist items */
+.watchlist-item {
+  transition: all 0.2s ease;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.watchlist-item:hover {
+  background: #f5f5f5;
+  transform: translateX(3px);
 }
