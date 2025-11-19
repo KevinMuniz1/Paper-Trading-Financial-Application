@@ -1,4 +1,4 @@
-import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { forwardRef, useImperativeHandle, useState, useEffect } from 'react';
 import {
   StockChartComponent,
   StockChartSeriesCollectionDirective,
@@ -86,6 +86,12 @@ const themes = [
   "fluent2dark", "tailwind3", "tailwind3dark"
 ];
 
+interface PortfolioChartRef {
+  refresh: () => void;
+}
+
+interface PortfolioChartProps {}
+
 interface ChartDataPoint {
   x: Date;
   portfolioValue: number;
@@ -101,7 +107,7 @@ interface PortfolioStats {
   buyingPower: number;
 }
 
-const PortfolioChartAdvanced = forwardRef((props, ref) => {
+const PortfolioChartAdvanced = forwardRef<PortfolioChartRef, PortfolioChartProps>((props, ref) => {
   const {token} = useAuth();
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [stats, setStats] = useState<PortfolioStats | null>(null);
@@ -129,7 +135,7 @@ const PortfolioChartAdvanced = forwardRef((props, ref) => {
     }
   }, [token, selectedPeriod]);
 
-  const fetchPortfolioData = async () => {
+  const fetchPortfolioData = async (period: string = '1d', showLoading: boolean = true) =>  {
     if (!token) { 
       setError("User not authenticated");
       setLoading(false);
@@ -184,7 +190,7 @@ const PortfolioChartAdvanced = forwardRef((props, ref) => {
         body: JSON.stringify({ days: 3650 }) // Get max history
       });
 
-      const historyData = await historyResponse.json();
+      const performanceData = await historyResponse.json();
 
 
       // Fetch current portfolio summary
