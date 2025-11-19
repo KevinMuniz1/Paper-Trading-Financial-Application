@@ -1892,15 +1892,14 @@ router.post('/portfolio/performance', async (req, res) => {
                 }
             });
 
-            const totalPortfolioValue = totalStockValue + buyingPower;
+            const totalPortfolioValue = totalStockValue;
             const gain = totalStockValue - totalInvested;
             const gainPercent = totalInvested > 0 ? (gain / totalInvested) * 100 : 0;
 
             return {
                 timestamp: date.toISOString(),
-                portfolioValue: Math.round(totalPortfolioValue * 100) / 100,
+                portfolioValue: Math.round(totalStockValue * 100) / 100,
                 stockValue: Math.round(totalStockValue * 100) / 100,
-                buyingPower: Math.round(buyingPower * 100) / 100,
                 totalInvested: Math.round(totalInvested * 100) / 100,
                 gain: Math.round(gain * 100) / 100,
                 gainPercent: Math.round(gainPercent * 100) / 100
