@@ -156,7 +156,6 @@ const DisplayStockPage = () => {
     <div className="layout-wrapper">  
       {/* Header */}
       <div className='logo-navigation-combo'>
-        <PageTitle />
         <NavBar/>
       </div>
 

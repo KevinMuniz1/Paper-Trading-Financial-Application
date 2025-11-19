@@ -12,11 +12,14 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  padding-top: 5rem; /* ← Add padding to the wrapper instead */
 }
 
 /* ===========================
    MAIN SECTION
    =========================== */
+
+
 .main-section {
   display: flex;
   flex-direction: row;
@@ -26,6 +29,7 @@
   width: 100vw;
   padding: 0 2rem;
   box-sizing: border-box;
+  margin-top: 5rem; 
 }
 
 /* ===========================
