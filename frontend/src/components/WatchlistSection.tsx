@@ -71,7 +71,7 @@ export default function WatchlistSection() {
     }
 
     try {
-      const res = await fetch(buildPath("/watchlist"), {
+      const res = await fetch(buildPath("watchlist"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId })
