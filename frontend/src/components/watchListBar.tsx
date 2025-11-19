@@ -27,10 +27,10 @@ interface DailyChange {
 
 async function fetchDailyStockChange(symbol: string): Promise<DailyChange | null> {
   try {
-    console.log(`🔍 Fetching daily change for ${symbol}...`);
+    
     
     // Call YOUR backend instead of Yahoo Finance directly
-    const response = await fetch(buildPath("/api/stock/daily-change"), {
+    const response = await fetch(buildPath("/stock/daily-change"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ symbol })
@@ -60,7 +60,7 @@ async function fetchDailyStockChange(symbol: string): Promise<DailyChange | null
 }
 
 export default function HoldingsBar() {
-  console.log("🎨 HoldingsBar component rendering!");
+  
   
   const navigate = useNavigate();
   const { user, loading } = useAuth();
@@ -94,7 +94,7 @@ export default function HoldingsBar() {
       console.log("📦 Portfolio data received:", data);
 
       if (data && data.holdings) {
-        console.log(`📊 Processing ${data.holdings.length} holdings...`);
+        
         
         // Fetch daily changes for each holding
         const holdingsWithDailyChange = await Promise.all(
