@@ -29,6 +29,28 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            
+            <!-- Deep linking intent filter for opening web URLs in the app -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                
+                <data
+                    android:scheme="https"
+                    android:host="paper-trade-app.com"/>
+                <data
+                    android:scheme="http"
+                    android:host="paper-trade-app.com"/>
+                    
+                <!-- Support for www subdomain -->
+                <data
+                    android:scheme="https"
+                    android:host="www.paper-trade-app.com"/>
+                <data
+                    android:scheme="http"
+                    android:host="www.paper-trade-app.com"/>
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

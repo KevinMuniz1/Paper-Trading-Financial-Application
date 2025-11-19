@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:app_links/app_links.dart';
 import 'api_host.dart';
 import 'pages/news_page.dart';
 import 'services/api_service.dart';
@@ -11,8 +12,52 @@ void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late AppLinks _appLinks;
+  
+  @override
+  void initState() {
+    super.initState();
+    _initDeepLinks();
+  }
+  
+  Future<void> _initDeepLinks() async {
+    _appLinks = AppLinks();
+    
+    // Handle links when app is already running
+    _appLinks.uriLinkStream.listen((uri) {
+      debugPrint('Received deep link: $uri');
+      _handleDeepLink(uri);
+    });
+    
+    // Handle initial link if app was launched from a link
+    try {
+      final uri = await _appLinks.getInitialLink();
+      if (uri != null) {
+        debugPrint('App launched with deep link: $uri');
+        _handleDeepLink(uri);
+      }
+    } catch (e) {
+      debugPrint('Error handling initial link: $e');
+    }
+  }
+  
+  void _handleDeepLink(Uri uri) {
+    debugPrint('Handling deep link: ${uri.toString()}');
+    // Deep link received - app will open instead of browser
+    // You can add custom navigation logic here based on uri.path
+    // For example:
+    // - /login -> navigate to login
+    // - /trade -> navigate to trade page
+    // - /news -> navigate to news page
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1115,11 +1160,38 @@ class MainAppScreen extends StatefulWidget {
 
 class _MainAppScreenState extends State<MainAppScreen> {
   int _currentIndex = 0;
+  late final List<Widget> _pages;
+
+  @override
+  void initState() {
+    super.initState();
+    // Create all pages once and keep them in memory
+    _pages = [
+      HomeScreen(
+        userId: widget.userId,
+        firstName: widget.firstName,
+        lastName: widget.lastName,
+      ),
+      PortfolioPage(userId: widget.userId),
+      TradePage(userId: widget.userId),
+      const NewsPage(),
+      AccountScreen(
+        userId: widget.userId,
+        username: widget.username,
+        firstName: widget.firstName,
+        lastName: widget.lastName,
+        email: widget.email,
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _getPage(_currentIndex),
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _pages,
+      ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _currentIndex,
@@ -1154,37 +1226,6 @@ class _MainAppScreenState extends State<MainAppScreen> {
         ],
       ),
     );
-  }
-
-  Widget _getPage(int index) {
-    switch (index) {
-      case 0:
-        return HomeScreen(
-          userId: widget.userId,
-          firstName: widget.firstName,
-          lastName: widget.lastName,
-        );
-      case 1:
-        return PortfolioPage(userId: widget.userId);
-      case 2:
-        return TradePage(userId: widget.userId);
-      case 3:
-        return const NewsPage();
-      case 4:
-        return AccountScreen(
-          userId: widget.userId,
-          username: widget.username,
-          firstName: widget.firstName,
-          lastName: widget.lastName,
-          email: widget.email,
-        );
-      default:
-        return HomeScreen(
-          userId: widget.userId,
-          firstName: widget.firstName,
-          lastName: widget.lastName,
-        );
-    }
   }
 }
 
