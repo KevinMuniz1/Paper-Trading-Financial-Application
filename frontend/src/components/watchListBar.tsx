@@ -30,7 +30,7 @@ async function fetchDailyStockChange(symbol: string): Promise<DailyChange | null
     
     
     // Call YOUR backend instead of Yahoo Finance directly
-    const response = await fetch(buildPath("/stock/daily-change"), {
+    const response = await fetch(buildPath("stock/daily-change"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ symbol })

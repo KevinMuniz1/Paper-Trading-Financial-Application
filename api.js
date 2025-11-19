@@ -1742,7 +1742,7 @@ router.post('/stock/daily-change', async (req, res) => {
             return res.status(200).json({ error: error });
         }
 
-        console.log(`🔍 Fetching daily change for ${symbol}...`);
+        console.log(` Fetching daily change for ${symbol}...`);
         
         const response = await fetch(
             `https://query1.finance.yahoo.com/v8/finance/chart/${symbol.toUpperCase()}?interval=1d&range=5d`
@@ -1765,7 +1765,7 @@ router.post('/stock/daily-change', async (req, res) => {
             const priceChange = currentPrice - previousClose;
             const percentChange = (priceChange / previousClose) * 100;
             
-            console.log(`✅ ${symbol} - Current: $${currentPrice}, Previous: $${previousClose}, Change: $${priceChange.toFixed(2)} (${percentChange.toFixed(2)}%)`);
+            console.log(` ${symbol} - Current: $${currentPrice}, Previous: $${previousClose}, Change: $${priceChange.toFixed(2)} (${percentChange.toFixed(2)}%)`);
             
             res.status(200).json({
                 symbol: symbol.toUpperCase(),
