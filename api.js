@@ -1730,7 +1730,7 @@ router.get('/overview/:symbol', async (req, res) => {
     }
 });
 // GET STOCK DAILY CHANGE (for Yahoo Finance CORS proxy)
-router.post('/api/stock/daily-change', async (req, res) => {
+router.post('/stock/daily-change', async (req, res) => {
     // incoming: symbol
     // outgoing: symbol, priceChange, percentChange, currentPrice, previousClose, error
     var error = '';
