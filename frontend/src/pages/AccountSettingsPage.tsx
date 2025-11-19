@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import "./AccountSettingsPage.css";
 import NavBar from "../components/NavBar";
 import { buildPath } from "../../Path";
+import { useAuth } from '../context/AuthContext'; 
 
 interface AccountData {
   firstName: string;
@@ -16,6 +17,7 @@ interface EditingField {
 }
 
 const AccountSettingsPage = () => {
+  const { user, token } = useAuth();
   const [accountData, setAccountData] = useState<AccountData>({
     firstName: "",
     lastName: "",
@@ -78,30 +80,38 @@ const AccountSettingsPage = () => {
 
     try {
       const userData = localStorage.getItem("user_data");
-      if (!userData) {
+      if (!user || !token) {
         setMessageType("error");
         setMessage("Please log in first");
         setIsSaving(false);
         return;
       }
 
-      const parsed = JSON.parse(userData);
-      const userId = parsed.id;
+      const userId = user.userId;
       const field = editingField.field;
 
-      const updateData: Partial<AccountData> = {
-        [field]: editingField.value.trim(),
+      // Map frontend field names to backend field names
+      const fieldMappings = {
+        firstName: "firstName", // Backend handles both camelCase and PascalCase
+        lastName: "lastName",
+        email: "email", 
+        login: "login" // Backend expects 'login' for username
       };
+
+      const backendFieldName = fieldMappings[field];
+      const updateData = {
+        userId: userId,
+        [backendFieldName]: editingField.value.trim(),
+      };
+
+      console.log("Sending update data:", updateData);
 
       const response = await fetch(buildPath("user/update"), {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          userId,
-          ...updateData,
-        }),
+        body: JSON.stringify(updateData),
       });
 
       const data = await response.json();
@@ -116,9 +126,15 @@ const AccountSettingsPage = () => {
         }));
 
         // Update localStorage
-        parsed[field] = editingField.value.trim();
-        localStorage.setItem("user_data", JSON.stringify(parsed));
-
+        /*
+        const updatedUserData = {
+          ...parsed,
+          [field]: editingField.value.trim(),
+        };
+        localStorage.setItem("user_data", JSON.stringify(updatedUserData));
+        */
+       //update authcontext
+      
         setEditingField({ field: null, value: "" });
       } else {
         setMessageType("error");
@@ -157,23 +173,21 @@ const AccountSettingsPage = () => {
     }
 
     try {
-      const userData = localStorage.getItem("user_data");
-      if (!userData) {
+      //const userData = localStorage.getItem("user_data");
+      if (!user || !token) {
         setPasswordMessage("Please log in first");
         setPasswordMessageType("error");
         return;
       }
 
-      const parsed = JSON.parse(userData);
-      const userId = parsed.id;
-
+      const userId = user.userId;
       const response = await fetch(buildPath("user/change-password"), {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          userId,
+          userId: userId,
           currentPassword: passwordData.currentPassword,
           newPassword: passwordData.newPassword,
         }),
@@ -238,14 +252,13 @@ const AccountSettingsPage = () => {
     }
 
     try {
-      const userData = localStorage.getItem("user_data");
-      if (!userData) {
+      //const userData = localStorage.getItem("user_data");
+      if (!user || !token) {
         setDeleteMessage("Please log in first");
         return;
       }
 
-      const parsed = JSON.parse(userData);
-      const userId = parsed.id;
+      const userId = user.userId;
 
       const response = await fetch(buildPath("user/delete"), {
         method: "DELETE",
@@ -253,7 +266,7 @@ const AccountSettingsPage = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          userId,
+          userId: userId,
           password: deletePassword,
         }),
       });
@@ -287,23 +300,22 @@ const AccountSettingsPage = () => {
     // Fetch user data from API
     const fetchUserData = async () => {
       try {
-        const userData = localStorage.getItem("user_data");
-        if (!userData) {
+        //const userData = localStorage.getItem("user_data");
+        if (!user || !token) {
           setMessage("Please log in first");
           setMessageType("error");
           setIsLoading(false);
           return;
         }
 
-        const parsed = JSON.parse(userData);
-        const userId = parsed.id;
+        const userId = user.userId;
 
         const response = await fetch(buildPath("user/profile"), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ userId }),
+          body: JSON.stringify({ userId: userId  }),
         });
 
         if (!response.ok) {
@@ -333,7 +345,7 @@ const AccountSettingsPage = () => {
     };
 
     fetchUserData();
-  }, []);
+  }, [user, token]);
 
   return (
     <div className="account-settings-page">
