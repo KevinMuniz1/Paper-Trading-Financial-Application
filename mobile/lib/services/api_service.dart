@@ -117,7 +117,7 @@ class ApiService {
   static Future<Map<String, dynamic>> buyStock(int userId, String symbol, String name, int quantity) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/addcard'),
+        Uri.parse('$baseUrl/addstock'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'userId': userId,

@@ -226,6 +226,135 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  void _showForgotPasswordDialog() {
+    final TextEditingController emailController = TextEditingController();
+    bool isSending = false;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Forgot Password'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Enter your email address and we\'ll send you a password reset link.',
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: emailController,
+                    enabled: !isSending,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: const InputDecoration(
+                      labelText: 'Email Address',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.email),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSending ? null : () {
+                    Navigator.of(dialogContext).pop();
+                  },
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: isSending ? null : () async {
+                    final email = emailController.text.trim();
+                    
+                    if (email.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please enter your email address'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
+                    if (!email.contains('@') || !email.contains('.')) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please enter a valid email address'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
+                    setState(() {
+                      isSending = true;
+                    });
+
+                    try {
+                      final String apiBaseUrl = ApiHost.getBaseUrl();
+                      final response = await http.post(
+                        Uri.parse('$apiBaseUrl/forgot-password'),
+                        headers: {'Content-Type': 'application/json'},
+                        body: jsonEncode({'email': email}),
+                      );
+
+                      if (!mounted) return;
+
+                      Navigator.of(dialogContext).pop();
+
+                      if (response.statusCode == 200) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('If the email exists, a password reset link has been sent. Please check your inbox.'),
+                            backgroundColor: Colors.green,
+                            duration: Duration(seconds: 5),
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Server error: ${response.statusCode}'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      if (!mounted) return;
+                      
+                      Navigator.of(dialogContext).pop();
+                      
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error: ${e.toString()}'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6C5CE7),
+                  ),
+                  child: isSending
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Text('Send Reset Link', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -440,6 +569,23 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                           ),
+                          const SizedBox(height: 16),
+                          
+                          // Forgot Password Button
+                          Center(
+                            child: TextButton(
+                              onPressed: _showForgotPasswordDialog,
+                              child: const Text(
+                                'Forgot Password?',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                          
                           const Spacer(flex: 1),
                         ],
                       ),
@@ -1161,6 +1307,9 @@ class MainAppScreen extends StatefulWidget {
 class _MainAppScreenState extends State<MainAppScreen> {
   int _currentIndex = 0;
   late final List<Widget> _pages;
+  final GlobalKey<_HomeScreenState> _homeScreenKey = GlobalKey<_HomeScreenState>();
+  final GlobalKey<_PortfolioPageState> _portfolioPageKey = GlobalKey<_PortfolioPageState>();
+  final GlobalKey<_TradePageState> _tradePageKey = GlobalKey<_TradePageState>();
 
   @override
   void initState() {
@@ -1168,12 +1317,19 @@ class _MainAppScreenState extends State<MainAppScreen> {
     // Create all pages once and keep them in memory
     _pages = [
       HomeScreen(
+        key: _homeScreenKey,
         userId: widget.userId,
         firstName: widget.firstName,
         lastName: widget.lastName,
       ),
-      PortfolioPage(userId: widget.userId),
-      TradePage(userId: widget.userId),
+      PortfolioPage(
+        key: _portfolioPageKey,
+        userId: widget.userId,
+      ),
+      TradePage(
+        key: _tradePageKey,
+        userId: widget.userId,
+      ),
       const NewsPage(),
       AccountScreen(
         userId: widget.userId,
@@ -1199,6 +1355,10 @@ class _MainAppScreenState extends State<MainAppScreen> {
           setState(() {
             _currentIndex = index;
           });
+          // Refresh all pages when navigating to ensure data is up-to-date
+          _homeScreenKey.currentState?.refreshData();
+          _portfolioPageKey.currentState?.refreshData();
+          _tradePageKey.currentState?.refreshData();
         },
         selectedItemColor: const Color(0xFF6C5CE7),
         unselectedItemColor: Colors.grey,
@@ -1251,6 +1411,7 @@ class _HomeScreenState extends State<HomeScreen> {
   double _totalPortfolioValue = 0.0;
   double _totalValue = 0.0;
   bool _isLoading = true;
+  int _chartRefreshKey = 0; // Key to force chart refresh
 
   @override
   void initState() {
@@ -1258,7 +1419,12 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadPortfolioData();
   }
 
-  Future<void> _loadPortfolioData() async {
+  // Public method to refresh portfolio data from parent
+  void refreshData() {
+    _loadPortfolioData(refreshChart: true);
+  }
+
+  Future<void> _loadPortfolioData({bool refreshChart = false}) async {
     try {
       // Get complete portfolio summary
       final result = await ApiService.getPortfolioSummary(widget.userId);
@@ -1266,12 +1432,17 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) {
         if (result['error'] == null || result['error'].toString().isEmpty) {
           final portfolio = result['portfolio'];
+          final buyingPower = (portfolio?['buyingPower'] ?? 0.0).toDouble();
           setState(() {
-            _buyingPower = (portfolio?['buyingPower'] ?? 0.0).toDouble();
+            _buyingPower = buyingPower;
             _totalPortfolioValue = (portfolio?['totalPortfolioValue'] ?? 0.0).toDouble();
             // Total value is stocks value + buying power
             _totalValue = _totalPortfolioValue + _buyingPower;
             _isLoading = false;
+            // Only refresh chart when explicitly requested (e.g., after adding/decreasing funds)
+            if (refreshChart) {
+              _chartRefreshKey++; // Increment to refresh chart
+            }
           });
         } else {
           throw Exception(result['error']);
@@ -1347,7 +1518,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     
                     if (result['success'] == true) {
                       // Reload full portfolio data to update all values
-                      await _loadPortfolioData();
+                      await _loadPortfolioData(refreshChart: true);
                       
                       if (!mounted) return;
                       messenger.showSnackBar(
@@ -1460,7 +1631,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     
                     if (result['success'] == true) {
                       // Reload full portfolio data to update all values
-                      await _loadPortfolioData();
+                      await _loadPortfolioData(refreshChart: true);
                       
                       if (!mounted) return;
                       messenger.showSnackBar(
@@ -1765,7 +1936,10 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 30),
             
             // Portfolio Chart
-            PortfolioChart(userId: widget.userId),
+            PortfolioChart(
+              key: ValueKey(_chartRefreshKey),
+              userId: widget.userId,
+            ),
             const SizedBox(height: 30),
           ],
         ),
@@ -1895,6 +2069,7 @@ class AccountScreen extends StatelessWidget {
             
             // Account Options
             _buildAccountOption(context, 'Account Details', Icons.person, false, userId, username, firstName, lastName, email),
+            _buildAccountOption(context, 'Password & Security', Icons.security, false, userId, username, firstName, lastName, email),
             _buildAccountOption(context, 'Log Out', Icons.logout, true, userId, username, firstName, lastName, email),
           ],
         ),
@@ -1955,6 +2130,16 @@ class AccountScreen extends StatelessWidget {
                 ),
               ),
             );
+          } else if (title == 'Password & Security') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PasswordSecurityPage(
+                  userId: userId,
+                  email: email,
+                ),
+              ),
+            );
           }
         },
       ),
@@ -2001,7 +2186,7 @@ class AccountScreen extends StatelessWidget {
 }
 
 // Account Details Page
-class AccountDetailsPage extends StatelessWidget {
+class AccountDetailsPage extends StatefulWidget {
   final int userId;
   final String username;
   final String firstName;
@@ -2018,6 +2203,180 @@ class AccountDetailsPage extends StatelessWidget {
   });
 
   @override
+  State<AccountDetailsPage> createState() => _AccountDetailsPageState();
+}
+
+class _AccountDetailsPageState extends State<AccountDetailsPage> {
+  late TextEditingController _usernameController;
+  late TextEditingController _firstNameController;
+  late TextEditingController _lastNameController;
+  late TextEditingController _emailController;
+  bool _isEditing = false;
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _usernameController = TextEditingController(text: widget.username);
+    _firstNameController = TextEditingController(text: widget.firstName);
+    _lastNameController = TextEditingController(text: widget.lastName);
+    _emailController = TextEditingController(text: widget.email);
+  }
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveChanges() async {
+    if (_isSaving) return;
+
+    final username = _usernameController.text.trim();
+    final firstName = _firstNameController.text.trim();
+    final lastName = _lastNameController.text.trim();
+    final email = _emailController.text.trim();
+
+    if (username.isEmpty || firstName.isEmpty || lastName.isEmpty || email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('All fields are required'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Basic email validation
+    if (!email.contains('@') || !email.contains('.')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid email address'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      final String apiBaseUrl = ApiHost.getBaseUrl();
+      final response = await http.patch(
+        Uri.parse('$apiBaseUrl/user/update'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'userId': widget.userId,
+          'login': username,
+          'firstName': firstName,
+          'lastName': lastName,
+          'email': email,
+        }),
+      );
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body);
+        
+        // Treat "Failed to update user" as success since it means values are already correct
+        if (result['success'] == true || result['error'] == 'Failed to update user') {
+          if (!mounted) return;
+          
+          setState(() {
+            _isEditing = false;
+            _isSaving = false;
+          });
+          
+          // Use WidgetsBinding to ensure navigation happens after the current frame
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            
+            // Pop back to AccountScreen
+            Navigator.pop(context);
+            
+            // Pop back to MainAppScreen and replace with updated data
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => MainAppScreen(
+                  userId: widget.userId,
+                  username: username,
+                  firstName: firstName,
+                  lastName: lastName,
+                  email: email,
+                ),
+              ),
+            );
+            
+            // Show success message after navigation completes
+            Future.delayed(const Duration(milliseconds: 100), () {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Profile updated successfully!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            });
+          });
+        } else {
+          setState(() {
+            _isSaving = false;
+          });
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['error'] ?? 'Failed to update profile'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } else {
+        setState(() {
+          _isSaving = false;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Server error: ${response.statusCode}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      
+      setState(() {
+        _isSaving = false;
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _cancelEdit() {
+    setState(() {
+      _isEditing = false;
+      _usernameController.text = widget.username;
+      _firstNameController.text = widget.firstName;
+      _lastNameController.text = widget.lastName;
+      _emailController.text = widget.email;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -2025,6 +2384,17 @@ class AccountDetailsPage extends StatelessWidget {
         backgroundColor: const Color(0xFF6C5CE7),
         foregroundColor: Colors.white,
         centerTitle: true,
+        actions: [
+          if (!_isEditing && !_isSaving)
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () {
+                setState(() {
+                  _isEditing = true;
+                });
+              },
+            ),
+        ],
       ),
       body: Container(
         width: double.infinity,
@@ -2074,7 +2444,559 @@ class AccountDetailsPage extends StatelessWidget {
               ),
               const SizedBox(height: 40),
               
-              // Name Card
+              // First Name Field
+              _buildEditableField(
+                'First Name',
+                Icons.person_outline,
+                _firstNameController,
+              ),
+              const SizedBox(height: 20),
+              
+              // Last Name Field
+              _buildEditableField(
+                'Last Name',
+                Icons.person_outline,
+                _lastNameController,
+              ),
+              const SizedBox(height: 20),
+              
+              // Username Field
+              _buildEditableField(
+                'Username',
+                Icons.account_circle_outlined,
+                _usernameController,
+              ),
+              const SizedBox(height: 20),
+              
+              // Email Field
+              _buildEditableField(
+                'Email Address',
+                Icons.email_outlined,
+                _emailController,
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 30),
+              
+              // Save/Cancel Buttons
+              if (_isEditing)
+                Column(
+                  children: [
+                    ElevatedButton(
+                      onPressed: _isSaving ? null : _saveChanges,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF7ED321),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 3,
+                      ),
+                      child: _isSaving
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : const Text(
+                              'Save Changes',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton(
+                      onPressed: _isSaving ? null : _cancelEdit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 3,
+                      ),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEditableField(
+    String label,
+    IconData icon,
+    TextEditingController controller, {
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF6C5CE7), Color(0xFF9776EC)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF6C5CE7).withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              icon,
+              color: const Color(0xFF6C5CE7),
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: _isEditing
+                ? TextField(
+                    controller: controller,
+                    enabled: !_isSaving,
+                    keyboardType: keyboardType,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    decoration: InputDecoration(
+                      labelText: label,
+                      labelStyle: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      border: const UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white70),
+                      ),
+                      enabledBorder: const UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white70),
+                      ),
+                      focusedBorder: const UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white, width: 2),
+                      ),
+                    ),
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        label,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        controller.text,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Password & Security Page
+class PasswordSecurityPage extends StatefulWidget {
+  final int userId;
+  final String email;
+
+  const PasswordSecurityPage({
+    super.key,
+    required this.userId,
+    required this.email,
+  });
+
+  @override
+  State<PasswordSecurityPage> createState() => _PasswordSecurityPageState();
+}
+
+class _PasswordSecurityPageState extends State<PasswordSecurityPage> {
+  final TextEditingController _currentPasswordController = TextEditingController();
+  final TextEditingController _newPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _deletePasswordController = TextEditingController();
+  bool _isChangingPassword = false;
+  bool _isSendingResetEmail = false;
+
+  @override
+  void dispose() {
+    _currentPasswordController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
+    _deletePasswordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _changePassword() async {
+    final currentPassword = _currentPasswordController.text;
+    final newPassword = _newPasswordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+
+    if (currentPassword.isEmpty || newPassword.isEmpty || confirmPassword.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('All fields are required'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (newPassword != confirmPassword) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('New passwords do not match'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('New password must be at least 6 characters'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isChangingPassword = true;
+    });
+
+    try {
+      final String apiBaseUrl = ApiHost.getBaseUrl();
+      final response = await http.patch(
+        Uri.parse('$apiBaseUrl/user/change-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'userId': widget.userId,
+          'currentPassword': currentPassword,
+          'newPassword': newPassword,
+        }),
+      );
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body);
+        
+        if (result['success'] == true) {
+          setState(() {
+            _isChangingPassword = false;
+            _currentPasswordController.clear();
+            _newPasswordController.clear();
+            _confirmPasswordController.clear();
+          });
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Password changed successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          setState(() {
+            _isChangingPassword = false;
+          });
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['error'] ?? 'Failed to change password'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } else {
+        setState(() {
+          _isChangingPassword = false;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Server error: ${response.statusCode}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      
+      setState(() {
+        _isChangingPassword = false;
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _sendPasswordResetEmail() async {
+    setState(() {
+      _isSendingResetEmail = true;
+    });
+
+    try {
+      final String apiBaseUrl = ApiHost.getBaseUrl();
+      final response = await http.post(
+        Uri.parse('$apiBaseUrl/forgot-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': widget.email,
+        }),
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _isSendingResetEmail = false;
+      });
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Password reset email sent! Please check your inbox.'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 5),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Server error: ${response.statusCode}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      
+      setState(() {
+        _isSendingResetEmail = false;
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _deleteAccount() async {
+    final password = _deletePasswordController.text;
+
+    if (password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter your password to confirm'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Show loading
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final String apiBaseUrl = ApiHost.getBaseUrl();
+      final response = await http.delete(
+        Uri.parse('$apiBaseUrl/user/delete'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'userId': widget.userId,
+          'password': password,
+        }),
+      );
+
+      if (!mounted) return;
+      
+      // Close loading dialog
+      Navigator.of(context).pop();
+
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body);
+        
+        if (result['success'] == true) {
+          // Navigate back to login screen
+          if (!mounted) return;
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+            (route) => false,
+          );
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Account deleted successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['error'] ?? 'Failed to delete account'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Server error: ${response.statusCode}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      
+      // Close loading dialog if still open
+      Navigator.of(context).pop();
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _showDeleteConfirmation() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete Account'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'This action cannot be undone. All your data will be permanently deleted.',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              const Text('Please enter your password to confirm:'),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _deletePasswordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Password',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.lock),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                _deletePasswordController.clear();
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _deleteAccount();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+              ),
+              child: const Text('Delete Account', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Password & Security'),
+        backgroundColor: const Color(0xFF6C5CE7),
+        foregroundColor: Colors.white,
+        centerTitle: true,
+      ),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF2D1B69),
+              Color(0xFF3D2B7A),
+            ],
+          ),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 20),
+              
+              // Change Password Section
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -2092,51 +3014,112 @@ class AccountDetailsPage extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.person_outline,
-                        color: Color(0xFF6C5CE7),
-                        size: 28,
+                    const Row(
+                      children: [
+                        Icon(Icons.lock, color: Colors.white, size: 28),
+                        SizedBox(width: 12),
+                        Text(
+                          'Change Password',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    TextField(
+                      controller: _currentPasswordController,
+                      obscureText: true,
+                      enabled: !_isChangingPassword,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                        labelText: 'Current Password',
+                        labelStyle: TextStyle(color: Colors.white70),
+                        prefixIcon: Icon(Icons.lock_outline, color: Colors.white70),
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.white70),
+                        ),
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.white, width: 2),
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Full Name',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '$firstName $lastName',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _newPasswordController,
+                      obscureText: true,
+                      enabled: !_isChangingPassword,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                        labelText: 'New Password',
+                        labelStyle: TextStyle(color: Colors.white70),
+                        prefixIcon: Icon(Icons.lock, color: Colors.white70),
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.white70),
+                        ),
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.white, width: 2),
+                        ),
                       ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _confirmPasswordController,
+                      obscureText: true,
+                      enabled: !_isChangingPassword,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                        labelText: 'Confirm New Password',
+                        labelStyle: TextStyle(color: Colors.white70),
+                        prefixIcon: Icon(Icons.lock, color: Colors.white70),
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.white70),
+                        ),
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.white, width: 2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: _isChangingPassword ? null : _changePassword,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF7ED321),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 3,
+                      ),
+                      child: _isChangingPassword
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : const Text(
+                              'Change Password',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               
-              // Username Card
+              // Password Reset Section
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -2154,105 +3137,114 @@ class AccountDetailsPage extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.account_circle_outlined,
-                        color: Color(0xFF6C5CE7),
-                        size: 28,
+                    const Row(
+                      children: [
+                        Icon(Icons.email, color: Colors.white, size: 28),
+                        SizedBox(width: 12),
+                        Text(
+                          'Forgot Password?',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Send a password reset link to your email address',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Username',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            username,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: _isSendingResetEmail ? null : _sendPasswordResetEmail,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: const Color(0xFF6C5CE7),
+                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 3,
                       ),
+                      child: _isSendingResetEmail
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6C5CE7)),
+                              ),
+                            )
+                          : const Text(
+                              'Send Reset Email',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               
-              // Email Card
+              // Delete Account Section
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF6C5CE7), Color(0xFF9776EC)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  border: Border.all(color: Colors.red, width: 2),
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF6C5CE7).withOpacity(0.3),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
                 ),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.email_outlined,
-                        color: Color(0xFF6C5CE7),
-                        size: 28,
+                    const Row(
+                      children: [
+                        Icon(Icons.warning, color: Colors.red, size: 28),
+                        SizedBox(width: 12),
+                        Text(
+                          'Danger Zone',
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Once you delete your account, there is no going back. Please be certain.',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Email Address',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            email,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
+                    const SizedBox(height: 16),
+                    OutlinedButton(
+                      onPressed: _showDeleteConfirmation,
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.red, width: 2),
+                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Delete Account',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red,
+                        ),
                       ),
                     ),
                   ],
@@ -2326,6 +3318,11 @@ class _TradePageState extends State<TradePage> {
     _loadData();
   }
 
+  // Public method to refresh trade data from parent
+  void refreshData() {
+    _loadData();
+  }
+
   void _initializeStocks() {
     // Initialize the 8 stocks with placeholder data
     // Real prices will be loaded from Yahoo Finance API
@@ -2347,16 +3344,13 @@ class _TradePageState extends State<TradePage> {
     });
     
     try {
-      // Load buying power
-      final buyingPowerResult = await ApiService.getBuyingPower(widget.userId);
+      // Load buying power and holdings together
+      final portfolioResult = await ApiService.getPortfolioSummary(widget.userId);
       
-      // Load user's current holdings to check ownership
-      final holdingsResult = await ApiService.searchTrades(widget.userId);
-      
-      // Create a map of holdings by symbol for quick lookup (just to show "Owned" indicator)
+      // Create a map of holdings by symbol for quick lookup
       Map<String, dynamic> holdingsMap = {};
-      if (holdingsResult['results'] != null) {
-        for (var holding in holdingsResult['results']) {
+      if (portfolioResult['holdings'] != null) {
+        for (var holding in portfolioResult['holdings']) {
           holdingsMap[holding['symbol']] = holding;
         }
       }
@@ -2403,7 +3397,7 @@ class _TradePageState extends State<TradePage> {
       
       if (mounted) {
         setState(() {
-          _buyingPower = (buyingPowerResult['buyingPower'] ?? 0.0).toDouble();
+          _buyingPower = (portfolioResult['portfolio']?['buyingPower'] ?? 0.0).toDouble();
           _userHoldings = holdingsMap;
           _isLoading = false;
         });
@@ -3058,6 +4052,9 @@ class PortfolioValuePoint {
 
   // For backwards compatibility with old code
   double get combinedValue => totalValue;
+  
+  // Get stocks value only (excluding cash/buying power)
+  double get stocksValue => totalValue - buyingPower;
 
   Map<String, dynamic> toJson() {
     return {
@@ -3081,16 +4078,32 @@ class PortfolioChartPainter extends CustomPainter {
   final List<PortfolioValuePoint> points;
   final double maxValue;
   final double minValue;
+  final bool hasVariation;
 
   PortfolioChartPainter({
     required this.points,
     required this.maxValue,
     required this.minValue,
+    required this.hasVariation,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     if (points.isEmpty) return;
+
+    // Draw horizontal grid lines
+    final gridPaint = Paint()
+      ..color = Colors.white.withOpacity(0.1)
+      ..strokeWidth = 1.0;
+
+    for (int i = 0; i <= 4; i++) {
+      final y = (i / 4) * size.height;
+      canvas.drawLine(
+        Offset(0, y),
+        Offset(size.width, y),
+        gridPaint,
+      );
+    }
 
     final paint = Paint()
       ..color = const Color(0xFF7ED321)
@@ -3106,7 +4119,9 @@ class PortfolioChartPainter extends CustomPainter {
 
     for (int i = 0; i < points.length; i++) {
       final x = (i / (points.length - 1)) * size.width;
-      final normalizedValue = (points[i].combinedValue - minValue) / (maxValue - minValue);
+      final normalizedValue = hasVariation 
+        ? (points[i].stocksValue - minValue) / (maxValue - minValue)
+        : 0.5; // Center the line if no variation
       final y = size.height - (normalizedValue * size.height);
 
       if (i == 0) {
@@ -3121,6 +4136,7 @@ class PortfolioChartPainter extends CustomPainter {
 
     // Complete the fill path
     fillPath.lineTo(size.width, size.height);
+    fillPath.lineTo(0, size.height);
     fillPath.close();
 
     // Draw the filled area
@@ -3136,7 +4152,9 @@ class PortfolioChartPainter extends CustomPainter {
 
     for (int i = 0; i < points.length; i++) {
       final x = (i / (points.length - 1)) * size.width;
-      final normalizedValue = (points[i].combinedValue - minValue) / (maxValue - minValue);
+      final normalizedValue = hasVariation 
+        ? (points[i].stocksValue - minValue) / (maxValue - minValue)
+        : 0.5; // Center the line if no variation
       final y = size.height - (normalizedValue * size.height);
       canvas.drawCircle(Offset(x, y), 3, pointPaint);
     }
@@ -3159,6 +4177,7 @@ class PortfolioChart extends StatefulWidget {
 class _PortfolioChartState extends State<PortfolioChart> {
   List<PortfolioValuePoint> _history = [];
   bool _isLoading = true;
+  double _currentStocksValue = 0.0; // Current actual stocks value from portfolio
 
   @override
   void initState() {
@@ -3168,6 +4187,13 @@ class _PortfolioChartState extends State<PortfolioChart> {
 
   Future<void> _loadChartData() async {
     try {
+      // Fetch current portfolio to get actual current stocks value
+      final portfolioResult = await ApiService.getPortfolioSummary(widget.userId);
+      double currentStocksValue = 0.0;
+      if (portfolioResult['portfolio'] != null) {
+        currentStocksValue = (portfolioResult['portfolio']['totalPortfolioValue'] ?? 0.0).toDouble();
+      }
+      
       // Fetch portfolio history from backend
       final result = await ApiService.getPortfolioHistory(widget.userId, days: 30);
       
@@ -3185,6 +4211,7 @@ class _PortfolioChartState extends State<PortfolioChart> {
           
           setState(() {
             _history = history;
+            _currentStocksValue = currentStocksValue;
             _isLoading = false;
           });
         } else {
@@ -3196,6 +4223,7 @@ class _PortfolioChartState extends State<PortfolioChart> {
       if (mounted) {
         setState(() {
           _history = [];
+          _currentStocksValue = 0.0;
           _isLoading = false;
         });
       }
@@ -3256,14 +4284,19 @@ class _PortfolioChartState extends State<PortfolioChart> {
       );
     }
 
-    final maxValue = _history.map((p) => p.combinedValue).reduce(math.max);
-    final minValue = _history.map((p) => p.combinedValue).reduce(math.min);
-    final currentValue = _history.last.combinedValue;
-    final firstValue = _history.first.combinedValue;
+    final maxValue = _history.map((p) => p.stocksValue).reduce(math.max);
+    final minValue = _history.map((p) => p.stocksValue).reduce(math.min);
+    // Use actual current stocks value from portfolio, not historical data
+    final currentValue = _currentStocksValue;
+    final firstValue = _history.first.stocksValue;
     final change = currentValue - firstValue;
     final changePercent = firstValue > 0 ? (change / firstValue) * 100 : 0;
     final isPositive = change >= 0;
     final color = isPositive ? const Color(0xFF22C55E) : const Color(0xFFEF4444); // Darker green and bright red
+
+    // If all values are the same (e.g., all 0), show a flat line message
+    final valueRange = maxValue - minValue;
+    final hasVariation = valueRange > 0.01; // Allow small threshold for floating point comparison
 
     return Container(
       width: double.infinity,
@@ -3366,6 +4399,7 @@ class _PortfolioChartState extends State<PortfolioChart> {
                 points: _history,
                 maxValue: maxValue,
                 minValue: minValue,
+                hasVariation: hasVariation,
               ),
             ),
           ),
@@ -3374,7 +4408,7 @@ class _PortfolioChartState extends State<PortfolioChart> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Start',
+                'Yesterday',
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.white.withOpacity(0.7),
@@ -4173,6 +5207,11 @@ class _PortfolioPageState extends State<PortfolioPage> {
     _loadPortfolio();
   }
 
+  // Public method to refresh portfolio data from parent
+  void refreshData() {
+    _loadPortfolio();
+  }
+
   Future<void> _loadPortfolio() async {
     setState(() {
       _isLoading = true;
@@ -4184,8 +5223,9 @@ class _PortfolioPageState extends State<PortfolioPage> {
       if (mounted) {
         if (result['error'] == null || result['error'].toString().isEmpty) {
           final portfolio = result['portfolio'];
+          final buyingPower = (portfolio?['buyingPower'] ?? 0.0).toDouble();
           setState(() {
-            _buyingPower = (portfolio?['buyingPower'] ?? 0.0).toDouble();
+            _buyingPower = buyingPower;
             _totalPortfolioValue = (portfolio?['totalPortfolioValue'] ?? 0.0).toDouble();
             _totalGain = (portfolio?['totalGain'] ?? 0.0).toDouble();
             _totalGainPercent = (portfolio?['totalGainPercent'] ?? 0.0).toDouble();
