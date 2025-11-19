@@ -156,10 +156,14 @@ const BrowsePage = () => {
     };
 
     return (
-        <div className="browse-page">
+        
+<div>
+     <NavBar />
+    <div className="browse-page">
+           
             <div className="logo-navigation-combo">
                 <h1 className="page-title">Browse</h1>
-                <NavBar />
+                
             </div>
 
             {/* Search Bar */}
@@ -309,6 +313,7 @@ const BrowsePage = () => {
                     </div>
                 )}
             </div>
+        </div>
         </div>
     );
 };
