@@ -1,0 +1,1737 @@
+swagger: '2.0'
+info:
+  description: This is the API Endpoints documentation for the COP 4331 SimpliTrade - Paper Trading App, for Team 21
+  version: 1.0.0
+  title: SimpliTrade API Documentation
+  contact:
+    email: simplitrade.25@gmail.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+
+host: paper-trade-app.com
+basePath: /api
+schemes:
+  - http
+
+paths:
+  /login:
+    post:
+      tags:
+        - Authentication
+      summary: User login with JWT token
+      operationId: loginUser
+      description: Authenticate user and return JWT token with user profile
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Login credentials
+          required: true
+          schema:
+            $ref: '#/definitions/Login'
+      responses:
+        200:
+          description: Successful login with JWT token
+          schema:
+            $ref: '#/definitions/LoginResponseWithToken'
+        400:
+          description: Invalid credentials
+        500:
+          description: Server error
+
+  /register:
+    post:
+      tags:
+        - Authentication
+      summary: Register new user
+      operationId: registerUser
+      description: Create new user account and send verification email
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: User registration data
+          required: true
+          schema:
+            $ref: '#/definitions/Register'
+      responses:
+        200:
+          description: User registered successfully
+          schema:
+            $ref: '#/definitions/RegisterResponse'
+        400:
+          description: Invalid input or user exists
+        500:
+          description: Server error
+
+  /verify-email:
+    post:
+      tags:
+        - Authentication
+      summary: Verify email address
+      operationId: verifyEmail
+      description: Verify user's email address using token
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Email verification token
+          required: true
+          schema:
+            $ref: '#/definitions/VerifyEmail'
+      responses:
+        200:
+          description: Email verified successfully
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        400:
+          description: Invalid token
+        500:
+          description: Server error
+
+  /forgot-password:
+    post:
+      tags:
+        - Authentication
+      summary: Request password reset
+      operationId: forgotPassword
+      description: Send password reset email to user
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: User email
+          required: true
+          schema:
+            $ref: '#/definitions/ForgotPassword'
+      responses:
+        200:
+          description: Reset email sent if account exists
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        500:
+          description: Server error
+
+  /reset-password:
+    post:
+      tags:
+        - Authentication
+      summary: Reset user password
+      operationId: resetPassword
+      description: Reset user password using reset token
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Reset token and new password
+          required: true
+          schema:
+            $ref: '#/definitions/ResetPassword'
+      responses:
+        200:
+          description: Password reset successfully
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        400:
+          description: Invalid token
+        500:
+          description: Server error
+
+  /portfolio/buying-power:
+    post:
+      tags:
+        - Portfolio
+      summary: Get user's buying power
+      operationId: getBuyingPower
+      description: Retrieve user's current buying power
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: User ID
+          required: true
+          schema:
+            $ref: '#/definitions/UserIdRequest'
+      responses:
+        200:
+          description: Buying power retrieved
+          schema:
+            $ref: '#/definitions/BuyingPowerResponse'
+        404:
+          description: Portfolio not found
+        500:
+          description: Server error
+
+  /portfolio/add-funds:
+    post:
+      tags:
+        - Portfolio
+      summary: Add or decrease buying power
+      operationId: addFunds
+      description: Add or decrease funds in user's buying power (positive amounts add, negative amounts decrease)
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: User ID and amount (positive to add, negative to decrease)
+          required: true
+          schema:
+            $ref: '#/definitions/AddFunds'
+      responses:
+        200:
+          description: Funds updated successfully
+          schema:
+            $ref: '#/definitions/AddFundsResponse'
+        400:
+          description: Invalid amount or insufficient funds
+        404:
+          description: Portfolio not found
+        500:
+          description: Server error
+
+  /addstock:
+    post:
+      tags:
+        - Trading
+      summary: Buy stocks
+      operationId: addStock
+      description: Purchase stocks and add to portfolio with enhanced debugging
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Trade details
+          required: true
+          schema:
+            $ref: '#/definitions/AddStock'
+      responses:
+        200:
+          description: Stock purchased successfully
+          schema:
+            $ref: '#/definitions/TradeResponse'
+        400:
+          description: Insufficient funds or invalid data
+        500:
+          description: Server error
+
+  /searchstocks:
+    post:
+      tags:
+        - Trading
+      summary: Search user's stock holdings
+      operationId: searchStocks
+      description: Search user's portfolio stocks by symbol or name with multiple price support
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Search criteria
+          required: true
+          schema:
+            $ref: '#/definitions/SearchStocks'
+      responses:
+        200:
+          description: Search results
+          schema:
+            $ref: '#/definitions/SearchStocksResponse'
+        500:
+          description: Server error
+
+  /sell:
+    post:
+      tags:
+        - Trading
+      summary: Sell stocks
+      operationId: sellStocks
+      description: Sell partial or full stock position
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Sell order details
+          required: true
+          schema:
+            $ref: '#/definitions/SellStocks'
+      responses:
+        200:
+          description: Stocks sold successfully
+          schema:
+            $ref: '#/definitions/SellResponse'
+        400:
+          description: Invalid quantity or trade not found
+        500:
+          description: Server error
+
+  /sell-all:
+    post:
+      tags:
+        - Trading
+      summary: Sell all shares of a symbol
+      operationId: sellAllStocks
+      description: Sell all shares of a specific stock symbol
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Symbol to sell
+          required: true
+          schema:
+            $ref: '#/definitions/SellAll'
+      responses:
+        200:
+          description: All shares sold successfully
+          schema:
+            $ref: '#/definitions/SellAllResponse'
+        400:
+          description: No holdings found
+        500:
+          description: Server error
+
+  /portfolio/summary:
+    post:
+      tags:
+        - Portfolio
+      summary: Get portfolio summary
+      operationId: getPortfolioSummary
+      description: Retrieve complete portfolio summary with holdings and current values
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: User ID
+          required: true
+          schema:
+            $ref: '#/definitions/UserIdRequest'
+      responses:
+        200:
+          description: Portfolio summary
+          schema:
+            $ref: '#/definitions/PortfolioSummaryResponse'
+        500:
+          description: Server error
+
+  /portfolio/history:
+    post:
+      tags:
+        - Portfolio
+      summary: Get portfolio historical data
+      operationId: getPortfolioHistory
+      description: Retrieve historical portfolio performance data
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: User ID and optional days parameter
+          required: true
+          schema:
+            $ref: '#/definitions/PortfolioHistoryRequest'
+      responses:
+        200:
+          description: Portfolio history data
+          schema:
+            $ref: '#/definitions/PortfolioHistoryResponse'
+        500:
+          description: Server error
+
+  /portfolio/performance:
+    post:
+      tags:
+        - Portfolio
+      summary: Get real-time portfolio performance
+      operationId: getPortfolioPerformance
+      description: Retrieve detailed portfolio performance data with historical tracking
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: User ID and performance period
+          required: true
+          schema:
+            $ref: '#/definitions/PortfolioPerformanceRequest'
+      responses:
+        200:
+          description: Portfolio performance data
+          schema:
+            $ref: '#/definitions/PortfolioPerformanceResponse'
+        500:
+          description: Server error
+
+  /news:
+    get:
+      tags:
+        - Market Data
+      summary: Get financial news
+      operationId: getNews
+      description: Retrieve financial news with stock ticker analysis
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: bustCache
+          type: boolean
+          description: Force cache refresh
+      responses:
+        200:
+          description: News articles
+          schema:
+            $ref: '#/definitions/NewsResponse'
+        500:
+          description: Server error
+
+  /top-movers:
+    get:
+      tags:
+        - Market Data
+      summary: Get top gainers and losers
+      operationId: getTopMovers
+      description: Retrieve today's top gaining and losing stocks with fallback support
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Top movers data
+          schema:
+            $ref: '#/definitions/TopMoversResponse'
+        500:
+          description: Server error
+
+  /search:
+    get:
+      tags:
+        - Market Data
+      summary: Search stocks
+      operationId: searchStocksMarket
+      description: Search for stocks by symbol or company name
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: q
+          type: string
+          required: true
+          description: Search query (symbol or company name)
+        - in: query
+          name: query
+          type: string
+          description: Alternative search query parameter
+      responses:
+        200:
+          description: Search results
+          schema:
+            $ref: '#/definitions/SearchMarketResponse'
+        400:
+          description: Search query required
+        500:
+          description: Server error
+
+  /stock/prices:
+    post:
+      tags:
+        - Market Data
+      summary: Get multiple stock prices
+      operationId: getStockPrices
+      description: Retrieve current prices for multiple stock symbols with warning support
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Array of stock symbols
+          required: true
+          schema:
+            $ref: '#/definitions/StockPricesRequest'
+      responses:
+        200:
+          description: Stock prices
+          schema:
+            $ref: '#/definitions/StockPricesResponse'
+        400:
+          description: Symbols array required
+        500:
+          description: Server error
+
+  /overview/{symbol}:
+    get:
+      tags:
+        - Market Data
+      summary: Get stock overview
+      operationId: getStockOverview
+      description: Retrieve detailed overview information for a stock using Alpha Vantage
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: symbol
+          type: string
+          required: true
+          description: Stock symbol
+      responses:
+        200:
+          description: Stock overview data
+          schema:
+            $ref: '#/definitions/StockOverviewResponse'
+        400:
+          description: Symbol required
+        500:
+          description: Server error
+
+  /stock/history/{symbol}:
+    get:
+      tags:
+        - Market Data
+      summary: Get stock historical data
+      operationId: getStockHistory
+      description: Retrieve historical price data for a stock with multiple time periods
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: symbol
+          type: string
+          required: true
+          description: Stock symbol
+        - in: query
+          name: period
+          type: string
+          enum: ['1d', '5d', '1mo', '3mo', '6mo', '1y', '5y', 'ytd', 'max']
+          default: '1mo'
+          description: Time period for historical data
+      responses:
+        200:
+          description: Stock historical data
+          schema:
+            $ref: '#/definitions/StockHistoryResponse'
+        500:
+          description: Server error
+
+  /stock/daily-change:
+    post:
+      tags:
+        - Market Data
+      summary: Get stock daily change
+      operationId: getStockDailyChange
+      description: Retrieve daily price change information for a stock using Yahoo Finance API
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Stock symbol
+          required: true
+          schema:
+            $ref: '#/definitions/DailyChangeRequest'
+      responses:
+        200:
+          description: Daily change data
+          schema:
+            $ref: '#/definitions/DailyChangeResponse'
+        400:
+          description: Symbol required
+        500:
+          description: Server error
+
+  /watchlist/add:
+    post:
+      tags:
+        - Watchlist
+      summary: Add stock to watchlist
+      operationId: addToWatchlist
+      description: Add stock symbol to user's watchlist
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Stock symbol to add
+          required: true
+          schema:
+            $ref: '#/definitions/WatchlistAdd'
+      responses:
+        200:
+          description: Stock added to watchlist
+          schema:
+            $ref: '#/definitions/WatchlistResponse'
+        400:
+          description: Invalid symbol or already in watchlist
+        500:
+          description: Server error
+
+  /watchlist/delete:
+    post:
+      tags:
+        - Watchlist
+      summary: Remove stock from watchlist
+      operationId: removeFromWatchlist
+      description: Remove stock symbol from user's watchlist
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Stock symbol to remove
+          required: true
+          schema:
+            $ref: '#/definitions/WatchlistRemove'
+      responses:
+        200:
+          description: Stock removed from watchlist
+          schema:
+            $ref: '#/definitions/WatchlistResponse'
+        400:
+          description: Stock not in watchlist
+        500:
+          description: Server error
+
+  /watchlist:
+    post:
+      tags:
+        - Watchlist
+      summary: Get user's watchlist
+      operationId: getWatchlist
+      description: Retrieve user's complete watchlist with current prices and change calculations
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: User ID
+          required: true
+          schema:
+            $ref: '#/definitions/UserIdRequest'
+      responses:
+        200:
+          description: Watchlist data
+          schema:
+            $ref: '#/definitions/WatchlistDataResponse'
+        500:
+          description: Server error
+
+  /watchlist/check:
+    post:
+      tags:
+        - Watchlist
+      summary: Check if stock is in watchlist
+      operationId: checkWatchlist
+      description: Check if specific stock is in user's watchlist
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Stock symbol to check
+          required: true
+          schema:
+            $ref: '#/definitions/WatchlistCheck'
+      responses:
+        200:
+          description: Check result
+          schema:
+            $ref: '#/definitions/WatchlistCheckResponse'
+        500:
+          description: Server error
+
+  /user/profile:
+    post:
+      tags:
+        - User
+      summary: Get user profile
+      operationId: getUserProfile
+      description: Retrieve user profile information
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: User ID
+          required: true
+          schema:
+            $ref: '#/definitions/UserIdRequest'
+      responses:
+        200:
+          description: User profile data
+          schema:
+            $ref: '#/definitions/UserProfileResponse'
+        404:
+          description: User not found
+        500:
+          description: Server error
+
+  /user/update:
+    patch:
+      tags:
+        - User
+      summary: Update user profile
+      operationId: updateUserProfile
+      description: Update user profile information
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Updated user data
+          required: true
+          schema:
+            $ref: '#/definitions/UpdateUserProfile'
+      responses:
+        200:
+          description: Profile updated successfully
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        400:
+          description: Invalid data or username/email exists
+        404:
+          description: User not found
+        500:
+          description: Server error
+
+  /user/change-password:
+    patch:
+      tags:
+        - User
+      summary: Change user password
+      operationId: changePassword
+      description: Change user password with current password verification
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Password change data
+          required: true
+          schema:
+            $ref: '#/definitions/ChangePassword'
+      responses:
+        200:
+          description: Password changed successfully
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        400:
+          description: Current password incorrect or missing fields
+        500:
+          description: Server error
+
+  /user/delete:
+    delete:
+      tags:
+        - User
+      summary: Delete user account
+      operationId: deleteUser
+      description: Permanently delete user account and all associated data
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: User ID and password for verification
+          required: true
+          schema:
+            $ref: '#/definitions/DeleteUser'
+      responses:
+        200:
+          description: Account deleted successfully
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        400:
+          description: Incorrect password or missing fields
+        500:
+          description: Server error
+
+definitions:
+  # Authentication Definitions
+  Login:
+    type: object
+    required:
+      - login
+      - password
+    properties:
+      login:
+        type: string
+        example: "john_doe"
+      password:
+        type: string
+        example: "password123"
+
+  LoginResponseWithToken:
+    type: object
+    properties:
+      id:
+        type: integer
+        example: 1
+      firstName:
+        type: string
+        example: "John"
+      lastName:
+        type: string
+        example: "Doe"
+      email:
+        type: string
+        example: "john.doe@email.com"
+      login:
+        type: string
+        example: "john_doe"
+      token:
+        type: string
+        example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      error:
+        type: string
+        example: ""
+
+  Register:
+    type: object
+    required:
+      - firstName
+      - lastName
+      - email
+      - login
+      - password
+    properties:
+      firstName:
+        type: string
+        example: "John"
+      lastName:
+        type: string
+        example: "Doe"
+      email:
+        type: string
+        example: "john.doe@email.com"
+      login:
+        type: string
+        example: "john_doe"
+      password:
+        type: string
+        example: "password123"
+
+  RegisterResponse:
+    type: object
+    properties:
+      id:
+        type: integer
+        example: 1
+      error:
+        type: string
+        example: ""
+      message:
+        type: string
+        example: "Registration successful! Please check your email to verify your account."
+
+  VerifyEmail:
+    type: object
+    required:
+      - token
+    properties:
+      token:
+        type: string
+        example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+  ForgotPassword:
+    type: object
+    required:
+      - email
+    properties:
+      email:
+        type: string
+        example: "john.doe@email.com"
+
+  ResetPassword:
+    type: object
+    required:
+      - token
+      - newPassword
+    properties:
+      token:
+        type: string
+        example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      newPassword:
+        type: string
+        example: "newpassword123"
+
+  SuccessResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      error:
+        type: string
+        example: ""
+      message:
+        type: string
+        example: "Operation completed successfully"
+
+  # Portfolio Definitions
+  UserIdRequest:
+    type: object
+    required:
+      - userId
+    properties:
+      userId:
+        type: integer
+        example: 1
+
+  BuyingPowerResponse:
+    type: object
+    properties:
+      buyingPower:
+        type: number
+        format: float
+        example: 1000.50
+      lastUpdated:
+        type: string
+        format: date-time
+        example: "2024-01-15T10:30:00.000Z"
+      error:
+        type: string
+        example: ""
+
+  AddFunds:
+    type: object
+    required:
+      - userId
+      - amount
+    properties:
+      userId:
+        type: integer
+        example: 1
+      amount:
+        type: number
+        format: float
+        example: 500.00
+
+  AddFundsResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      error:
+        type: string
+        example: ""
+      newBalance:
+        type: number
+        format: float
+        example: 1500.50
+      message:
+        type: string
+        example: "Successfully added $500.00 to your account. New balance: $1500.50"
+
+  PortfolioHistoryRequest:
+    type: object
+    required:
+      - userId
+    properties:
+      userId:
+        type: integer
+        example: 1
+      days:
+        type: integer
+        example: 30
+
+  PortfolioHistoryResponse:
+    type: object
+    properties:
+      history:
+        type: array
+        items:
+          $ref: '#/definitions/PortfolioHistoryItem'
+      error:
+        type: string
+        example: ""
+
+  PortfolioHistoryItem:
+    type: object
+    properties:
+      date:
+        type: string
+        format: date-time
+        example: "2024-01-15T00:00:00.000Z"
+      totalValue:
+        type: number
+        format: float
+        example: 3500.75
+      totalInvested:
+        type: number
+        format: float
+        example: 3200.25
+
+  PortfolioPerformanceRequest:
+    type: object
+    required:
+      - userId
+    properties:
+      userId:
+        type: integer
+        example: 1
+      period:
+        type: string
+        enum: ['1d', '5d', '1mo', '3mo', '1y', 'ytd', 'all']
+        default: '1d'
+        example: "1d"
+
+  PortfolioPerformanceResponse:
+    type: object
+    properties:
+      performance:
+        type: array
+        items:
+          $ref: '#/definitions/PerformanceDataPoint'
+      period:
+        type: string
+        example: "1d"
+      error:
+        type: string
+        example: ""
+
+  PerformanceDataPoint:
+    type: object
+    properties:
+      timestamp:
+        type: string
+        format: date-time
+        example: "2024-01-15T09:30:00.000Z"
+      portfolioValue:
+        type: number
+        format: float
+        example: 3500.75
+      stockValue:
+        type: number
+        format: float
+        example: 2500.75
+      totalInvested:
+        type: number
+        format: float
+        example: 3200.25
+      gain:
+        type: number
+        format: float
+        example: 300.50
+      gainPercent:
+        type: number
+        format: float
+        example: 9.39
+
+  # Trading Definitions
+  AddStock:
+    type: object
+    required:
+      - userId
+      - cardName
+      - tickerSymbol
+    properties:
+      userId:
+        type: integer
+        example: 1
+      cardName:
+        type: string
+        example: "Apple Inc."
+      tickerSymbol:
+        type: string
+        example: "AAPL"
+      quantity:
+        type: integer
+        example: 10
+
+  TradeResponse:
+    type: object
+    properties:
+      error:
+        type: string
+        example: ""
+      message:
+        type: string
+        example: "Successfully purchased 10 share(s) of AAPL for $1820.50"
+
+  SearchStocks:
+    type: object
+    required:
+      - userId
+    properties:
+      userId:
+        type: integer
+        example: 1
+      search:
+        type: string
+        example: "AAPL"
+
+  SearchStocksResponse:
+    type: object
+    properties:
+      results:
+        type: array
+        items:
+          $ref: '#/definitions/TradeItem'
+      error:
+        type: string
+        example: ""
+      searchQuery:
+        type: string
+        example: "AAPL"
+      totalResults:
+        type: integer
+        example: 1
+
+  TradeItem:
+    type: object
+    properties:
+      id:
+        type: string
+        example: "507f1f77bcf86cd799439011"
+      symbol:
+        type: string
+        example: "AAPL"
+      name:
+        type: string
+        example: "Apple Inc."
+      quantity:
+        type: integer
+        example: 10
+      purchasePrice:
+        type: number
+        format: float
+        example: 182.05
+      currentPrice:
+        type: number
+        format: float
+        example: 185.30
+      totalCost:
+        type: number
+        format: float
+        example: 1820.50
+      currentValue:
+        type: number
+        format: float
+        example: 1853.00
+      gain:
+        type: number
+        format: float
+        example: 32.50
+      gainPercent:
+        type: number
+        format: float
+        example: 1.78
+      purchaseDate:
+        type: string
+        format: date-time
+        example: "2024-01-10T14:30:00.000Z"
+      isPositive:
+        type: boolean
+        example: true
+
+  SellStocks:
+    type: object
+    required:
+      - userId
+      - tradeId
+    properties:
+      userId:
+        type: integer
+        example: 1
+      tradeId:
+        type: string
+        example: "507f1f77bcf86cd799439011"
+      quantity:
+        type: integer
+        example: 5
+
+  SellResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      error:
+        type: string
+        example: ""
+      message:
+        type: string
+        example: "Successfully sold 5 share(s) of AAPL for $926.50"
+      saleAmount:
+        type: number
+        format: float
+        example: 926.50
+      soldQuantity:
+        type: integer
+        example: 5
+      remainingQuantity:
+        type: integer
+        example: 5
+      symbol:
+        type: string
+        example: "AAPL"
+      salePrice:
+        type: number
+        format: float
+        example: 185.30
+
+  SellAll:
+    type: object
+    required:
+      - userId
+      - symbol
+    properties:
+      userId:
+        type: integer
+        example: 1
+      symbol:
+        type: string
+        example: "AAPL"
+
+  SellAllResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      error:
+        type: string
+        example: ""
+      message:
+        type: string
+        example: "Successfully sold all 10 share(s) of AAPL for $1853.00"
+      totalSaleAmount:
+        type: number
+        format: float
+        example: 1853.00
+      soldQuantity:
+        type: integer
+        example: 10
+      symbol:
+        type: string
+        example: "AAPL"
+      salePrice:
+        type: number
+        format: float
+        example: 185.30
+
+  PortfolioSummaryResponse:
+    type: object
+    properties:
+      portfolio:
+        type: object
+        properties:
+          userId:
+            type: integer
+            example: 1
+          buyingPower:
+            type: number
+            format: float
+            example: 1500.50
+          totalPortfolioValue:
+            type: number
+            format: float
+            example: 3500.75
+          totalInvested:
+            type: number
+            format: float
+            example: 3200.25
+          totalGain:
+            type: number
+            format: float
+            example: 300.50
+          totalGainPercent:
+            type: number
+            format: float
+            example: 9.39
+          lastUpdated:
+            type: string
+            format: date-time
+            example: "2024-01-15T10:30:00.000Z"
+      holdings:
+        type: array
+        items:
+          $ref: '#/definitions/TradeItem'
+      error:
+        type: string
+        example: ""
+
+  # Market Data Definitions
+  NewsResponse:
+    type: object
+    properties:
+      articles:
+        type: array
+        items:
+          $ref: '#/definitions/NewsArticle'
+      error:
+        type: string
+        example: ""
+
+  NewsArticle:
+    type: object
+    properties:
+      title:
+        type: string
+        example: "Apple Reports Record Quarterly Earnings"
+      description:
+        type: string
+        example: "Apple Inc. reported record quarterly earnings driven by strong iPhone sales..."
+      url:
+        type: string
+        example: "https://example.com/news/apple-earnings"
+      urlToImage:
+        type: string
+        example: "https://example.com/images/apple-news.jpg"
+      publishedAt:
+        type: string
+        format: date-time
+        example: "2024-01-15T08:00:00.000Z"
+      source:
+        type: string
+        example: "Bloomberg"
+      ticker:
+        type: string
+        example: "AAPL"
+
+  TopMoversResponse:
+    type: object
+    properties:
+      gainers:
+        type: array
+        items:
+          $ref: '#/definitions/MoverItem'
+      losers:
+        type: array
+        items:
+          $ref: '#/definitions/MoverItem'
+      error:
+        type: string
+        example: ""
+
+  MoverItem:
+    type: object
+    properties:
+      symbol:
+        type: string
+        example: "AAPL"
+      name:
+        type: string
+        example: "Apple Inc."
+      price:
+        type: number
+        format: float
+        example: 185.30
+      change:
+        type: number
+        format: float
+        example: 5.25
+      changePercent:
+        type: number
+        format: float
+        example: 2.91
+
+  SearchMarketResponse:
+    type: object
+    properties:
+      results:
+        type: array
+        items:
+          $ref: '#/definitions/SearchResultItem'
+      error:
+        type: string
+        example: ""
+
+  SearchResultItem:
+    type: object
+    properties:
+      symbol:
+        type: string
+        example: "AAPL"
+      name:
+        type: string
+        example: "Apple Inc."
+      type:
+        type: string
+        example: "Equity"
+      region:
+        type: string
+        example: "United States"
+
+  StockPricesRequest:
+    type: object
+    required:
+      - symbols
+    properties:
+      symbols:
+        type: array
+        items:
+          type: string
+        example: ["AAPL", "GOOGL", "MSFT"]
+
+  StockPricesResponse:
+    type: object
+    properties:
+      prices:
+        type: object
+        additionalProperties:
+          type: number
+          format: float
+        example: {"AAPL": 185.30, "GOOGL": 145.25, "MSFT": 385.45}
+      error:
+        type: string
+        example: ""
+
+  StockOverviewResponse:
+    type: object
+    properties:
+      overview:
+        type: object
+        properties:
+          Symbol:
+            type: string
+            example: "AAPL"
+          Name:
+            type: string
+            example: "Apple Inc."
+          Description:
+            type: string
+            example: "Apple Inc. designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories worldwide."
+          Exchange:
+            type: string
+            example: "NASDAQ"
+          Currency:
+            type: string
+            example: "USD"
+          Country:
+            type: string
+            example: "USA"
+          Sector:
+            type: string
+            example: "Technology"
+          Industry:
+            type: string
+            example: "Consumer Electronics"
+          MarketCapitalization:
+            type: string
+            example: "2850000000000"
+          PERatio:
+            type: string
+            example: "28.5"
+          DividendYield:
+            type: string
+            example: "0.0056"
+      error:
+        type: string
+        example: ""
+
+  StockHistoryResponse:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/StockHistoryItem'
+      error:
+        type: string
+        example: ""
+
+  StockHistoryItem:
+    type: object
+    properties:
+      x:
+        type: string
+        format: date-time
+        example: "2024-01-15T00:00:00.000Z"
+      high:
+        type: number
+        format: float
+        example: 186.50
+      low:
+        type: number
+        format: float
+        example: 184.20
+      open:
+        type: number
+        format: float
+        example: 185.00
+      close:
+        type: number
+        format: float
+        example: 185.30
+      volume:
+        type: integer
+        example: 28563900
+
+  DailyChangeRequest:
+    type: object
+    required:
+      - symbol
+    properties:
+      symbol:
+        type: string
+        example: "AAPL"
+
+  DailyChangeResponse:
+    type: object
+    properties:
+      symbol:
+        type: string
+        example: "AAPL"
+      priceChange:
+        type: number
+        format: float
+        example: 2.45
+      percentChange:
+        type: number
+        format: float
+        example: 1.34
+      currentPrice:
+        type: number
+        format: float
+        example: 185.30
+      openPrice:
+        type: number
+        format: float
+        example: 182.85
+      previousClose:
+        type: number
+        format: float
+        example: 182.85
+      error:
+        type: string
+        example: ""
+
+  # Watchlist Definitions
+  WatchlistAdd:
+    type: object
+    required:
+      - userId
+      - symbol
+    properties:
+      userId:
+        type: integer
+        example: 1
+      symbol:
+        type: string
+        example: "TSLA"
+
+  WatchlistRemove:
+    type: object
+    required:
+      - userId
+      - symbol
+    properties:
+      userId:
+        type: integer
+        example: 1
+      symbol:
+        type: string
+        example: "TSLA"
+
+  WatchlistResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      error:
+        type: string
+        example: ""
+      message:
+        type: string
+        example: "Added TSLA to watchlist"
+
+  WatchlistCheck:
+    type: object
+    required:
+      - userId
+      - symbol
+    properties:
+      userId:
+        type: integer
+        example: 1
+      symbol:
+        type: string
+        example: "TSLA"
+
+  WatchlistCheckResponse:
+    type: object
+    properties:
+      isInWatchlist:
+        type: boolean
+        example: true
+      error:
+        type: string
+        example: ""
+
+  WatchlistDataResponse:
+    type: object
+    properties:
+      watchlist:
+        type: array
+        items:
+          $ref: '#/definitions/WatchlistItem'
+      error:
+        type: string
+        example: ""
+
+  WatchlistItem:
+    type: object
+    properties:
+      id:
+        type: string
+        example: "507f1f77bcf86cd799439011"
+      symbol:
+        type: string
+        example: "TSLA"
+      name:
+        type: string
+        example: "Tesla Inc."
+      addedPrice:
+        type: number
+        format: float
+        example: 250.75
+      currentPrice:
+        type: number
+        format: float
+        example: 245.30
+      change:
+        type: number
+        format: float
+        example: -5.45
+      changePercent:
+        type: number
+        format: float
+        example: -2.17
+      addedDate:
+        type: string
+        format: date-time
+        example: "2024-01-10T14:30:00.000Z"
+      isPositive:
+        type: boolean
+        example: false
+
+  # User Management Definitions
+  UserProfileResponse:
+    type: object
+    properties:
+      id:
+        type: integer
+        example: 1
+      firstName:
+        type: string
+        example: "John"
+      lastName:
+        type: string
+        example: "Doe"
+      email:
+        type: string
+        example: "john.doe@email.com"
+      login:
+        type: string
+        example: "john_doe"
+      error:
+        type: string
+        example: ""
+
+  UpdateUserProfile:
+    type: object
+    required:
+      - userId
+    properties:
+      userId:
+        type: integer
+        example: 1
+      firstName:
+        type: string
+        example: "John"
+      lastName:
+        type: string
+        example: "Smith"
+      email:
+        type: string
+        example: "john.smith@email.com"
+      login:
+        type: string
+        example: "john_smith"
+
+  ChangePassword:
+    type: object
+    required:
+      - userId
+      - currentPassword
+      - newPassword
+    properties:
+      userId:
+        type: integer
+        example: 1
+      currentPassword:
+        type: string
+        example: "oldpassword123"
+      newPassword:
+        type: string
+        example: "newpassword123"
+
+  DeleteUser:
+    type: object
+    required:
+      - userId
+      - password
+    properties:
+      userId:
+        type: integer
+        example: 1
+      password:
+        type: string
+        example: "userpassword123"
