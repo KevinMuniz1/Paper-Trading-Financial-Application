@@ -120,14 +120,14 @@ const PortfolioChartAdvanced = forwardRef(({ userId }: PortfolioChartProps, ref)
 
   useEffect(() => {
     fetchPortfolioData(selectedPeriod, true); // Show loading on initial load
-    
-    // Auto-refresh every 30 seconds for real-time updates (NO loading state)
+
+    // Auto-refresh every 10 seconds for real-time updates (NO loading state)
     const interval = setInterval(() => {
       fetchPortfolioData(selectedPeriod, false); // Silent refresh
     }, 10000);
-    
+
     return () => clearInterval(interval);
-  }, [userId]); // Only re-run if userId changes, not period
+  }, [userId, selectedPeriod]); // Re-run if userId or period changes
 
   const fetchPortfolioData = async (period: string = '1d', showLoading: boolean = true) => {
     
