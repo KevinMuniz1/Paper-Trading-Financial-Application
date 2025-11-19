@@ -409,7 +409,7 @@ module.exports = function (client) {
                 success: true, 
                 error: error,
                 newBalance: updatedPortfolio.buyingPower,
-                message: `Successfully ${addAmount > 0 ? 'added' : 'decreased'} $${absAmount.toFixed(2)} ${addAmount > 0 ? 'to' : 'from'} your account. New balance: $${updatedPortfolio.buyingPower.toFixed(2)}. new portfolio value: $${updatedPortfolio.totalPortfolioValue.toFixed(2)} `
+                message: `Successfully ${addAmount > 0 ? 'added' : 'decreased'} $${absAmount.toFixed(2)} ${addAmount > 0 ? 'to' : 'from'} your account. New Balance: $${updatedPortfolio.buyingPower.toFixed(2)}. New Portfolio Value: $${updatedPortfolio.totalPortfolioValue.toFixed(2)} `
             };
             res.status(200).json(ret);
 
