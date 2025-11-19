@@ -93,7 +93,7 @@ async function getPortfolioData(userId, db) {
 
         // Format holdings to include proper field names for mobile compatibility
         const formattedHoldings = trades.map(trade => ({
-            id: trade._id,
+            id: trade._id.toString(), // Convert ObjectId to string for consistency
             symbol: trade.tickerSymbol,
             name: trade.cardName, // Map cardName to name for mobile app
             quantity: trade.quantity,
