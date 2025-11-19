@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "./NavBar.css";
+import PageTitle from "./PageTitle"; // ← ADD THIS IMPORT
 
 const NavBar = () => {
   const location = useLocation();
@@ -37,10 +38,14 @@ const NavBar = () => {
 
   return (
     <div className="navbar-wrapper">
-
       <div className="navigation-Bar">
+        
+        {/* Logo absolutely centered */}
+        <div className="nav-logo-section">
+          <PageTitle />
+        </div>
 
-        {/* Home */}
+        {/* Your existing nav items - they'll stay on the right */}
         <div className="nav-item">
           {location.pathname !== "/DashboardPage" ? (
             <Link to="/DashboardPage">

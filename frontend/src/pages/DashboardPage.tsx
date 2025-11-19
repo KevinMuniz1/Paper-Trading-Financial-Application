@@ -23,10 +23,9 @@ const DashboardPage = () => {
 
   return (
     <div className="layout-wrapper">  
-      <div className='logo-navigation-combo'>
-        <PageTitle />
+
         <NavBar/>
-      </div>
+      
       
       <main className="main-section">
         {isCardVisible && (
