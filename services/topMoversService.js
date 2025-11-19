@@ -27,7 +27,19 @@ class TopMoversService {
 
             // Check for API errors
             if (data['Error Message'] || data['Note']) {
-                console.error('Alpha Vantage API error:', data['Error Message'] || data['Note']);
+                const errorMsg = data['Error Message'] || data['Note'];
+                console.error('Alpha Vantage API error:', errorMsg);
+                console.error('Full response:', JSON.stringify(data, null, 2));
+                return this.getFallbackMovers();
+            }
+            
+            // Check if response is empty or missing expected data
+            if (!data.top_gainers || !data.top_losers) {
+                console.warn('Alpha Vantage response missing data:', {
+                  hasGainers: !!data.top_gainers,
+                  hasLosers: !!data.top_losers,
+                  dataKeys: Object.keys(data)
+                });
                 return this.getFallbackMovers();
             }
 

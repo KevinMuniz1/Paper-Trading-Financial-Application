@@ -17,7 +17,7 @@
 }
 
 .settings-content {
-  background: rgba(255, 255, 255, 0.05);
+  background: #ffffff0d;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   padding: 2.5rem;
@@ -53,7 +53,7 @@
   display: flex;
   flex-direction: column;
   gap:0;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid #ffffff1a;
   border-radius: 8px;
   overflow: hidden;
   margin-bottom: 2rem;
@@ -71,7 +71,7 @@
 }
 
 .settings-row:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: #ffffff0d;
 }
 
 .settings-row:last-child {
@@ -85,7 +85,7 @@
 }
 
 .label-text {
-  color: #888888;
+  color: #ffffff;
   font-size: 0.9rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -109,8 +109,8 @@
 
 .change-btn {
   padding: 0.5rem 1.2rem;
-  background: rgba(0, 200, 83, 0.2);
-  color: #00C853;
+  background: #00c85333;
+  color: #45ff92;
   border: 1px solid #00C853;
   border-radius: 6px;
   cursor: pointer;
@@ -285,9 +285,9 @@
 
 .section-toggle-btn {
   padding: 0.75rem 1.5rem;
-  background: rgba(0, 122, 255, 0.2);
-  color: #007AFF;
-  border: 1px solid #007AFF;
+  background: linear-gradient(135deg, #007AFF 0%, #0051d5 100%);
+  color: #ffffff;
+  border: none;
   border-radius: 8px;
   cursor: pointer;
   font-size: 0.95rem;
@@ -297,8 +297,8 @@
 }
 
 .section-toggle-btn:hover {
-  background: rgba(0, 122, 255, 0.3);
-  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+  background: linear-gradient(135deg, #0084ff 0%, #0062ff 100%);
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.5);
 }
 
 .password-change-form {
@@ -359,16 +359,17 @@
 }
 
 .reset-description {
-  color: #b0b0b0;
+  color: #ffffff;
   font-size: 0.9rem;
   margin: 0 0 1rem 0;
+  font-weight: 500;
 }
 
 .reset-password-btn {
   padding: 0.75rem 1.5rem;
-  background: rgba(255, 149, 0, 0.2);
-  color: #FF9500;
-  border: 1px solid #FF9500;
+  background: linear-gradient(135deg, #FF9500 0%, #f57c00 100%);
+  color: #ffffff;
+  border: none;
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.95rem;
@@ -377,8 +378,8 @@
 }
 
 .reset-password-btn:hover {
-  background: rgba(255, 149, 0, 0.3);
-  box-shadow: 0 2px 8px rgba(255, 149, 0, 0.3);
+  background: linear-gradient(135deg, #ffb300 0%, #ff8a00 100%);
+  box-shadow: 0 4px 12px rgba(255, 149, 0, 0.5);
 }
 
 /* Danger Zone Section */
@@ -390,21 +391,22 @@
 }
 
 .danger-section h2 {
-  color: #ff3b30;
+  color: #ffffff;
 }
 
 .danger-warning {
-  color: #ff8a80;
+  color: #ffffff;
   font-size: 0.95rem;
   margin: 0 0 1.5rem 0;
   line-height: 1.5;
+  font-weight: 500;
 }
 
 .delete-account-btn {
   padding: 0.75rem 1.5rem;
-  background: rgba(255, 59, 48, 0.2);
-  color: #ff3b30;
-  border: 2px solid #ff3b30;
+  background: linear-gradient(135deg, #ff3b30 0%, #d32f2f 100%);
+  color: #ffffff;
+  border: none;
   border-radius: 8px;
   cursor: pointer;
   font-size: 0.95rem;
@@ -413,8 +415,8 @@
 }
 
 .delete-account-btn:hover {
-  background: rgba(255, 59, 48, 0.3);
-  box-shadow: 0 4px 12px rgba(255, 59, 48, 0.4);
+  background: linear-gradient(135deg, #ff5449 0%, #e53935 100%);
+  box-shadow: 0 4px 12px rgba(255, 59, 48, 0.5);
   transform: translateY(-2px);
 }
 

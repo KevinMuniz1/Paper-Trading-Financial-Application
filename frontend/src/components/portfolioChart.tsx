@@ -70,11 +70,11 @@ const SAMPLE_CSS = `
   }
 
   .stat-value.positive {
-    color: #22c55e;
+    color: #00802f;
   }
 
   .stat-value.negative {
-    color: #ef4444;
+    color: #d03535;
   }
 `;
 

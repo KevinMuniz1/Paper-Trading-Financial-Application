@@ -58,13 +58,28 @@
     padding: 0.75rem 1rem;
 }
 
+.search-input::placeholder {
+    color: #cccccc;
+}
+
 .search-button {
     background: linear-gradient(135deg, #1a7221, #26c93a);
     border: none;
     border-radius: 8px;
     padding: 0.75rem 1rem;
-    color: white;
+    color: #ffffff;
     cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.search-button:hover {
+    background: linear-gradient(135deg, #26c93a, #2fd747);
+    box-shadow: 0 4px 12px rgba(38, 201, 58, 0.4);
 }
 
 /* SEARCH DROPDOWN */
@@ -83,13 +98,16 @@
 
 .search-result-item {
     padding: 1rem;
-    background-color: black;
+    background-color: #ffffff;
     border-bottom: 1px solid rgba(0,0,0,0.1);
     cursor: pointer;
+    color: #000000;
+    font-weight: 500;
 }
 
 .search-result-item:hover {
-    background: rgb(22, 136, 56);
+    background: #e8f5e9;
+    color: #1a7221;
 }
 
 /* SECTION HEADERS */
@@ -176,14 +194,14 @@
 
 .article-source {
     font-size: 0.75rem;
-    font-weight: 600;
+    font-weight: 700;
     color: #1a7221;
 }
 
 .ticker-tag {
     font-size: 0.75rem;
     font-weight: 700;
-    color: white;
+    color: #ffffff;
     padding: 0.25rem 0.5rem;
     border-radius: 4px;
 }
@@ -238,21 +256,23 @@
     padding: 0.25rem 0.5rem;
     border-radius: 4px;
     font-weight: 700;
+    color: #ffffff;
 }
 
 .stock-change.positive {
-    background: #26c93a;
-    color: white;
+    background: #0b6e17;
+    color: #ffffff;
 }
 
 .stock-change.negative {
-    background: #d33;
-    color: white;
+    background: rgb(133, 25, 25);
+    color: #ffffff;
 }
 
 .stock-name {
     font-size: 0.8rem;
-    color: #666;
+    color: #333333;
+    font-weight: 500;
 }
 
 .stock-price {
