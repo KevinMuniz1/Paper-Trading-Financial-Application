@@ -60,7 +60,7 @@ export default function HoldingsBar() {
     // Auto-refresh every 5 seconds
     intervalRef.current = setInterval(() => {
       fetchHoldings();
-    }, 5000);
+    }, 1000);
 
     // Listen for manual refresh events
     const handler = () => fetchHoldings();
