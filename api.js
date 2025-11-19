@@ -409,7 +409,7 @@ module.exports = function (client) {
                 success: true, 
                 error: error,
                 newBalance: updatedPortfolio.buyingPower,
-                message: `Successfully ${addAmount > 0 ? 'added' : 'decreased'} $${absAmount.toFixed(2)} ${addAmount > 0 ? 'to' : 'from'} your account. New Balance: $${updatedPortfolio.buyingPower.toFixed(2)}. New Portfolio Value: $${updatedPortfolio.totalPortfolioValue.toFixed(2)} `
+                message: `Successfully ${addAmount > 0 ? 'added' : 'decreased'} $${absAmount.toFixed(2)} ${addAmount > 0 ? 'to' : 'from'} your account. New balance: $${updatedPortfolio.buyingPower.toFixed(2)}. new portfolio value: $${updatedPortfolio.totalPortfolioValue.toFixed(2)} `
             };
             res.status(200).json(ret);
 
@@ -1730,7 +1730,7 @@ router.get('/overview/:symbol', async (req, res) => {
     }
 });
 // GET STOCK DAILY CHANGE (for Yahoo Finance CORS proxy)
-router.post('/stock/daily-change', async (req, res) => {
+router.post('/api/stock/daily-change', async (req, res) => {
     // incoming: symbol
     // outgoing: symbol, priceChange, percentChange, currentPrice, previousClose, error
     var error = '';
@@ -1742,7 +1742,7 @@ router.post('/stock/daily-change', async (req, res) => {
             return res.status(200).json({ error: error });
         }
 
-        console.log(` Fetching daily change for ${symbol}...`);
+        console.log(`🔍 Fetching daily change for ${symbol}...`);
         
         const response = await fetch(
             `https://query1.finance.yahoo.com/v8/finance/chart/${symbol.toUpperCase()}?interval=1d&range=5d`
@@ -1765,7 +1765,7 @@ router.post('/stock/daily-change', async (req, res) => {
             const priceChange = currentPrice - previousClose;
             const percentChange = (priceChange / previousClose) * 100;
             
-            console.log(` ${symbol} - Current: $${currentPrice}, Previous: $${previousClose}, Change: $${priceChange.toFixed(2)} (${percentChange.toFixed(2)}%)`);
+            console.log(`✅ ${symbol} - Current: $${currentPrice}, Previous: $${previousClose}, Change: $${priceChange.toFixed(2)} (${percentChange.toFixed(2)}%)`);
             
             res.status(200).json({
                 symbol: symbol.toUpperCase(),

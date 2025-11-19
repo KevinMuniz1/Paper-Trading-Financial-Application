@@ -26,7 +26,7 @@ async function fetchDailyStockChange(symbol: string): Promise<DailyChange | null
   try {
     console.log(`Fetching daily change for ${symbol}...`);
     
-    const response = await fetch(buildPath("stock/daily-change"), {
+    const response = await fetch(buildPath("/api/stock/daily-change"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ symbol })
