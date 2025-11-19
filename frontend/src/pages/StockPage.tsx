@@ -12,8 +12,7 @@ import { useAuth } from '../context/AuthContext';
 
 const DisplayStockPage = () => {
   const { symbol } = useParams();
-  const { user } = useAuth();
-  const userId = user?.userId;
+  const { token } = useAuth();
   const [overview, setOverview] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -43,7 +42,7 @@ const DisplayStockPage = () => {
       fetchOverview(symbol.toUpperCase());
       checkWatchlistStatus(symbol.toUpperCase());
     }
-  }, [symbol, userId]);
+  }, [symbol, token]);
 
   const fetchOverview = async (symbol: string) => {
     try {
@@ -74,13 +73,13 @@ const DisplayStockPage = () => {
   // CHECK WATCHLIST STATUS
   // -----------------------------
   const checkWatchlistStatus = async (symbol: string) => {
-    if (!userId) return;
+    if (!token) return;
 
     try {
       const response = await fetch(buildPath('watchlist/check'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, symbol })
+        headers: { 'Content-Type': 'application/json', "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ symbol })
       });
 
       const data = await response.json();
@@ -94,15 +93,15 @@ const DisplayStockPage = () => {
   // WATCHLIST TOGGLE
   // -----------------------------
   const toggleWatchlist = async () => {
-    if (!userId || !symbol) return;
+    if (!token || !symbol) return;
 
     try {
       if (isInWatchlist) {
         // Remove from watchlist
         const response = await fetch(buildPath('watchlist/delete'), {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId, symbol: symbol.toUpperCase() })
+          headers: { 'Content-Type': 'application/json', "Authorization": `Bearer ${token}` },
+          body: JSON.stringify({ symbol: symbol.toUpperCase() })
         });
 
         const data = await response.json();
@@ -117,8 +116,8 @@ const DisplayStockPage = () => {
         // Add to watchlist
         const response = await fetch(buildPath('watchlist/add'), {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId, symbol: symbol.toUpperCase() })
+          headers: { 'Content-Type': 'application/json', "Authorization": `Bearer ${token}` },
+          body: JSON.stringify({ symbol: symbol.toUpperCase() })
         });
 
         const data = await response.json();

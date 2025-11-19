@@ -18,6 +18,7 @@ import {
 
 import { buildPath } from "../../Path";
 import "@syncfusion/ej2-base/styles/material.css";
+import { useAuth } from '../context/AuthContext';
 
 const SAMPLE_CSS = `
   .chart-gradient stop[offset="0"] { stop-opacity: 0.5; }
@@ -96,10 +97,6 @@ const themes = [
   "fluent2dark", "tailwind3", "tailwind3dark"
 ];
 
-interface PortfolioChartProps {
-  userId: string | number;
-}
-
 interface ChartDataPoint {
   x: Date;
   portfolioValue: number;
@@ -115,17 +112,26 @@ interface PortfolioStats {
   buyingPower: number;
 }
 
-const PortfolioChartAdvanced = ({ userId }: PortfolioChartProps) => {
+const PortfolioChartAdvanced = () => {
+  const { token } = useAuth(); 
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [stats, setStats] = useState<PortfolioStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetchPortfolioData();
-  }, [userId]);
+    if(token){
+      fetchPortfolioData();
+    }
+  }, [token]);
 
   const fetchPortfolioData = async () => {
+    if (!token) { 
+      setError("User not authenticated");
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError("");
@@ -133,8 +139,8 @@ const PortfolioChartAdvanced = ({ userId }: PortfolioChartProps) => {
       // Fetch all available history (let Syncfusion handle the filtering)
       const historyResponse = await fetch(buildPath('portfolio/history'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, days: 3650 }) // Get max history
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ days: 3650 }) // Get max history
       });
 
       const historyData = await historyResponse.json();
@@ -142,8 +148,8 @@ const PortfolioChartAdvanced = ({ userId }: PortfolioChartProps) => {
       // Fetch current portfolio summary
       const summaryResponse = await fetch(buildPath('portfolio/summary'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId })
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({  })
       });
 
       const summaryData = await summaryResponse.json();

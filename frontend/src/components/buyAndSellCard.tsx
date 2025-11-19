@@ -18,8 +18,7 @@ function TradeStockCard({ onClose, onTradeSuccess, stockSymbol, stockName, curre
   const [currentPrice, setCurrentPrice] = useState(initialPrice || 0);
   const [loading, setLoading] = useState(!initialPrice);
 
-  const { user } = useAuth();
-  const userId = user?.userId || 0;
+  const { token } = useAuth();
   const quantity = parseInt(shares);
   const totalAmount = shares ? quantity * currentPrice : 0;
 
@@ -33,7 +32,7 @@ function TradeStockCard({ onClose, onTradeSuccess, stockSymbol, stockName, curre
       setLoading(true);
       const response = await fetch(buildPath('stock/prices'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', "Authorization": `Bearer ${token}` },
         body: JSON.stringify({ symbols: [stockSymbol.toUpperCase()] })
       });
       
@@ -54,22 +53,25 @@ function TradeStockCard({ onClose, onTradeSuccess, stockSymbol, stockName, curre
   // BUY STOCK → /addstock
   // ---------------------------
   async function buyStock() {
+
+    if (!token) {
+      alert('User not authenticated');
+      return;
+    }
+
     try {
+
       console.log("=== BUY STOCK DEBUG ===");
-      console.log("Raw userId from localStorage:", userId);
-      console.log("Parsed userId:", userId);
       console.log("Request payload:", {
-        userId: userId,
         cardName: stockName,
         tickerSymbol: stockSymbol,
         quantity: quantity
       });
-
+      
       const res = await fetch(buildPath("/addstock"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({
-          userId: userId,
           cardName: stockName,
           tickerSymbol: stockSymbol,
           quantity: quantity
@@ -96,12 +98,17 @@ function TradeStockCard({ onClose, onTradeSuccess, stockSymbol, stockName, curre
   // SELL STOCK → /sell
   // ---------------------------
   async function sellStock() {
+    if (!token) {
+      alert('User not authenticated');
+      return;
+    }
+
     try {
       // Find tradeId for this symbol
       const findRes = await fetch(buildPath("/searchstocks"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, search: stockSymbol })
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ search: stockSymbol })
       });
 
       const findData = await findRes.json();
@@ -116,9 +123,8 @@ function TradeStockCard({ onClose, onTradeSuccess, stockSymbol, stockName, curre
 
       const res = await fetch(buildPath("/sell"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}`},
         body: JSON.stringify({
-          userId,
           tradeId,
           quantity
         })

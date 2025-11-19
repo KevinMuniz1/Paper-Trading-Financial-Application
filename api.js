@@ -15,6 +15,28 @@ const { default: YahooFinance } = require('yahoo-finance2');
 const yahooFinance = new YahooFinance();
 
 module.exports = function (client) {
+
+    // AUTHENTICATION MIDDLEWARE 
+    const jwt = require('jsonwebtoken');
+    const JWT_SECRET = process.env.JWT_SECRET || 'key_cop4331_jwt_main';
+
+    const authenticateToken = (req, res, next) => {
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1];
+
+        if (!token) {
+            return res.status(401).json({ error: 'Access token required' });
+        }
+
+        jwt.verify(token, JWT_SECRET, (err, user) => {
+            if (err) {
+                return res.status(403).json({ error: 'Invalid or expired token' });
+            }
+            req.user = user; // This contains the decoded JWT payload
+            next();
+        });
+    };
+
     // Initialize NewsService with DB instance
     const db = client.db('Finance-app');
     newsService.setDb(db);
@@ -306,8 +328,9 @@ module.exports = function (client) {
     });
 
     // VIEW BUYING POWER
-    router.post('/portfolio/buying-power', async (req, res, next) => {
-        const { userId } = req.body;
+    router.post('/portfolio/buying-power', authenticateToken, async (req, res, next) => {
+        const userId = req.user.userId;
+        //const { userId } = req.body;
         var error = '';
 
         try {
@@ -337,11 +360,12 @@ module.exports = function (client) {
 
     
     // ADD BUYING POWER
-    router.post('/portfolio/add-funds', async (req, res, next) => {
+    router.post('/portfolio/add-funds', authenticateToken, async (req, res, next) => {
         // incoming: userId, amount
         // outgoing: success, error, newBalance
         var error = '';
-        const { userId, amount } = req.body;
+        const userId = req.user.userId;
+        const { amount } = req.body;
 
         try {
             const db = client.db('Finance-app');
@@ -422,8 +446,9 @@ module.exports = function (client) {
     });
 
     // ADD TRADE/STOCK 
-    router.post('/addstock', async (req, res, next) => {
-        const { userId, cardName, tickerSymbol, quantity = 1 } = req.body;
+    router.post('/addstock', authenticateToken, async (req, res, next) => {
+        const userId = req.user.userId;
+        const { cardName, tickerSymbol, quantity = 1 } = req.body;
         var error = '';
 
         try {
@@ -528,11 +553,12 @@ module.exports = function (client) {
     });
 
     // SEARCH TRADES/STOCKS
-    router.post('/searchstocks', async (req, res, next) => {
+    router.post('/searchstocks', authenticateToken, async (req, res, next) => {
         // incoming: userId, search
         // outgoing: results[], error
         var error = '';
-        const { userId, search } = req.body;
+        const userId = req.user.userId;
+        const { search } = req.body;
 
         try {
             const db = client.db('Finance-app');
@@ -605,11 +631,12 @@ module.exports = function (client) {
     });
 
     // SELL TRADE/CARD
-    router.post('/sell', async (req, res, next) => {
+    router.post('/sell', authenticateToken, async (req, res, next) => {
         // incoming: userId, tradeId, quantity 
         // outgoing: success, error, message, saleAmount, remainingQuantity
         var error = '';
-        const { userId, tradeId, quantity } = req.body;
+        const userId = req.user.userId;
+        const { tradeId, quantity } = req.body;
 
         try {
             const db = client.db('Finance-app');
@@ -705,11 +732,12 @@ module.exports = function (client) {
     });
 
     // SELL ALL SHARES OF SYMBOL
-    router.post('/sell-all', async (req, res, next) => {
+    router.post('/sell-all', authenticateToken, async (req, res, next) => {
         // incoming: userId, symbol
         // outgoing: success, error, message, totalSaleAmount, soldQuantity
         var error = '';
-        const { userId, symbol } = req.body;
+        const userId = req.user.userId;
+        const { symbol } = req.body;
 
         try {
             const db = client.db('Finance-app');
@@ -952,8 +980,8 @@ module.exports = function (client) {
     });
 
     // DISPLAY PORTFOLIO SUMMARY 
-    router.post('/portfolio/summary', async (req, res, next) => {
-        const { userId } = req.body;
+    router.post('/portfolio/summary', authenticateToken, async (req, res, next) => {
+        const userId = req.user.userId;
         var error = '';
 
         try {
@@ -984,8 +1012,9 @@ module.exports = function (client) {
     });
     
     // GET PORTFOLIO HISTORY
-    router.post('/portfolio/history', async (req, res, next) => {
-        const { userId, days } = req.body;
+    router.post('/portfolio/history', authenticateToken, async (req, res, next) => {
+        const userId = req.user.userId;
+        const { days } = req.body;
         var error = '';
 
         try {
@@ -1032,11 +1061,12 @@ module.exports = function (client) {
     });
     
     // ADD TO WATCHLIST
-    router.post('/watchlist/add', async (req, res, next) => {
+    router.post('/watchlist/add', authenticateToken, async (req, res, next) => {
         // incoming: userId, symbol
         // outgoing: success, error, message
         var error = '';
-        const { userId, symbol } = req.body;
+        const userId = req.user.userId;
+        const { symbol } = req.body;
 
         try {
             if (!userId || !symbol) {
@@ -1112,11 +1142,12 @@ module.exports = function (client) {
     });
 
     // DELETE FROM WATCHLIST
-    router.post('/watchlist/delete', async (req, res, next) => {
+    router.post('/watchlist/delete', authenticateToken, async (req, res, next) => {
         // incoming: userId, symbol
         // outgoing: success, error, message
         var error = '';
-        const { userId, symbol } = req.body;
+        const userId = req.user.userId;
+        const { symbol } = req.body;
 
         try {
             if (!userId || !symbol) {
@@ -1157,11 +1188,12 @@ module.exports = function (client) {
     });
 
     // DISPLAY WATCHLIST
-    router.post('/watchlist', async (req, res, next) => {
+    router.post('/watchlist', authenticateToken, async (req, res, next) => {
         // incoming: userId
         // outgoing: watchlist[], error
         var error = '';
-        const { userId } = req.body;
+        const userId = req.user.userId;
+        //const { userId } = req.body;
 
         try {
             if (!userId) {
@@ -1221,11 +1253,12 @@ module.exports = function (client) {
     });
 
     // CHECK IF IN WATCHLIST
-    router.post('/watchlist/check', async (req, res, next) => {
+    router.post('/watchlist/check', authenticateToken, async (req, res, next) => {
         // incoming: userId, symbol
         // outgoing: isInWatchlist, error
         var error = '';
-        const { userId, symbol } = req.body;
+        const userId = req.user.userId;
+        const { symbol } = req.body;
 
         try {
             if (!userId || !symbol) {
@@ -1354,11 +1387,12 @@ module.exports = function (client) {
     });
 
     // GET USER INFO BY ID
-    router.post('/user/profile', async (req, res, next) => {
+    router.post('/user/profile', authenticateToken, async (req, res, next) => {
         // incoming: userId
         // outgoing: id, firstName, lastName, email, login, error
         var error = '';
-        const { userId } = req.body;
+        const userId = req.user.userId;
+        //const { userId } = req.body;
 
         try {
             if (!userId) {
@@ -1440,11 +1474,12 @@ router.get('/overview/:symbol', async (req, res) => {
 
 
     // UPDATE USER PROFILE
-    router.patch('/user/update', async (req, res, next) => {
+    router.patch('/user/update', authenticateToken, async (req, res, next) => {
         // incoming: userId, firstName, lastName, email, login (optional)
         // outgoing: success, error, message
         var error = '';
-        const { userId, firstName, lastName, email, login } = req.body;
+        const userId = req.user.userId;
+        const { firstName, lastName, email, login } = req.body;
 
         try {
             if (!userId) {
@@ -1540,9 +1575,10 @@ router.get('/overview/:symbol', async (req, res) => {
     });
 
     // Change Password
-    router.patch('/user/change-password', async (req, res) => {
+    router.patch('/user/change-password',  authenticateToken, async (req, res) => {
         try {
-            const { userId, currentPassword, newPassword } = req.body;
+            const userId = req.user.userId;
+            const { currentPassword, newPassword } = req.body;
 
             if (!userId || !currentPassword || !newPassword) {
                 return res.status(200).json({
@@ -1586,9 +1622,10 @@ router.get('/overview/:symbol', async (req, res) => {
     });
 
     // Delete Account
-    router.delete('/user/delete', async (req, res) => {
+    router.delete('/user/delete', authenticateToken, async (req, res) => {
         try {
-            const { userId, password } = req.body;
+            const userId = req.user.userId;
+            const { password } = req.body;
 
             if (!userId || !password) {
                 return res.status(200).json({

@@ -11,11 +11,11 @@ interface BuyingPowerCardProps {
 function BuyingPowerCard({ onClose }: BuyingPowerCardProps) {
   const [amountToAdd, setAmountToAdd] = useState('');
   const { buyingPower, fetchPortfolioData } = usePortfolio();
-  const { user } = useAuth();
+  const { token } = useAuth();
 
   const handleAdd = async () => {
-    if (!user?.userId) {
-      alert('User not found');
+    if (!token) {
+      alert('User not authenticated');
       return;
     }
 
@@ -28,9 +28,8 @@ function BuyingPowerCard({ onClose }: BuyingPowerCardProps) {
     try {
       const response = await fetch(buildPath('portfolio/add-funds'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', "Authorization": `Bearer ${token}` },
         body: JSON.stringify({
-          userId: user.userId,
           amount: amount
         })
       });

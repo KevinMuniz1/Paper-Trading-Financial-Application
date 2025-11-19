@@ -40,7 +40,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         },
-        body: JSON.stringify({ userId: user.userId })
+        body: JSON.stringify({})
       });
       const buyingPowerData = await buyingPowerRes.json();
 
@@ -51,7 +51,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         },
-        body: JSON.stringify({ userId: user.userId })
+        body: JSON.stringify({})
       });
       const summaryData = await summaryRes.json();
 

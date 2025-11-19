@@ -100,7 +100,6 @@ const AccountSettingsPage = () => {
 
       const backendFieldName = fieldMappings[field];
       const updateData = {
-        userId: userId,
         [backendFieldName]: editingField.value.trim(),
       };
 
@@ -109,7 +108,8 @@ const AccountSettingsPage = () => {
       const response = await fetch(buildPath("user/update"), {
         method: "PATCH",
         headers: {
-          "Content-Type": "application/json",
+          currentPassword: passwordData.currentPassword,
+          "Content-Type": "application/json", "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify(updateData),
       });
@@ -125,14 +125,7 @@ const AccountSettingsPage = () => {
           [field]: editingField.value.trim(),
         }));
 
-        // Update localStorage
-        /*
-        const updatedUserData = {
-          ...parsed,
-          [field]: editingField.value.trim(),
-        };
-        localStorage.setItem("user_data", JSON.stringify(updatedUserData));
-        */
+        
        //update authcontext
       
         setEditingField({ field: null, value: "" });
@@ -184,10 +177,9 @@ const AccountSettingsPage = () => {
       const response = await fetch(buildPath("user/change-password"), {
         method: "PATCH",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/json", "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({
-          userId: userId,
           currentPassword: passwordData.currentPassword,
           newPassword: passwordData.newPassword,
         }),
@@ -263,10 +255,9 @@ const AccountSettingsPage = () => {
       const response = await fetch(buildPath("user/delete"), {
         method: "DELETE",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/json", "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({
-          userId: userId,
           password: deletePassword,
         }),
       });
@@ -276,6 +267,7 @@ const AccountSettingsPage = () => {
       if (data.success) {
         // Clear localStorage and redirect to login
         localStorage.removeItem("user_data");
+        localStorage.removeItem("token");
         window.location.href = "/";
       } else {
         setDeleteMessage(data.error || "Failed to delete account");
@@ -313,9 +305,9 @@ const AccountSettingsPage = () => {
         const response = await fetch(buildPath("user/profile"), {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type": "application/json", "Authorization": `Bearer ${token}`
           },
-          body: JSON.stringify({ userId: userId  }),
+          body: JSON.stringify({}),
         });
 
         if (!response.ok) {

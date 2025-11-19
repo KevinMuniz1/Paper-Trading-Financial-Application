@@ -14,8 +14,6 @@ const DashboardPage = () => {
   const [isCardVisible, setIsCardVisible] = useState(false);
   const { user, loading } = useAuth();  // GET LOADING STATE
   
-  const userId = user?.userId;
-
   function toggleBuyingPowerCard() {
     setIsCardVisible(!isCardVisible);
   }
@@ -61,8 +59,8 @@ const DashboardPage = () => {
         <div className="left-panel">
           
           {/* Portfolio Chart - displays historical portfolio performance */}
-          {userId ? (
-            <PortfolioChartAdvanced userId={userId} />
+          {user ? (
+            <PortfolioChartAdvanced />
           ) : (
             <div style={{ 
               padding: '20px', 

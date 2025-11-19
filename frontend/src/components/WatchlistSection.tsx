@@ -22,13 +22,13 @@ interface DailyChange {
   previousClose: number;
 }
 
-async function fetchDailyStockChange(symbol: string): Promise<DailyChange | null> {
+async function fetchDailyStockChange(symbol: string, token: string): Promise<DailyChange | null> {
   try {
     console.log(`Fetching daily change for ${symbol}...`);
     
     const response = await fetch(buildPath("stock/daily-change"), {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
       body: JSON.stringify({ symbol })
     });
     
@@ -59,22 +59,21 @@ async function fetchDailyStockChange(symbol: string): Promise<DailyChange | null
 
 export default function WatchlistSection() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const userId = user?.userId;
+  const { token } = useAuth();
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   async function fetchWatchlist() {
-    if (!userId) {
-      console.error("No userId found from AuthContext");
+    if (!token) {
+      console.error("No token found from AuthContext");
       return;
     }
 
     try {
       const res = await fetch(buildPath("/watchlist"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId })
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({})
       });
 
       const data = await res.json();
@@ -86,7 +85,7 @@ export default function WatchlistSection() {
         const watchlistWithDailyChange = await Promise.all(
           data.watchlist.map(async (item: any) => {
            
-            const dailyChange = await fetchDailyStockChange(item.symbol);
+            const dailyChange = await fetchDailyStockChange(item.symbol, token);
             
             return {
               symbol: item.symbol,
@@ -126,7 +125,7 @@ export default function WatchlistSection() {
       }
       window.removeEventListener("refreshWatchlist", handler);
     };
-  }, [userId]);
+  }, [token]);
 
   return (
     <div className="watchlist-container">

@@ -16,14 +16,13 @@ interface Holding {
 
 export default function HoldingsBar() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const userId = user?.userId;
+  const { token, user } = useAuth();
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   async function fetchHoldings() {
-    if (!userId) {
-      console.error("No userId found from AuthContext");
+    if (!token) {
+      console.error("No token found from AuthContext");
       return;
     }
 

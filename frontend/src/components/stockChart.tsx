@@ -5,6 +5,7 @@ import {StockChartComponent,StockChartSeriesCollectionDirective,StockChartSeries
 } from "@syncfusion/ej2-react-charts";
 
 import { buildPath } from "../../Path";
+import { useAuth } from '../context/AuthContext'; 
 import "@syncfusion/ej2-base/styles/material.css";
 
 const SAMPLE_CSS = `
