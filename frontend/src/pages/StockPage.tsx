@@ -8,9 +8,12 @@ import { useEffect, useState } from "react";
 import { useParams } from 'react-router-dom';
 import { buildPath } from '../../Path';
 import TradeStockCard from '../components/buyAndSellCard';
+import { useAuth } from '../context/AuthContext';
 
 const DisplayStockPage = () => {
   const { symbol } = useParams();
+  const { user } = useAuth();
+  const userId = user?.userId;
   const [overview, setOverview] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -38,8 +41,9 @@ const DisplayStockPage = () => {
   useEffect(() => {
     if (symbol) {
       fetchOverview(symbol.toUpperCase());
+      checkWatchlistStatus(symbol.toUpperCase());
     }
-  }, [symbol]);
+  }, [symbol, userId]);
 
   const fetchOverview = async (symbol: string) => {
     try {
@@ -67,11 +71,69 @@ const DisplayStockPage = () => {
   };
 
   // -----------------------------
+  // CHECK WATCHLIST STATUS
+  // -----------------------------
+  const checkWatchlistStatus = async (symbol: string) => {
+    if (!userId) return;
+
+    try {
+      const response = await fetch(buildPath('watchlist/check'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, symbol })
+      });
+
+      const data = await response.json();
+      setIsInWatchlist(data.isInWatchlist);
+    } catch (err) {
+      console.error('Error checking watchlist status:', err);
+    }
+  };
+
+  // -----------------------------
   // WATCHLIST TOGGLE
   // -----------------------------
-  const toggleWatchlist = () => {
-    setIsInWatchlist(!isInWatchlist);
-    console.log(isInWatchlist ? 'Removed from watchlist' : 'Added to watchlist');
+  const toggleWatchlist = async () => {
+    if (!userId || !symbol) return;
+
+    try {
+      if (isInWatchlist) {
+        // Remove from watchlist
+        const response = await fetch(buildPath('watchlist/delete'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, symbol: symbol.toUpperCase() })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          setIsInWatchlist(false);
+          window.dispatchEvent(new Event('refreshWatchlist'));
+          console.log('Removed from watchlist');
+        } else {
+          alert(data.error || 'Failed to remove from watchlist');
+        }
+      } else {
+        // Add to watchlist
+        const response = await fetch(buildPath('watchlist/add'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, symbol: symbol.toUpperCase() })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          setIsInWatchlist(true);
+          window.dispatchEvent(new Event('refreshWatchlist'));
+          console.log('Added to watchlist');
+        } else {
+          alert(data.error || 'Failed to add to watchlist');
+        }
+      }
+    } catch (err) {
+      console.error('Error toggling watchlist:', err);
+      alert('Failed to update watchlist');
+    }
   };
 
   if (!symbol) {
