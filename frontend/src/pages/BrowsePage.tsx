@@ -195,7 +195,7 @@ const BrowsePage = () => {
         console.log('Clicked on stock:', symbol);
         setShowResults(false);
         setSearchQuery('');
-        // TODO: Navigate to stock detail page or perform action
+        navigate(`/stock/${symbol}`);
     };
 
     return (
