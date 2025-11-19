@@ -114,7 +114,7 @@ export default function WatchlistSection() {
     // Auto-refresh every 10 seconds
     intervalRef.current = setInterval(() => {
       fetchWatchlist();
-    }, 10000);
+    }, 1000);
 
     // Listen for manual refresh events
     const handler = () => fetchWatchlist();

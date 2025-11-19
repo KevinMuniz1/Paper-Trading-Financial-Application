@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import {
   StockChartComponent,
   StockChartSeriesCollectionDirective,
@@ -30,25 +30,14 @@ const SAMPLE_CSS = `
     text-align: left !important;
   }
   
-  /* Stock chart toolbar - make everything horizontal */
+  /* HIDE ALL SYNCFUSION TOOLBAR ELEMENTS */
   #portfoliochart_stockChart_toolbar,
-  #portfoliochart > div:first-child,
-  .e-stockchart-toolbar {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
-    flex-wrap: wrap !important;
-    gap: 10px !important;
-  }
-  
-  /* Period selector and Indicators should be inline */
   #portfoliochart_stockChart_PeriodsSelector,
   #portfoliochart_stockChart_Indicator,
+  .e-stockchart-toolbar,
   .e-period-selector,
   .e-toolbar-item {
-    display: inline-block !important;
-    vertical-align: middle !important;
+    display: none !important;
   }
 
   .portfolio-stats {
@@ -115,29 +104,49 @@ interface PortfolioStats {
   buyingPower: number;
 }
 
-const PortfolioChartAdvanced = ({ userId }: PortfolioChartProps) => {
+const PortfolioChartAdvanced = forwardRef(({ userId }: PortfolioChartProps, ref) => {
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [stats, setStats] = useState<PortfolioStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedPeriod, setSelectedPeriod] = useState('1d');
+
+  // Expose refresh function to parent component
+  useImperativeHandle(ref, () => ({
+    refresh: () => {
+      fetchPortfolioData(selectedPeriod, false); // Silent refresh - no loading screen
+    }
+  }));
 
   useEffect(() => {
-    fetchPortfolioData();
-  }, [userId]);
+    fetchPortfolioData(selectedPeriod, true); // Show loading on initial load
+    
+    // Auto-refresh every 30 seconds for real-time updates (NO loading state)
+    const interval = setInterval(() => {
+      fetchPortfolioData(selectedPeriod, false); // Silent refresh
+    }, 10000);
+    
+    return () => clearInterval(interval);
+  }, [userId]); // Only re-run if userId changes, not period
 
-  const fetchPortfolioData = async () => {
+  const fetchPortfolioData = async (period: string = '1d', showLoading: boolean = true) => {
+    
     try {
-      setLoading(true);
+      // Only show loading on initial load, not on refresh
+      if (showLoading) {
+        setLoading(true);
+      }
       setError("");
-
-      // Fetch all available history (let Syncfusion handle the filtering)
-      const historyResponse = await fetch(buildPath('portfolio/history'), {
+      
+      // Fetch real-time performance data
+      const performanceResponse = await fetch(buildPath('portfolio/performance'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, days: 3650 }) // Get max history
+        body: JSON.stringify({ userId, period })
       });
-
-      const historyData = await historyResponse.json();
+      
+      const performanceData = await performanceResponse.json();
+      
 
       // Fetch current portfolio summary
       const summaryResponse = await fetch(buildPath('portfolio/summary'), {
@@ -148,22 +157,23 @@ const PortfolioChartAdvanced = ({ userId }: PortfolioChartProps) => {
 
       const summaryData = await summaryResponse.json();
 
-      if (historyData.error || summaryData.error) {
-        setError(historyData.error || summaryData.error);
+      if (performanceData.error || summaryData.error) {
+        setError(performanceData.error || summaryData.error);
         return;
       }
 
-      // Process history data
-      if (historyData.history && historyData.history.length > 0) {
-        const formattedData = historyData.history.map((item: any) => ({
+      // Process performance data
+      if (performanceData.performance && performanceData.performance.length > 0) {
+        const formattedData = performanceData.performance.map((item: any) => ({
           x: new Date(item.timestamp),
-          portfolioValue: parseFloat(item.totalPortfolioValue),
-          totalInvested: parseFloat(item.totalInvested),
-          gain: parseFloat(item.totalGain)
+          portfolioValue: item.portfolioValue,
+          totalInvested: item.totalInvested,
+          gain: item.gain
         }));
+
+        
         setChartData(formattedData);
       } else {
-        // If no history, create a single data point with current values
         const now = new Date();
         setChartData([{
           x: now,
@@ -173,19 +183,18 @@ const PortfolioChartAdvanced = ({ userId }: PortfolioChartProps) => {
         }]);
       }
 
-      // Set stats
+      // Set stats with safe parsing
       if (summaryData.portfolio) {
         setStats({
-          currentValue: summaryData.portfolio.totalPortfolioValue,
-          totalInvested: summaryData.portfolio.totalInvested,
-          totalGain: summaryData.portfolio.totalGain,
-          totalGainPercent: summaryData.portfolio.totalGainPercent,
-          buyingPower: summaryData.portfolio.buyingPower
+          currentValue: parseFloat(summaryData.portfolio.totalPortfolioValue) || 0,
+          totalInvested: parseFloat(summaryData.portfolio.totalInvested) || 0,
+          totalGain: parseFloat(summaryData.portfolio.totalGain) || 0,
+          totalGainPercent: parseFloat(summaryData.portfolio.totalGainPercent) || 0,
+          buyingPower: parseFloat(summaryData.portfolio.buyingPower) || 0
         });
       }
 
     } catch (err) {
-      console.error("Error fetching portfolio data:", err);
       setError("Failed to load portfolio data");
     } finally {
       setLoading(false);
@@ -194,6 +203,13 @@ const PortfolioChartAdvanced = ({ userId }: PortfolioChartProps) => {
 
   const load = (args: IStockChartEventArgs) => {
     // Load customizations if needed
+  };
+
+  // Handle period selection
+  const handlePeriodChange = (period: string) => {
+    setSelectedPeriod(period);
+    // Silent refresh for smooth period transitions
+    fetchPortfolioData(period, false);
   };
 
   if (loading) {
@@ -244,6 +260,33 @@ const PortfolioChartAdvanced = ({ userId }: PortfolioChartProps) => {
         </div>
       )}
 
+      {/* Period Selector Buttons */}
+      <div style={{ 
+        display: 'flex', 
+        gap: '10px', 
+        marginBottom: '15px',
+        flexWrap: 'wrap'
+      }}>
+        {['1d', '5d', '1mo', '3mo', '1y', 'ytd', 'all'].map(period => (
+          <button
+            key={period}
+            onClick={() => handlePeriodChange(period)}
+            style={{
+              padding: '8px 16px',
+              borderRadius: '6px',
+              border: selectedPeriod === period ? '2px solid #4054a5ff' : '1px solid #ccc',
+              background: selectedPeriod === period ? '#4054a5ff' : 'white',
+              color: selectedPeriod === period ? 'white' : '#333',
+              cursor: 'pointer',
+              fontWeight: selectedPeriod === period ? '600' : '400',
+              transition: 'all 0.2s'
+            }}
+          >
+            {period.toUpperCase()}
+          </button>
+        ))}
+      </div>
+
       <svg style={{ height: 0 }}>
         <defs>
           {themes.map((theme) => (
@@ -273,38 +316,33 @@ const PortfolioChartAdvanced = ({ userId }: PortfolioChartProps) => {
         indicatorType={[]}
         trendlineType={[]}
         exportType={[]}
-        enablePeriodSelector={true}
-        periods={[
-          { text: '1M', interval: 1, intervalType: 'Months' },
-          { text: '3M', interval: 3, intervalType: 'Months' },
-          { text: '6M', interval: 6, intervalType: 'Months' },
-          { text: '1Y', interval: 1, intervalType: 'Years' },
-          { text: 'YTD', intervalType: 'Years' },
-        ]}
+        enableSelector={false}
+        enablePeriodSelector={false}
+        height='500'
         primaryXAxis={{
-        valueType: "DateTime",
-        majorGridLines: { width: 0 },
-        crosshairTooltip: { enable: true }
+          valueType: "DateTime",
+          majorGridLines: { width: 0 },
+          crosshairTooltip: { enable: true }
         }}
-      primaryYAxis={{
-      title: 'Value ($)',
-      lineStyle: { color: "transparent" },
-      majorTickLines: { color: "transparent", height: 0 },
-      labelFormat: '${value}',
-      minimum: 0
-      }}
-      tooltip={{
-      enable: true,
-      format: "<b>${point.x}</b><br/>Portfolio Value: <b>${point.y}</b>",
-      }}
-      crosshair={{
-      enable: true,
-      lineType: "Both",
-      snapToData: true,
-      dashArray: "5, 5"
-      }}
-  chartArea={{ border: { width: 0 } }}
->
+        primaryYAxis={{
+          title: 'Value ($)',
+          lineStyle: { color: "transparent" },
+          majorTickLines: { color: "transparent", height: 0 },
+          labelFormat: '${value}',
+          minimum: 0
+        }}
+        tooltip={{
+          enable: true,
+          format: "<b>${point.x}</b><br/>Portfolio Value: <b>$${point.y}</b>",
+        }}
+        crosshair={{
+          enable: true,
+          lineType: "Both",
+          snapToData: true,
+          dashArray: "5, 5"
+        }}
+        chartArea={{ border: { width: 0 } }}
+      >
         <Inject
           services={[
             DateTime,
@@ -314,8 +352,7 @@ const PortfolioChartAdvanced = ({ userId }: PortfolioChartProps) => {
             RangeTooltip,
             Tooltip,
             Crosshair,
-            Legend,
-            PeriodSelector
+            Legend
           ]}
         />
 
@@ -333,6 +370,7 @@ const PortfolioChartAdvanced = ({ userId }: PortfolioChartProps) => {
               color: "#1113a1ff"
             }}
             opacity={0.75}
+            animation={{ enable: true }}
           />
 
           {/* Total Invested - Baseline reference */}
@@ -373,6 +411,6 @@ const PortfolioChartAdvanced = ({ userId }: PortfolioChartProps) => {
       )}
     </div>
   );
-};
+});
 
 export default PortfolioChartAdvanced;

@@ -18,25 +18,14 @@ const SAMPLE_CSS = `
     text-align: left !important;
   }
   
-  /* Stock chart toolbar - make everything horizontal */
+  /* HIDE ALL SYNCFUSION TOOLBAR ELEMENTS */
   #stockchartsplinearea_stockChart_toolbar,
-  #stockchartsplinearea > div:first-child,
-  .e-stockchart-toolbar {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
-    flex-wrap: wrap !important;
-    gap: 10px !important;
-  }
-  
-  /* Period selector and Indicators should be inline */
   #stockchartsplinearea_stockChart_PeriodsSelector,
   #stockchartsplinearea_stockChart_Indicator,
+  .e-stockchart-toolbar,
   .e-period-selector,
   .e-toolbar-item {
-    display: inline-block !important;
-    vertical-align: middle !important;
+    display: none !important;
   }
 `;
 
@@ -65,10 +54,19 @@ const SplineArea = ({ symbol }: StockChartProps) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
+  const [selectedPeriod, setSelectedPeriod] = useState('1y');
 
   useEffect(() => {
-    fetchStockHistory(symbol);
+    fetchStockHistory(symbol, selectedPeriod, true);
     fetchCurrentPrice(symbol);
+    
+    // Auto-refresh every 5 seconds for real-time price updates
+    const interval = setInterval(() => {
+      fetchCurrentPrice(symbol);
+      fetchStockHistory(symbol, selectedPeriod, false); // Silent refresh
+    }, 5000);
+    
+    return () => clearInterval(interval);
   }, [symbol]);
 
   const fetchCurrentPrice = async (ticker: string) => {
@@ -89,13 +87,15 @@ const SplineArea = ({ symbol }: StockChartProps) => {
     }
   };
 
-  const fetchStockHistory = async (ticker: string) => {
+  const fetchStockHistory = async (ticker: string, period: string = '1y', showLoading: boolean = true) => {
     try {
-      setLoading(true);
+      // Only show loading on initial load or period change
+      if (showLoading) {
+        setLoading(true);
+      }
       setError("");
       
-      // Fetch maximum data (1 year) so the period selector can filter it client-side
-      const response = await fetch(buildPath(`stock/history/${ticker}?period=1y`));
+      const response = await fetch(buildPath(`stock/history/${ticker}?period=${period}`));
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -144,8 +144,15 @@ const SplineArea = ({ symbol }: StockChartProps) => {
         volume: 1000000 
       }]);
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
+  };
+
+  const handlePeriodChange = (period: string) => {
+    setSelectedPeriod(period);
+    fetchStockHistory(symbol, period, false); // Silent refresh for smooth transition
   };
 
   const load = (args: IStockChartEventArgs) => {
@@ -168,6 +175,33 @@ const SplineArea = ({ symbol }: StockChartProps) => {
   return (
     <div className="control-pane">
       <style>{SAMPLE_CSS}</style>
+
+      {/* Custom Period Selector Buttons */}
+      <div style={{ 
+        display: 'flex', 
+        gap: '10px', 
+        marginBottom: '15px',
+        flexWrap: 'wrap'
+      }}>
+        {['1d', '5d', '1mo', '3mo', '6mo', '1y', '5y', 'max'].map(period => (
+          <button
+            key={period}
+            onClick={() => handlePeriodChange(period)}
+            style={{
+              padding: '8px 16px',
+              borderRadius: '6px',
+              border: selectedPeriod === period ? '2px solid #4054a5ff' : '1px solid #ccc',
+              background: selectedPeriod === period ? '#4054a5ff' : 'white',
+              color: selectedPeriod === period ? 'white' : '#333',
+              cursor: 'pointer',
+              fontWeight: selectedPeriod === period ? '600' : '400',
+              transition: 'all 0.2s'
+            }}
+          >
+            {period.toUpperCase()}
+          </button>
+        ))}
+      </div>
 
       <svg style={{ height: 0 }}>
         <defs>
@@ -194,16 +228,18 @@ const SplineArea = ({ symbol }: StockChartProps) => {
         id="stockchartsplinearea"
         title={currentPrice ? `${symbol} - $${currentPrice.toFixed(2)}` : `${symbol} Stock Price`}
         titleStyle={{
-        fontFamily: 'Segoe UI',
-        fontWeight: '600',
-        size: '24px',  // Change this value to make it bigger or smaller
-        color: '#19005eff'
+          fontFamily: 'Segoe UI',
+          fontWeight: '600',
+          size: '24px',
+          color: '#19005eff'
         }}
         load={load}
         theme="Material3"
         indicatorType={[]}
         trendlineType={[]}
         exportType={[]}
+        enableSelector={false}
+        enablePeriodSelector={false}
         primaryXAxis={{
           valueType: "DateTime",
           majorGridLines: { width: 0 },
