@@ -10,20 +10,27 @@ interface BuyingPowerCardProps {
 
 function BuyingPowerCard({ onClose }: BuyingPowerCardProps) {
   const [amountToAdd, setAmountToAdd] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [transactionType, setTransactionType] = useState<'add' | 'withdraw'>('add');
   const { buyingPower, fetchPortfolioData } = usePortfolio();
   const { user } = useAuth();
 
   const handleAdd = async () => {
     if (!user?.userId) {
-      alert('User not found');
+      console.error('User not found');
       return;
     }
 
     const amount = parseFloat(amountToAdd);
     if (isNaN(amount) || amount <= 0) {
-      alert('Please enter a valid amount greater than 0');
+      setErrorMessage('Please enter a valid amount greater than 0');
+      setTimeout(() => setErrorMessage(''), 5000);
       return;
     }
+
+    // Use negative amount for withdrawal
+    const finalAmount = transactionType === 'withdraw' ? -amount : amount;
 
     try {
       const response = await fetch(buildPath('portfolio/add-funds'), {
@@ -31,22 +38,24 @@ function BuyingPowerCard({ onClose }: BuyingPowerCardProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user.userId,
-          amount: amount
+          amount: finalAmount
         })
       });
 
       const data = await response.json();
 
       if (data.success) {
-        alert(data.message || `Successfully added $${amount.toFixed(2)} to your account`);
+        const action = transactionType === 'add' ? 'Added' : 'Withdrew';
+        setSuccessMessage(`${action} $${amount.toFixed(2)} ${transactionType === 'add' ? 'to' : 'from'} your account`);
         await fetchPortfolioData(); // Refresh portfolio to show updated balance
-        onClose();
+        setTimeout(() => onClose(), 1500);  // close after showing message briefly
       } else {
-        alert(data.error || 'Failed to add buying power');
+        setErrorMessage(data.error || 'Failed to process transaction');
+        setTimeout(() => setErrorMessage(''), 5000);
       }
     } catch (error) {
-      console.error('Error adding buying power:', error);
-      alert('Failed to add buying power');
+      setErrorMessage('Failed to process transaction. Please try again.');
+      setTimeout(() => setErrorMessage(''), 5000);
     }
   };
 
@@ -56,6 +65,32 @@ function BuyingPowerCard({ onClose }: BuyingPowerCardProps) {
 
   return (
     <div className="buying-power-card">
+      {successMessage && (
+        <div style={{
+          backgroundColor: '#10b981',
+          color: 'white',
+          padding: '12px 16px',
+          borderRadius: '8px',
+          marginBottom: '12px',
+          fontWeight: '500',
+          textAlign: 'center'
+        }}>
+          ✓ {successMessage}
+        </div>
+      )}
+      {errorMessage && (
+        <div style={{
+          backgroundColor: '#ef4444',
+          color: 'white',
+          padding: '12px 16px',
+          borderRadius: '8px',
+          marginBottom: '12px',
+          fontWeight: '500',
+          textAlign: 'center'
+        }}>
+          ✕ {errorMessage}
+        </div>
+      )}
       <h2 className="card-title">Add Buying Power</h2>
 
       <div className="current-power-display">
@@ -65,8 +100,42 @@ function BuyingPowerCard({ onClose }: BuyingPowerCardProps) {
         </div>
       </div>
 
+      {/* Add/Withdraw Toggle */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+        <button
+          onClick={() => setTransactionType('add')}
+          style={{
+            flex: 1,
+            padding: '10px 16px',
+            border: 'none',
+            borderRadius: '8px',
+            backgroundColor: transactionType === 'add' ? '#007AFF' : '#e5e5e5',
+            color: transactionType === 'add' ? 'white' : '#333',
+            fontWeight: '500',
+            cursor: 'pointer'
+          }}
+        >
+          Add
+        </button>
+        <button
+          onClick={() => setTransactionType('withdraw')}
+          style={{
+            flex: 1,
+            padding: '10px 16px',
+            border: 'none',
+            borderRadius: '8px',
+            backgroundColor: transactionType === 'withdraw' ? '#FF9500' : '#e5e5e5',
+            color: transactionType === 'withdraw' ? 'white' : '#333',
+            fontWeight: '500',
+            cursor: 'pointer'
+          }}
+        >
+          Withdraw
+        </button>
+      </div>
+
       <div className="input-section">
-        <label className="input-label">Amount to Add</label>
+        <label className="input-label">Amount to {transactionType === 'add' ? 'Add' : 'Withdraw'}</label>
         <div className="input-wrapper">
           <span className="dollar-sign">$</span>
           <input
@@ -84,7 +153,7 @@ function BuyingPowerCard({ onClose }: BuyingPowerCardProps) {
           Cancel
         </button>
         <button onClick={handleAdd} className="add-button">
-          Add
+          {transactionType === 'add' ? 'Add' : 'Withdraw'}
         </button>
       </div>
     </div>

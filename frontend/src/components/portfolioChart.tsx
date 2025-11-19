@@ -129,7 +129,7 @@ const PortfolioChartAdvanced = forwardRef(({ userId }: PortfolioChartProps, ref)
     const interval = setInterval(() => {
       fetchPortfolioData(selectedPeriod, false);
     }, 10000);
-    
+
     return () => clearInterval(interval);
   }, [userId, selectedPeriod]);
 
