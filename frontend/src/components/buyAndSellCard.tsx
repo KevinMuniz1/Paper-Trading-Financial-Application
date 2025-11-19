@@ -1,5 +1,6 @@
 // TradeStockCard.tsx
 import { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { buildPath } from '../../Path';
 import "./DashboardPage.css";
 
@@ -15,20 +16,34 @@ function TradeStockCard({ onClose, onTradeSuccess, stockSymbol, stockName, curre
   const [shares, setShares] = useState('');
   const [tradeType, setTradeType] = useState<'buy' | 'sell'>('buy');
 
-  const userId = localStorage.getItem("userId") || "";
+  const { user } = useAuth();
+  const userId = user?.userId || 0;
   const quantity = parseInt(shares);
   const totalAmount = shares ? quantity * currentPrice : 0;
 
   // ---------------------------
-  // BUY STOCK → /addcard
+  // BUY STOCK → /addstock
   // ---------------------------
   async function buyStock() {
     try {
-      const res = await fetch(buildPath("/addcard"), {
+
+      //const parsedUserId = parseInt(userId);
+      console.log("=== BUY STOCK DEBUG ===");
+      console.log("Raw userId from localStorage:", userId);
+      console.log("Parsed userId:", userId);
+      console.log("Request payload:", {
+        userId: userId,
+        cardName: stockName,
+        tickerSymbol: stockSymbol,
+        quantity: quantity
+      });
+
+      const res = await fetch(buildPath("/addstock"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId,
+          //userId: parseInt(userId),
+          userId: userId,
           cardName: stockName,
           tickerSymbol: stockSymbol,
           quantity: quantity
@@ -42,6 +57,7 @@ function TradeStockCard({ onClose, onTradeSuccess, stockSymbol, stockName, curre
         return;
       }
 
+      alert(data.message || `Successfully purchased ${quantity} shares of ${stockSymbol}`);
       onTradeSuccess();  // refresh holdings + account value
       onClose();
     } catch (err) {
@@ -56,7 +72,7 @@ function TradeStockCard({ onClose, onTradeSuccess, stockSymbol, stockName, curre
   async function sellStock() {
     try {
       // Find tradeId for this symbol
-      const findRes = await fetch(buildPath("/searchcards"), {
+      const findRes = await fetch(buildPath("/searchstocks"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, search: stockSymbol })
@@ -89,6 +105,7 @@ function TradeStockCard({ onClose, onTradeSuccess, stockSymbol, stockName, curre
         return;
       }
 
+      alert(data.message || `Successfully sold ${quantity} shares of ${stockSymbol}`);
       onTradeSuccess();
       onClose();
     } catch (err) {
@@ -101,7 +118,10 @@ function TradeStockCard({ onClose, onTradeSuccess, stockSymbol, stockName, curre
   // MAIN HANDLER
   // ---------------------------
   const handleTrade = () => {
-    if (!shares || quantity <= 0) return;
+    if (!shares || quantity <= 0){
+      alert("Please enter a valid number of shares.");
+      return;
+    }
 
     if (tradeType === "buy") {
       buyStock();
