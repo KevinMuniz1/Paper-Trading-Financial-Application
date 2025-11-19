@@ -30,7 +30,7 @@ function Login() {
       const res = await response.json();
        console.log('Login response:', res);
 
-      if (res.id <= 0 || !res.token) {
+      if (res.id <= 0) {
         setMessage(res.error || 'User/Password combination incorrect');
       } else {
         // Use AuthContext login - automatically handles token storage and decoding
