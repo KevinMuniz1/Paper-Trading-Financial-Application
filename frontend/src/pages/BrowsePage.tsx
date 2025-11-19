@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { buildPath } from "../../Path";
+import { useNavigate } from 'react-router-dom';
 import NavBar from '../components/NavBar';
 import './BrowsePage.css';
 
@@ -28,6 +29,7 @@ interface SearchResult {
     name: string;
 }
 
+
 const BrowsePage = () => {
     const [articles, setArticles] = useState<Article[]>([]);
     const [gainers, setGainers] = useState<Stock[]>([]);
@@ -40,6 +42,7 @@ const BrowsePage = () => {
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
     const [searching, setSearching] = useState(false);
     const [showResults, setShowResults] = useState(false);
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchNews();
@@ -313,7 +316,7 @@ const BrowsePage = () => {
                 ) : (
                     <div className="movers-scroll">
                         {gainers.map((stock, index) => (
-                            <div key={index} className="stock-card gainer">
+                            <div key={index} className="stock-card gainer" onClick={() => navigate(`/stock/${stock.symbol}`)}>
                                 <div className="stock-content">
                                     <div className="stock-header">
                                         <div className="stock-symbol">{stock.symbol}</div>
