@@ -1446,8 +1446,8 @@ router.get('/overview/:symbol', async (req, res) => {
             });
         }
 
-
-        const url = `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${symbol}&apikey=${process.env.ALPHA_VANTAGE_KEY}`;
+        const apiKey = process.env.ALPHA_VANTAGE_API_KEY || process.env.ALPHA_VANTAGE_KEY;
+        const url = `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${symbol}&apikey=${apiKey}`;
 
         const { data } = await axios.get(url);
 
