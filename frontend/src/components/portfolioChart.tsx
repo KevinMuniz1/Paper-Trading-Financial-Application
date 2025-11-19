@@ -13,7 +13,7 @@ import {
   Tooltip,
   Legend,
   IStockChartEventArgs,
-  RangeNavigator
+  PeriodSelector
 } from "@syncfusion/ej2-react-charts";
 
 import { buildPath } from "../../Path";
@@ -25,10 +25,12 @@ const SAMPLE_CSS = `
   .chart-gradient stop[offset="0.6"] { stop-opacity: 0.2; }
   .chart-gradient stop[offset="1"] { stop-opacity: 0; }
   
+  /* Control pane layout fix */
   .control-pane {
     text-align: left !important;
   }
   
+  /* Stock chart toolbar - make everything horizontal */
   #portfoliochart_stockChart_toolbar,
   #portfoliochart > div:first-child,
   .e-stockchart-toolbar {
@@ -38,6 +40,15 @@ const SAMPLE_CSS = `
     justify-content: flex-start !important;
     flex-wrap: wrap !important;
     gap: 10px !important;
+  }
+  
+  /* Period selector and Indicators should be inline */
+  #portfoliochart_stockChart_PeriodsSelector,
+  #portfoliochart_stockChart_Indicator,
+  .e-period-selector,
+  .e-toolbar-item {
+    display: inline-block !important;
+    vertical-align: middle !important;
   }
 
   .portfolio-stats {
@@ -261,41 +272,39 @@ const PortfolioChartAdvanced = ({ userId }: PortfolioChartProps) => {
         theme="Material3"
         indicatorType={[]}
         trendlineType={[]}
-        exportType={['PNG', 'JPEG', 'SVG', 'PDF']}
-        primaryXAxis={{
-          valueType: "DateTime",
-          majorGridLines: { width: 0 },
-          crosshairTooltip: { enable: true }
-        }}
-        primaryYAxis={{
-          title: 'Value ($)',
-          lineStyle: { color: "transparent" },
-          majorTickLines: { color: "transparent", height: 0 },
-          labelFormat: '${value}'
-        }}
-        tooltip={{
-          enable: true,
-          shared: true,
-          format: "<b>${point.x}</b><br/>${series.name}: <b>$${point.y}</b>"
-        }}
-        crosshair={{
-          enable: true,
-          lineType: "Both",
-          snapToData: true,
-          dashArray: "5, 5"
-        }}
-        chartArea={{ border: { width: 0 } }}
-        legendSettings={{ visible: true }}
+        exportType={[]}
+        enablePeriodSelector={true}
         periods={[
-          { text: '1D', interval: 1, intervalType: 'Days' },
-          { text: '5D', interval: 5, intervalType: 'Days' },
           { text: '1M', interval: 1, intervalType: 'Months' },
           { text: '3M', interval: 3, intervalType: 'Months' },
           { text: '6M', interval: 6, intervalType: 'Months' },
           { text: '1Y', interval: 1, intervalType: 'Years' },
           { text: 'YTD', intervalType: 'Years' },
         ]}
-      >
+        primaryXAxis={{
+        valueType: "DateTime",
+        majorGridLines: { width: 0 },
+        crosshairTooltip: { enable: true }
+        }}
+      primaryYAxis={{
+      title: 'Value ($)',
+      lineStyle: { color: "transparent" },
+      majorTickLines: { color: "transparent", height: 0 },
+      labelFormat: '${value}',
+      minimum: 0
+      }}
+      tooltip={{
+      enable: true,
+      format: "<b>${point.x}</b><br/>Portfolio Value: <b>${point.y}</b>",
+      }}
+      crosshair={{
+      enable: true,
+      lineType: "Both",
+      snapToData: true,
+      dashArray: "5, 5"
+      }}
+  chartArea={{ border: { width: 0 } }}
+>
         <Inject
           services={[
             DateTime,
@@ -306,7 +315,7 @@ const PortfolioChartAdvanced = ({ userId }: PortfolioChartProps) => {
             Tooltip,
             Crosshair,
             Legend,
-            RangeNavigator
+            PeriodSelector
           ]}
         />
 
