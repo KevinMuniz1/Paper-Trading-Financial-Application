@@ -374,6 +374,7 @@ const PortfolioChartAdvanced = forwardRef(({ userId }: PortfolioChartProps, ref)
         tooltip={{
           enable: true,
           format: "<b>${point.x}</b><br/>Portfolio Value: <b>$${point.y}</b>",
+          shared: false
         }}
         crosshair={{
           enable: true,
