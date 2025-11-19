@@ -17,6 +17,8 @@ function TradeStockCard({ onClose, onTradeSuccess, stockSymbol, stockName, curre
   const [tradeType, setTradeType] = useState<'buy' | 'sell'>('buy');
   const [currentPrice, setCurrentPrice] = useState(initialPrice || 0);
   const [loading, setLoading] = useState(!initialPrice);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const { user } = useAuth();
   const userId = user?.userId || 0;
@@ -27,6 +29,12 @@ function TradeStockCard({ onClose, onTradeSuccess, stockSymbol, stockName, curre
   useEffect(() => {
     fetchCurrentPrice();
   }, [stockSymbol]);
+
+  useEffect(() => {
+    if (successMessage) {
+      console.log('RENDER TRIGGERED - successMessage changed to:', successMessage);
+    }
+  }, [successMessage]);
 
   const fetchCurrentPrice = async () => {
     try {
@@ -55,16 +63,6 @@ function TradeStockCard({ onClose, onTradeSuccess, stockSymbol, stockName, curre
   // ---------------------------
   async function buyStock() {
     try {
-      console.log("=== BUY STOCK DEBUG ===");
-      console.log("Raw userId from localStorage:", userId);
-      console.log("Parsed userId:", userId);
-      console.log("Request payload:", {
-        userId: userId,
-        cardName: stockName,
-        tickerSymbol: stockSymbol,
-        quantity: quantity
-      });
-
       const res = await fetch(buildPath("/addstock"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -78,17 +76,25 @@ function TradeStockCard({ onClose, onTradeSuccess, stockSymbol, stockName, curre
 
       const data = await res.json();
 
-      if (data.error) {
-        alert(data.error);
+      if (data.error && data.error !== '') {
+        console.error('Buy error:', data.error);
+        setErrorMessage(data.error);
+        setTimeout(() => setErrorMessage(''), 5000);
         return;
       }
 
-      alert(data.message || `Successfully purchased ${quantity} shares of ${stockSymbol}`);
-      onTradeSuccess();  // refresh holdings + account value
-      onClose();
+      // Set message FIRST before any other operations
+      const successMsg = `Successfully purchased ${quantity} shares of ${stockSymbol}!`;
+      setSuccessMessage(successMsg);
+      // Wait, then refresh and close
+      setTimeout(() => {
+        onTradeSuccess();
+        onClose();
+      }, 3000);
     } catch (err) {
-      console.error(err);
-      alert("Failed to execute trade.");
+      console.error('Buy failed:', err);
+      setErrorMessage('Failed to execute trade. Please try again.');
+      setTimeout(() => setErrorMessage(''), 5000);
     }
   }
 
@@ -104,11 +110,13 @@ function TradeStockCard({ onClose, onTradeSuccess, stockSymbol, stockName, curre
         body: JSON.stringify({ userId, search: stockSymbol })
       });
 
-      const findData = await findRes.json();
-      const holding = findData.results?.find((t: any) => t.symbol === stockSymbol);
+      const searchData = await findRes.json();
+      const holding = searchData.results?.find((t: any) => t.symbol === stockSymbol);
 
       if (!holding) {
-        alert(`You do not own any shares of ${stockSymbol}.`);
+        console.error(`You do not own any shares of ${stockSymbol}.`);
+        setErrorMessage(`You do not own any shares of ${stockSymbol}.`);
+        setTimeout(() => setErrorMessage(''), 5000);
         return;
       }
 
@@ -126,17 +134,25 @@ function TradeStockCard({ onClose, onTradeSuccess, stockSymbol, stockName, curre
 
       const data = await res.json();
 
-      if (data.error) {
-        alert(data.error);
+      if (data.error && data.error !== '') {
+        console.error('Sell error:', data.error);
+        setErrorMessage(data.error);
+        setTimeout(() => setErrorMessage(''), 5000);
         return;
       }
 
-      alert(data.message || `Successfully sold ${quantity} shares of ${stockSymbol}`);
-      onTradeSuccess();
-      onClose();
+      // Set message FIRST before any other operations
+      const successMsg = `Successfully sold ${quantity} shares of ${stockSymbol}!`;
+      setSuccessMessage(successMsg);
+      // Wait, then refresh and close
+      setTimeout(() => {
+        onTradeSuccess();
+        onClose();
+      }, 3000);
     } catch (err) {
-      console.error(err);
-      alert("Sell failed.");
+      console.error('Sell failed:', err);
+      setErrorMessage('Failed to execute trade. Please try again.');
+      setTimeout(() => setErrorMessage(''), 5000);
     }
   }
 
@@ -145,7 +161,8 @@ function TradeStockCard({ onClose, onTradeSuccess, stockSymbol, stockName, curre
   // ---------------------------
   const handleTrade = () => {
     if (!shares || quantity <= 0){
-      alert("Please enter a valid number of shares.");
+      setErrorMessage('Please enter a valid number of shares.');
+      setTimeout(() => setErrorMessage(''), 5000);
       return;
     }
 
@@ -166,6 +183,32 @@ function TradeStockCard({ onClose, onTradeSuccess, stockSymbol, stockName, curre
 
   return (
     <div className="trade-card">
+      {successMessage && (
+        <div style={{
+          backgroundColor: '#10b981',
+          color: 'white',
+          padding: '12px 16px',
+          borderRadius: '8px',
+          marginBottom: '12px',
+          fontWeight: '500',
+          textAlign: 'center'
+        }}>
+          ✓ {successMessage}
+        </div>
+      )}
+      {errorMessage && (
+        <div style={{
+          backgroundColor: '#ef4444',
+          color: 'white',
+          padding: '12px 16px',
+          borderRadius: '8px',
+          marginBottom: '12px',
+          fontWeight: '500',
+          textAlign: 'center'
+        }}>
+          ✕ {errorMessage}
+        </div>
+      )}
       <h2 className="trade-title">Trade {stockSymbol}</h2>
 
       {/* Stock Info */}
