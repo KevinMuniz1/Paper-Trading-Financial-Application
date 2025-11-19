@@ -120,7 +120,7 @@ export default function HoldingsBar() {
         ))}
       </div>
       {holdings.length === 0 && (
-        <div className="watchlist-empty">No current holdings</div>
+        <div className="watchlist-empty" style={{ padding: "12px", textAlign: "center", color: "black" }}>No current holdings</div>
       )}
     </div>
   );

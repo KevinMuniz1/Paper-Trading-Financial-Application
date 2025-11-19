@@ -167,7 +167,7 @@ export default function WatchlistSection() {
         ))}
       </div>
       {watchlist.length === 0 && (
-        <div className="watchlist-empty">No stocks in watchlist</div>
+        <div className="watchlist-empty" style={{ padding: "12px", textAlign: "center", color: "black" }}>No stocks in watchlist</div>
       )}
     </div>
   );
