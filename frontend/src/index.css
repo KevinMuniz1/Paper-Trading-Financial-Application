@@ -1,28 +1,47 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 :root {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   color-scheme: dark;
 
-  --bg-page:    #060b18;
-  --bg-panel:   #0d1526;
-  --bg-elevated:#111d35;
-  --bg-hover:   #162040;
-  --bg-active:  #1a2a50;
-  --border:     #1a2d4a;
-  --border-light:#1e3358;
-  --accent:     #3b82f6;
-  --accent-hover:#2563eb;
-  --accent-dim: rgba(59,130,246,0.15);
-  --green:      #10b981;
-  --green-dim:  rgba(16,185,129,0.12);
-  --red:        #ef4444;
-  --red-dim:    rgba(239,68,68,0.12);
+  /* Backgrounds — warm zinc, not cold navy */
+  --bg-page:      #09090b;
+  --bg-panel:     #111113;
+  --bg-elevated:  #18181b;
+  --bg-hover:     rgba(139, 92, 246, 0.06);
+  --bg-active:    rgba(139, 92, 246, 0.1);
+
+  /* Borders */
+  --border:       #27272a;
+  --border-light: #3f3f46;
+
+  /* Accent — violet (nobody does this in finance) */
+  --accent:       #8b5cf6;
+  --accent-hover: #7c3aed;
+  --accent-dim:   rgba(139, 92, 246, 0.12);
+  --accent-text:  #a78bfa;
+
+  /* Semantic colors */
+  --green:      #22c55e;
+  --green-dim:  rgba(34, 197, 94, 0.1);
+  --green-text: #4ade80;
+  --red:        #f43f5e;
+  --red-dim:    rgba(244, 63, 94, 0.1);
+  --red-text:   #fb7185;
   --yellow:     #f59e0b;
-  --text-primary:   #e2e8f0;
-  --text-secondary: #94a3b8;
-  --text-muted:     #475569;
-  --sidebar-w:  240px;
+
+  /* Typography */
+  --text-primary:   #fafafa;
+  --text-secondary: #a1a1aa;
+  --text-muted:     #52525b;
+
+  /* Layout */
+  --sidebar-w:  220px;
+  --radius-sm:  5px;
+  --radius-md:  8px;
+  --radius-lg:  12px;
 
   color: var(--text-primary);
   background-color: var(--bg-page);
@@ -41,8 +60,8 @@ body {
   color: var(--text-primary);
 }
 
-a { color: var(--accent); text-decoration: none; }
-a:hover { color: var(--accent-hover); }
+a { color: var(--accent-text); text-decoration: none; }
+a:hover { color: var(--accent); }
 
 button {
   font-family: inherit;
@@ -50,27 +69,31 @@ button {
   border: none;
   outline: none;
 }
-
 button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-/* Utility classes */
-.num { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum'; }
-.positive { color: var(--green) !important; }
-.negative { color: var(--red) !important; }
+/* Numbers always use JetBrains Mono */
+.num, .mono {
+  font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+.positive { color: var(--green-text) !important; }
+.negative { color: var(--red-text) !important; }
 .truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* Scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-/* Modal overlay */
+/* ── Modal ─────────────────────────────────────────────────── */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.65);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -79,39 +102,50 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .modal-box {
   background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
   padding: 1.5rem;
   width: 100%;
   max-width: 400px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-  z-index: 1001;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(139, 92, 246, 0.1);
 }
 
-/* Enterprise card */
+/* ── Card primitive ─────────────────────────────────────────── */
 .card {
   background: var(--bg-panel);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   padding: 1.25rem;
 }
 
-/* Stat badge */
+/* ── P&L badges ─────────────────────────────────────────────── */
 .badge-positive {
   background: var(--green-dim);
-  color: var(--green);
+  color: var(--green-text);
+  border: 1px solid rgba(34, 197, 94, 0.2);
   padding: 2px 8px;
   border-radius: 4px;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
   font-variant-numeric: tabular-nums;
 }
 .badge-negative {
   background: var(--red-dim);
-  color: var(--red);
+  color: var(--red-text);
+  border: 1px solid rgba(244, 63, 94, 0.2);
   padding: 2px 8px;
   border-radius: 4px;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
   font-variant-numeric: tabular-nums;
+}
+
+/* ── Gradient text utility ─────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, #a78bfa 0%, #ec4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }

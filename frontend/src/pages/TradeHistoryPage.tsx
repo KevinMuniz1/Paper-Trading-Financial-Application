@@ -81,17 +81,18 @@ export default function TradeHistoryPage() {
   );
 
   const thStyle: React.CSSProperties = {
-    padding: '0.6rem 1rem', fontSize: '0.68rem', fontWeight: 600,
-    textTransform: 'uppercase' as const, letterSpacing: '0.07em',
+    padding: '0.55rem 1rem', fontSize: '0.62rem', fontWeight: 700,
+    textTransform: 'uppercase' as const, letterSpacing: '0.1em',
     color: 'var(--text-muted)', cursor: 'pointer', userSelect: 'none',
     whiteSpace: 'nowrap', borderBottom: '1px solid var(--border)',
     background: 'var(--bg-elevated)', textAlign: 'right' as const,
   };
   const tdStyle: React.CSSProperties = {
-    padding: '0.7rem 1rem', fontSize: '0.85rem',
+    padding: '0.65rem 1rem', fontSize: '0.84rem',
     color: 'var(--text-primary)', borderBottom: '1px solid var(--border)',
     fontVariantNumeric: 'tabular-nums', textAlign: 'right' as const,
     whiteSpace: 'nowrap',
+    fontFamily: "'JetBrains Mono', monospace",
   };
 
   return (
@@ -193,16 +194,16 @@ export default function TradeHistoryPage() {
                         onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
                         onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                       >
-                        <td style={{ ...tdStyle, textAlign: 'left' }}>
-                          <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{p.symbol}</div>
-                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                        <td style={{ ...tdStyle, textAlign: 'left', fontFamily: 'inherit' }}>
+                          <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'inherit', letterSpacing: '0.02em' }}>{p.symbol}</div>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'inherit', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
                         </td>
                         <td style={tdStyle}>{p.quantity}</td>
                         <td style={tdStyle}>${fmt(p.avgCost)}</td>
                         <td style={tdStyle}>${fmt(p.currentPrice)}</td>
                         <td style={tdStyle}>${fmt(p.totalCost)}</td>
                         <td style={tdStyle}>${fmt(p.currentValue)}</td>
-                        <td style={{ ...tdStyle, color: up ? 'var(--green)' : 'var(--red)' }}>
+                        <td style={{ ...tdStyle, color: up ? 'var(--green-text)' : 'var(--red-text)' }}>
                           {up ? '+' : ''}${fmt(p.gain)}
                         </td>
                         <td style={{ ...tdStyle }}>

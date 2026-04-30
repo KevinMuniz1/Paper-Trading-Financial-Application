@@ -90,7 +90,10 @@ const NavBar = () => {
       {/* Logo */}
       <div className="sidebar-logo">
         <div className="sidebar-logo-mark">ST</div>
-        <span className="sidebar-logo-text">SimpliTrade</span>
+        <div>
+          <div className="sidebar-logo-text">SimpliTrade</div>
+          <div className="sidebar-logo-sub">Paper Trading</div>
+        </div>
       </div>
 
       {/* Navigation */}
