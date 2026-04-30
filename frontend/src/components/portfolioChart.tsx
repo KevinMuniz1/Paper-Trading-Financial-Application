@@ -136,7 +136,7 @@ const PortfolioChartAdvanced = forwardRef(({ userId }: PortfolioChartProps, ref)
   /* ── Fetch on mount + interval ───────────────── */
   useEffect(() => {
     fetchPortfolioData(selectedPeriod, true);
-    const id = setInterval(() => fetchPortfolioData(selectedPeriod, false), 10_000);
+    const id = setInterval(() => fetchPortfolioData(selectedPeriod, false), 60_000);
     return () => clearInterval(id);
   }, [userId, selectedPeriod]);
 

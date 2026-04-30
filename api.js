@@ -1841,13 +1841,15 @@ router.post('/portfolio/performance', async (req, res) => {
                     period2: endDate,
                     interval: interval
                 });
-                
+
                 if (result && result.quotes) {
                     symbolHistoricalData[symbol] = result.quotes;
                 }
             } catch (err) {
                 console.error(`Error fetching ${symbol}:`, err.message);
             }
+            // Avoid 429s by spacing out sequential Yahoo Finance chart calls
+            await new Promise(r => setTimeout(r, 400));
         }
 
         const timestampSet = new Set();

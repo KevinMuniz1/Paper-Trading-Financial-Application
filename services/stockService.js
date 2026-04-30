@@ -10,32 +10,39 @@ console.log('===========================');
 // Create an instance
 const yahooFinance = new YahooFinance();
 
-const priceCache = new NodeCache({ stdTTL: 10, checkperiod: 5 });
+const priceCache = new NodeCache({ stdTTL: 60, checkperiod: 30 });
+
+// Rate limiter: minimum 400ms between actual Yahoo Finance API calls
+let lastApiCall = 0;
+const MIN_SPACING_MS = 400;
+function rateDelay() {
+    const wait = MIN_SPACING_MS - (Date.now() - lastApiCall);
+    if (wait <= 0) { lastApiCall = Date.now(); return Promise.resolve(); }
+    return new Promise(r => setTimeout(() => { lastApiCall = Date.now(); r(); }, wait));
+}
 
 class StockService {
     async getCurrentPrice(symbol) {
         try {
-            // Check cache first
             const cachedPrice = priceCache.get(symbol);
-            if (cachedPrice) {
-                console.log(`[CACHE] ${symbol}: $${cachedPrice}`);
+            if (cachedPrice !== undefined) {
                 return cachedPrice;
             }
 
-            console.log(`[API] Fetching ${symbol}...`);
+            await rateDelay();
             const quote = await yahooFinance.quote(symbol);
             const price = quote.regularMarketPrice;
-            
-            // Cache the price
             priceCache.set(symbol, price);
-            
-            console.log(` [API] ${symbol}: $${price}`);
+            console.log(`[API] ${symbol}: $${price}`);
             return price;
         } catch (error) {
+            const isRateLimit = error.message.includes('429') || error.message.includes('Too Many');
+            if (isRateLimit) {
+                const stale = priceCache.get(symbol);
+                if (stale !== undefined) return stale;
+            }
             console.error(`Error fetching price for ${symbol}:`, error.message);
-            // Keep existing behaviour (return numeric fallback) but log reason
             const fb = await this.fallbackPrice(symbol);
-            console.log(`[FALLBACK] ${symbol}: $${fb} (reason: ${error.message})`);
             return fb;
         }
     }
@@ -45,18 +52,13 @@ class StockService {
             const prices = {};
             const warnings = [];
 
-            // Fetch prices for all symbols, include metadata per-call to detect fallbacks
             for (const symbol of symbols) {
                 try {
-                    // Use the single-call method which logs fallback; we can still detect fallback by
-                    // checking cache first here to see if value comes from cache (best-effort)
                     const cached = priceCache.get(symbol);
-                    if (cached) {
+                    if (cached !== undefined) {
                         prices[symbol] = cached;
-                        warnings.push(`${symbol}: price returned from cache`);
                         continue;
                     }
-
                     const price = await this.getCurrentPrice(symbol);
                     prices[symbol] = price;
                 } catch (innerErr) {
