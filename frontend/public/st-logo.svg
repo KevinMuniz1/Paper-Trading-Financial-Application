@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Red background -->
+  <rect width="100" height="100" rx="22" fill="#C8102E"/>
+
+  <!-- Subtle inner shadow at top -->
+  <rect width="100" height="4" rx="0" fill="rgba(0,0,0,0.12)"/>
+  <rect x="0" y="0" width="100" height="4" rx="2" fill="rgba(255,255,255,0.08)"/>
+
+  <!-- Gold bottom accent band -->
+  <path d="M0 84 H100 V78 Q50 72 0 78 Z" fill="#D4A017" opacity="0.9"/>
+
+  <!-- White baseline -->
+  <line x1="14" y1="76" x2="86" y2="76" stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Rising chart bars (white, increasing height) -->
+  <rect x="14" y="60" width="12" height="16" rx="3" fill="rgba(255,255,255,0.30)"/>
+  <rect x="32" y="48" width="12" height="28" rx="3" fill="rgba(255,255,255,0.45)"/>
+  <rect x="50" y="34" width="12" height="42" rx="3" fill="rgba(255,255,255,0.65)"/>
+  <rect x="68" y="18" width="12" height="58" rx="3" fill="white"/>
+
+  <!-- Gold trend line over the bars -->
+  <polyline
+    points="20,57 38,45 56,31 74,15"
+    fill="none"
+    stroke="#D4A017"
+    stroke-width="4.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"/>
+
+  <!-- Arrow head at the top-right end -->
+  <polyline
+    points="64,12 76,14 74,26"
+    fill="none"
+    stroke="#D4A017"
+    stroke-width="4.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"/>
+
+  <!-- Gold dot at arrow tip -->
+  <circle cx="75" cy="14" r="4.5" fill="#D4A017"/>
+</svg>

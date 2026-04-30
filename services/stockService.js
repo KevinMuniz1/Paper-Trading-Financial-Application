@@ -10,7 +10,7 @@ console.log('===========================');
 // Create an instance
 const yahooFinance = new YahooFinance();
 
-const priceCache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
+const priceCache = new NodeCache({ stdTTL: 10, checkperiod: 5 });
 
 class StockService {
     async getCurrentPrice(symbol) {

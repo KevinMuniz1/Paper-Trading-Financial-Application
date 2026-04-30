@@ -7,7 +7,7 @@
   top: 0;
   width: var(--sidebar-w);
   height: 100vh;
-  background: #0a0a0d;
+  background: var(--bg-panel);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
