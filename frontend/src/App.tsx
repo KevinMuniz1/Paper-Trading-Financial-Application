@@ -12,10 +12,12 @@ import DisplayStockPage from "./pages/StockPage";
 import TradeHistoryPage from "./pages/TradeHistoryPage";
 import { AuthProvider } from './context/AuthContext';
 import { PortfolioProvider } from './context/PortfolioContext';
+import { ThemeProvider } from './context/ThemeContext';
 
 function App() {
   return (
     <BrowserRouter>
+      <ThemeProvider>
       <AuthProvider>
         <PortfolioProvider>
           <Routes>
@@ -32,6 +34,7 @@ function App() {
           </Routes>
         </PortfolioProvider>
       </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

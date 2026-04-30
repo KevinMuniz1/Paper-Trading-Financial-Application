@@ -6,38 +6,42 @@
   font-weight: 400;
   color-scheme: dark;
 
-  /* Backgrounds — warm zinc, not cold navy */
-  --bg-page:      #09090b;
-  --bg-panel:     #111113;
-  --bg-elevated:  #18181b;
-  --bg-hover:     rgba(139, 92, 246, 0.06);
-  --bg-active:    rgba(139, 92, 246, 0.1);
+  /* ── Backgrounds — warm dark, not cold navy ─── */
+  --bg-page:      #0d0b0a;
+  --bg-panel:     #141110;
+  --bg-elevated:  #1d1916;
+  --bg-hover:     rgba(212, 160, 23, 0.05);
+  --bg-active:    rgba(212, 160, 23, 0.09);
 
-  /* Borders */
-  --border:       #27272a;
-  --border-light: #3f3f46;
+  /* ── Borders — warm amber-tinted ────────────── */
+  --border:       #2e2620;
+  --border-light: #3e342a;
 
-  /* Accent — violet (nobody does this in finance) */
-  --accent:       #8b5cf6;
-  --accent-hover: #7c3aed;
-  --accent-dim:   rgba(139, 92, 246, 0.12);
-  --accent-text:  #a78bfa;
+  /* ── Wells Fargo Gold — primary UI accent ───── */
+  --accent:       #D4A017;
+  --accent-hover: #b88a0f;
+  --accent-dim:   rgba(212, 160, 23, 0.12);
+  --accent-text:  #F5C842;
 
-  /* Semantic colors */
-  --green:      #22c55e;
-  --green-dim:  rgba(34, 197, 94, 0.1);
-  --green-text: #4ade80;
-  --red:        #f43f5e;
-  --red-dim:    rgba(244, 63, 94, 0.1);
-  --red-text:   #fb7185;
-  --yellow:     #f59e0b;
+  /* ── Wells Fargo Red — logo & brand only ─────── */
+  --brand-red:    #C8102E;
+  --brand-red-dim: rgba(200, 16, 46, 0.15);
 
-  /* Typography */
-  --text-primary:   #fafafa;
-  --text-secondary: #a1a1aa;
-  --text-muted:     #52525b;
+  /* ── P&L colors ──────────────────────────────── */
+  --green:        #22c55e;
+  --green-dim:    rgba(34, 197, 94, 0.1);
+  --green-text:   #4ade80;
+  --red:          #ef4444;
+  --red-dim:      rgba(239, 68, 68, 0.1);
+  --red-text:     #f87171;
+  --yellow:       #D4A017;
 
-  /* Layout */
+  /* ── Typography — warm tones ────────────────── */
+  --text-primary:   #f5f0e8;
+  --text-secondary: #b5a898;
+  --text-muted:     #5c5040;
+
+  /* ── Layout ──────────────────────────────────── */
   --sidebar-w:  220px;
   --radius-sm:  5px;
   --radius-md:  8px;
@@ -49,6 +53,43 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Light theme (6 AM – 7 PM) ───────────────────── */
+:root[data-theme="light"] {
+  --bg-page:       #faf8f4;
+  --bg-panel:      #ffffff;
+  --bg-elevated:   #f5f0e8;
+  --bg-hover:      rgba(200, 16, 46, 0.04);
+  --bg-active:     rgba(200, 16, 46, 0.07);
+  --border:        #e2d8cc;
+  --border-light:  #cfc2b2;
+  --accent:        #b8860f;
+  --accent-hover:  #9a7209;
+  --accent-dim:    rgba(184, 134, 15, 0.1);
+  --accent-text:   #7a5c0a;
+  --brand-red:     #C8102E;
+  --brand-red-dim: rgba(200, 16, 46, 0.07);
+  --green:         #16a34a;
+  --green-dim:     rgba(22, 163, 74, 0.08);
+  --green-text:    #15803d;
+  --red:           #dc2626;
+  --red-dim:       rgba(220, 38, 38, 0.08);
+  --red-text:      #b91c1c;
+  --yellow:        #b8860f;
+  --text-primary:  #1c140d;
+  --text-secondary:#5c4a38;
+  --text-muted:    #a09080;
+}
+
+/* Smooth theme transition on key surfaces */
+body,
+.page-shell, .sidebar, .browse-shell,
+.stat-card, .chart-panel, .side-panel,
+.about-panel, .metric-item, .mover-row,
+.article-card, .search-container, .movers-panel,
+.buyingPowerDiv, .modal-box {
+  transition: background-color 0.35s ease, border-color 0.35s ease, color 0.25s ease;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -63,15 +104,10 @@ body {
 a { color: var(--accent-text); text-decoration: none; }
 a:hover { color: var(--accent); }
 
-button {
-  font-family: inherit;
-  cursor: pointer;
-  border: none;
-  outline: none;
-}
+button { font-family: inherit; cursor: pointer; border: none; outline: none; }
 button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-/* Numbers always use JetBrains Mono */
+/* Numbers — monospace */
 .num, .mono {
   font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
@@ -88,16 +124,13 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-/* ── Modal ─────────────────────────────────────────────────── */
+/* ── Modal ───────────────────────────────────────── */
 .modal-overlay {
-  position: fixed;
-  inset: 0;
+  position: fixed; inset: 0;
   background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(6px);
   z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex; align-items: center; justify-content: center;
 }
 
 .modal-box {
@@ -105,12 +138,11 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   border: 1px solid var(--border-light);
   border-radius: var(--radius-lg);
   padding: 1.5rem;
-  width: 100%;
-  max-width: 400px;
-  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(139, 92, 246, 0.1);
+  width: 100%; max-width: 400px;
+  box-shadow: 0 25px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(200,16,46,0.08);
 }
 
-/* ── Card primitive ─────────────────────────────────────────── */
+/* ── Card primitive ──────────────────────────────── */
 .card {
   background: var(--bg-panel);
   border: 1px solid var(--border);
@@ -118,34 +150,22 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   padding: 1.25rem;
 }
 
-/* ── P&L badges ─────────────────────────────────────────────── */
+/* ── P&L badges ──────────────────────────────────── */
 .badge-positive {
   background: var(--green-dim);
   color: var(--green-text);
-  border: 1px solid rgba(34, 197, 94, 0.2);
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 0.78rem;
-  font-weight: 600;
+  border: 1px solid rgba(34,197,94,0.2);
+  padding: 2px 8px; border-radius: 4px;
+  font-size: 0.78rem; font-weight: 600;
   font-family: 'JetBrains Mono', monospace;
   font-variant-numeric: tabular-nums;
 }
 .badge-negative {
   background: var(--red-dim);
   color: var(--red-text);
-  border: 1px solid rgba(244, 63, 94, 0.2);
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 0.78rem;
-  font-weight: 600;
+  border: 1px solid rgba(239,68,68,0.2);
+  padding: 2px 8px; border-radius: 4px;
+  font-size: 0.78rem; font-weight: 600;
   font-family: 'JetBrains Mono', monospace;
   font-variant-numeric: tabular-nums;
-}
-
-/* ── Gradient text utility ─────────────────────────────────── */
-.gradient-text {
-  background: linear-gradient(135deg, #a78bfa 0%, #ec4899 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
