@@ -30,8 +30,8 @@ const SplineArea = ({ symbol }: StockChartProps) => {
     if (!containerRef.current) return;
 
     const chart = createChart(containerRef.current, {
-      layout: { background: { color: '#ffffff' }, textColor: '#333' },
-      grid: { vertLines: { visible: false }, horzLines: { color: '#f0f0f0' } },
+      layout: { background: { color: '#0d1526' }, textColor: '#94a3b8' },
+      grid: { vertLines: { visible: false }, horzLines: { color: '#1a2d4a' } },
       rightPriceScale: { borderVisible: false },
       timeScale: { borderVisible: false, timeVisible: true },
       width: containerRef.current.clientWidth,
@@ -39,9 +39,9 @@ const SplineArea = ({ symbol }: StockChartProps) => {
     });
 
     const series = chart.addSeries(AreaSeries, {
-      lineColor: '#1113a1',
-      topColor: 'rgba(64, 84, 165, 0.75)',
-      bottomColor: 'rgba(64, 84, 165, 0)',
+      lineColor: '#3b82f6',
+      topColor: 'rgba(59,130,246,0.3)',
+      bottomColor: 'rgba(59,130,246,0)',
       lineWidth: 2,
     });
 

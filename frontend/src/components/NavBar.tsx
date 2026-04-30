@@ -1,192 +1,147 @@
-import { useState, useEffect, useRef } from "react";
-import { Link, useLocation } from "react-router-dom";
-import "./NavBar.css";
-import PageTitle from "./PageTitle";
+import { useState, useEffect } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 import { buildPath } from "../../Path";
 import { useAuth } from "../context/AuthContext";
+import "./NavBar.css";
 
-interface Holding {
-  symbol: string;
-  quantity: number;
-  price: number;
-  currentPrice: number;
-  costBasis: number;
-  gainPercent?: number;
-  gain?: number;
-}
+const NAV = [
+  {
+    to: "/DashBoardPage",
+    label: "Dashboard",
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+        <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+      </svg>
+    ),
+  },
+  {
+    to: "/browse",
+    label: "Market",
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+      </svg>
+    ),
+  },
+  {
+    to: "/trades",
+    label: "Positions",
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+        <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
+        <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+      </svg>
+    ),
+  },
+  {
+    to: "/accountSettings",
+    label: "Account",
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+    ),
+  },
+];
 
 const NavBar = () => {
-  const location = useLocation();
-  const { user, loading } = useAuth();
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [showAccount, setShowAccount] = useState(false);
-  const [notifications, setNotifications] = useState<string[]>([]);
-  const notifRef = useRef<HTMLDivElement>(null);
-  const accountRef = useRef<HTMLDivElement>(null);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [portfolioValue, setPortfolioValue] = useState<number | null>(null);
+  const [buyingPower, setBuyingPower] = useState<number | null>(null);
 
-  // Fetch portfolio holdings on component mount or when user changes
   useEffect(() => {
-    if (!loading && user?.userId) {
-      fetchPortfolioNotifications();
-      const interval = setInterval(fetchPortfolioNotifications, 5 * 60 * 1000); // Refresh every 5 minutes
-      return () => clearInterval(interval);
-    } else if (!loading && !user) {
-      setNotifications(["Please login to see portfolio notifications"]);
-    }
-  }, [user, loading]);
+    if (!user?.userId) return;
+    fetchSummary();
+    const id = setInterval(fetchSummary, 30_000);
+    return () => clearInterval(id);
+  }, [user?.userId]);
 
-  const fetchPortfolioNotifications = async () => {
+  const fetchSummary = async () => {
     try {
-      if (!user?.userId) {
-        setNotifications(["Please login to see portfolio notifications"]);
-        return;
-      }
-
-      console.log('Fetching portfolio for userId:', user.userId);
-
-      const response = await fetch(buildPath('portfolio/summary'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.userId })
+      const res = await fetch(buildPath("portfolio/summary"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user?.userId }),
       });
-
-      const data = await response.json();
-      console.log('Portfolio data:', data);
-
-      if (data.holdings && data.holdings.length > 0) {
-        const notifs: string[] = [];
-
-        // Fetch daily changes for each holding
-        const dailyChanges: { [key: string]: number } = {};
-        
-        for (const holding of data.holdings.slice(0, 5)) {
-          try {
-            const changeResponse = await fetch(buildPath('stock/daily-change'), {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ symbol: holding.symbol })
-            });
-            const changeData = await changeResponse.json();
-            dailyChanges[holding.symbol] = changeData.percentChange || 0;
-            console.log(`${holding.symbol} daily change: ${changeData.percentChange}%`);
-          } catch (err) {
-            console.error(`Error fetching daily change for ${holding.symbol}:`, err);
-            dailyChanges[holding.symbol] = 0;
-          }
-        }
-
-        // Show holdings with their daily changes
-        data.holdings.slice(0, 5).forEach((holding: Holding) => {
-          // Use daily change instead of overall gain percent
-          const dailyChangePercent = dailyChanges[holding.symbol] || 0;
-          const emoji = dailyChangePercent >= 0 ? '📈' : '📉';
-          const sign = dailyChangePercent > 0 ? '+' : '';
-          notifs.push(`${emoji} ${holding.symbol}: ${sign}${dailyChangePercent.toFixed(2)}%`);
-          
-          console.log(`Display ${holding.symbol}: daily=${dailyChangePercent.toFixed(2)}%, overall gain=${holding.gainPercent?.toFixed(2)}%`);
-        });
-
-        // Add portfolio total if available
-        if (data.portfolio && data.portfolio.totalPortfolioValue) {
-          notifs.push(`💼 Portfolio Value: $${data.portfolio.totalPortfolioValue.toFixed(2)}`);
-        }
-
-        if (notifs.length === 0) {
-          notifs.push("No holdings yet");
-        }
-
-        setNotifications(notifs);
-      } else {
-        setNotifications(["No holdings in portfolio", "Start trading to see your positions"]);
+      const data = await res.json();
+      if (data.portfolio) {
+        setPortfolioValue(data.portfolio.totalPortfolioValue ?? null);
+        setBuyingPower(data.portfolio.buyingPower ?? null);
       }
-    } catch (error) {
-      console.error('Error fetching portfolio notifications:', error);
-      setNotifications(["Unable to load portfolio data"]);
+    } catch {
+      /* ignore */
     }
   };
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
-        setShowNotifications(false);
-      }
-      if (accountRef.current && !accountRef.current.contains(event.target as Node)) {
-        setShowAccount(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
-  function doLogout(event: any): void {
-        event.preventDefault();
-        localStorage.removeItem("user_data");
-        window.location.href = '/';
-    }
+  const fmt = (n: number) =>
+    n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   return (
-    <div className="navbar-wrapper">
-      <div className="navigation-Bar">
-        
-        {/* Logo absolutely centered */}
-        <div className="nav-logo-section">
-          <PageTitle />
-        </div>
+    <aside className="sidebar">
+      {/* Logo */}
+      <div className="sidebar-logo">
+        <div className="sidebar-logo-mark">ST</div>
+        <span className="sidebar-logo-text">SimpliTrade</span>
+      </div>
 
-        {/* Your existing nav items - they'll stay on the right */}
-        <div className="nav-item">
-          {location.pathname !== "/DashboardPage" ? (
-            <Link to="/DashboardPage">
-              <h2 className="navigation-bar-button">Home</h2>
-            </Link>
-          ) : (
-            <h2 className="navigation-bar-button">Home</h2>
-          )}
-        </div>
-        
-        <Link to="/browse" className="navigation-bar-button search-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"></circle>
-              <path d="m21 21-4.35-4.35"></path>
-          </svg>
-          <span className="search-text">Search</span>
-        </Link>
+      {/* Navigation */}
+      <div className="sidebar-section-label">Navigation</div>
+      <nav className="sidebar-nav">
+        {NAV.map(({ to, label, icon }) => (
+          <NavLink
+            key={to}
+            to={to}
+            className={({ isActive }) => `sidebar-link${isActive ? " active" : ""}`}
+          >
+            <span className="sidebar-link-icon">{icon}</span>
+            {label}
+          </NavLink>
+        ))}
+      </nav>
 
-        <div 
-          className="dropdown" 
-          ref={notifRef}
-          onMouseEnter={() => setShowNotifications(true)}
-          onMouseLeave={() => setShowNotifications(false)}
-        >
-            <button className="dropbtn">Notifications ▼</button>
-
-        <div className={`dropdown-content ${showNotifications ? 'show' : ''}`}>
-            {notifications.length > 0 ? (
-              notifications.map((item, index) => (
-                <a key={index} style={{ fontSize: '0.9rem', padding: '8px 12px' }}>{item}</a>
-              ))
-            ) : (
-              <a style={{ fontSize: '0.9rem', padding: '8px 12px' }}>Loading notifications...</a>
-            )}
-        </div>
-        </div>
-
-        {/* Account */}
-        <div 
-          className="dropdown"
-          ref={accountRef}
-          onMouseEnter={() => setShowAccount(true)}
-          onMouseLeave={() => setShowAccount(false)}
-        >
-          <button className="dropbtn">Account  ▼</button>
-          <div className={`dropdown-content ${showAccount ? 'show' : ''}`}>
-            <Link to="/accountSettings">Update User Information</Link>
-            <a href="#" onClick={doLogout}>Logout</a>
+      {/* Portfolio summary */}
+      {user && portfolioValue !== null && (
+        <div className="sidebar-portfolio">
+          <div className="sidebar-portfolio-row">
+            <span className="sidebar-portfolio-label">Portfolio</span>
+            <span className="sidebar-portfolio-value num">${fmt(portfolioValue)}</span>
+          </div>
+          <div className="sidebar-portfolio-row">
+            <span className="sidebar-portfolio-label">Buying Power</span>
+            <span className="sidebar-portfolio-value num">
+              ${buyingPower !== null ? fmt(buyingPower) : "—"}
+            </span>
           </div>
         </div>
+      )}
 
+      {/* Footer */}
+      <div className="sidebar-footer">
+        {user && (
+          <div className="sidebar-user">
+            <div className="sidebar-user-avatar">
+              {user.firstName?.[0]}
+              {user.lastName?.[0]}
+            </div>
+            <div className="sidebar-user-name">
+              {user.firstName} {user.lastName}
+            </div>
+          </div>
+        )}
+        <button className="sidebar-logout" onClick={handleLogout}>
+          Sign out
+        </button>
       </div>
-    </div>
+    </aside>
   );
 };
 

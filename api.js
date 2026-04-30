@@ -2003,5 +2003,46 @@ function getPeriodStartDate(period) {
     return startDate;
 }
 
+    // TRADE POSITIONS
+    router.post('/trades', async (req, res) => {
+        const { userId } = req.body;
+        if (!userId) return res.status(400).json({ error: 'userId required' });
+        try {
+            const db = client.db('Finance-app');
+            const trades = await db.collection('Trades').find({ userId: parseInt(userId) }).toArray();
+            if (!trades.length) return res.status(200).json({ trades: [] });
+
+            const symbols = [...new Set(trades.map(t => t.tickerSymbol))];
+            const priceData = await stockService.getMultiplePrices(symbols);
+            const prices = priceData.prices || priceData;
+
+            const enriched = trades.map(t => {
+                const currentPrice = prices[t.tickerSymbol] || t.currentPrice || 0;
+                const currentValue = currentPrice * t.quantity;
+                const gain = currentValue - (t.totalCost || 0);
+                const gainPercent = t.totalCost > 0 ? (gain / t.totalCost) * 100 : 0;
+                return {
+                    id: t._id.toString(),
+                    symbol: t.tickerSymbol,
+                    name: t.cardName,
+                    quantity: t.quantity,
+                    avgCost: t.purchasePrice,
+                    currentPrice,
+                    totalCost: t.totalCost || 0,
+                    currentValue,
+                    gain,
+                    gainPercent,
+                    purchaseDate: t.purchaseDate || t.createdAt || null,
+                };
+            });
+
+            enriched.sort((a, b) => a.symbol.localeCompare(b.symbol));
+            return res.status(200).json({ trades: enriched });
+        } catch (e) {
+            console.error('Trades error:', e);
+            return res.status(500).json({ error: e.toString() });
+        }
+    });
+
     return router;
 }    

@@ -8,53 +8,21 @@ interface WatchlistItem {
   symbol: string;
   name: string;
   currentPrice: number;
-  change: number;
-  changePercent: number;
-  dailyPriceChange?: number;
-  dailyPercentChange?: number;
+  dailyPriceChange: number;
+  dailyPercentChange: number;
 }
 
-interface DailyChange {
-  symbol: string;
-  priceChange: number;
-  percentChange: number;
-  currentPrice: number;
-  previousClose: number;
-}
-
-async function fetchDailyStockChange(symbol: string): Promise<DailyChange | null> {
+async function fetchDailyChange(symbol: string) {
   try {
-    console.log(`Fetching daily change for ${symbol}...`);
-    
-    const response = await fetch(buildPath("stock/daily-change"), {
+    const res = await fetch(buildPath("stock/daily-change"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ symbol })
+      body: JSON.stringify({ symbol }),
     });
-    
-    if (!response.ok) {
-      return null;
-    }
-    
-    const data = await response.json();
-    
-    if (data.error) {
-      return null;
-    }
-    
-    console.log(`${symbol} - Current: $${data.currentPrice}, Change: $${data.priceChange.toFixed(2)} (${data.percentChange.toFixed(2)}%)`);
-    
-    return {
-      symbol: data.symbol,
-      priceChange: data.priceChange,
-      percentChange: data.percentChange,
-      currentPrice: data.currentPrice,
-      previousClose: data.previousClose
-    };
-  } catch (error) {
-   
-    return null;
-  }
+    const data = await res.json();
+    if (data.error) return null;
+    return { priceChange: data.priceChange, percentChange: data.percentChange, currentPrice: data.currentPrice };
+  } catch { return null; }
 }
 
 export default function WatchlistSection() {
@@ -62,112 +30,73 @@ export default function WatchlistSection() {
   const { user } = useAuth();
   const userId = user?.userId;
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   async function fetchWatchlist() {
-    if (!userId) {
-      console.error("No userId found from AuthContext");
-      return;
-    }
-
+    if (!userId) return;
     try {
       const res = await fetch(buildPath("watchlist"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId })
+        body: JSON.stringify({ userId }),
       });
-
       const data = await res.json();
+      if (!data?.watchlist) return;
 
-      if (data && data.watchlist) {
-        
-        
-        // Fetch daily changes for each watchlist item
-        const watchlistWithDailyChange = await Promise.all(
-          data.watchlist.map(async (item: any) => {
-           
-            const dailyChange = await fetchDailyStockChange(item.symbol);
-            
-            return {
-              symbol: item.symbol,
-              name: item.name,
-              currentPrice: dailyChange?.currentPrice || item.currentPrice,
-              change: item.change,
-              changePercent: item.changePercent,
-              dailyPriceChange: dailyChange?.priceChange || 0,
-              dailyPercentChange: dailyChange?.percentChange || 0
-            };
-          })
-        );
-
-        
-        setWatchlist(watchlistWithDailyChange);
-      }
-    } catch (err) {
-      console.error("Error fetching watchlist:", err);
-    }
+      const enriched = await Promise.all(
+        data.watchlist.map(async (item: any) => {
+          const dc = await fetchDailyChange(item.symbol);
+          return {
+            symbol: item.symbol,
+            name: item.name,
+            currentPrice: dc?.currentPrice ?? item.currentPrice ?? 0,
+            dailyPriceChange: dc?.priceChange ?? 0,
+            dailyPercentChange: dc?.percentChange ?? 0,
+          };
+        })
+      );
+      setWatchlist(enriched);
+    } catch { /* ignore */ }
   }
 
   useEffect(() => {
     fetchWatchlist();
-
-    // Auto-refresh every 10 seconds
-    intervalRef.current = setInterval(() => {
-      fetchWatchlist();
-    }, 1000);
-
-    // Listen for manual refresh events
+    intervalRef.current = setInterval(fetchWatchlist, 15_000);
     const handler = () => fetchWatchlist();
     window.addEventListener("refreshWatchlist", handler);
-
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      if (intervalRef.current) clearInterval(intervalRef.current);
       window.removeEventListener("refreshWatchlist", handler);
     };
   }, [userId]);
 
+  const fmt = (n: number) => n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
   return (
-    <div className="watchlist-container">
-      <h2 className="watchlist-title">Watchlist</h2>
-      <div className="watchlist-list">
-        {watchlist.map((stock) => (
-          <div
-            key={stock.symbol}
-            className="watchlist-item"
-            onClick={() => navigate(`/stock/${stock.symbol}`)}
-          >
-            <div className="watchlist-item-info">
-              <div className="holdings-left">
-                <div className="holdings-stock-symbol">{stock.symbol}</div>
-                <div className="holdings-quantity">
-                  {stock.name}
+    <div>
+      <p className="panel-title">Watchlist</p>
+      {watchlist.length === 0 ? (
+        <div className="panel-empty">No stocks added yet</div>
+      ) : (
+        <div className="watchlist-list">
+          {watchlist.map(s => {
+            const up = s.dailyPercentChange >= 0;
+            return (
+              <div key={s.symbol} className="watchlist-row" onClick={() => navigate(`/stock/${s.symbol}`)}>
+                <div className="row-left">
+                  <span className="row-symbol">{s.symbol}</span>
+                  <span className="row-sub">{s.name}</span>
+                </div>
+                <div className="row-right">
+                  <span className="row-price num">${fmt(s.currentPrice)}</span>
+                  <span className={`row-change ${up ? 'up' : 'down'}`}>
+                    {up ? '+' : ''}{s.dailyPercentChange.toFixed(2)}%
+                  </span>
                 </div>
               </div>
-
-              <div className="holdings-right">
-                <div className="holdings-stock-price">
-                  ${stock.currentPrice.toFixed(2)}
-                </div>
-
-                <div className="watchlist-change-group">
-                  <div className={`stock-change ${(stock.dailyPriceChange ?? 0) >= 0 ? "positive" : "negative"}`}>
-                    {(stock.dailyPriceChange ?? 0) >= 0 ? "$+" : "$"}
-                    {stock.dailyPriceChange?.toFixed(2) || "0.00"}
-                  </div>
-                  <div className={`stock-change-percent ${(stock.dailyPercentChange ?? 0) >= 0 ? "positive" : "negative"}`}>
-                    {(stock.dailyPercentChange ?? 0) >= 0 ? "+" : ""}
-                    {stock.dailyPercentChange?.toFixed(2) || "0.00"}%
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-      {watchlist.length === 0 && (
-        <div className="watchlist-empty" style={{ padding: "12px", textAlign: "center", color: "black" }}>No stocks in watchlist</div>
+            );
+          })}
+        </div>
       )}
     </div>
   );
