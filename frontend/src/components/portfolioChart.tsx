@@ -1,43 +1,9 @@
-import { useState, useEffect, forwardRef, useImperativeHandle, useMemo, memo, useRef } from 'react';
-import {
-  StockChartComponent,
-  StockChartSeriesCollectionDirective,
-  StockChartSeriesDirective,
-  Inject,
-  Crosshair,
-  DateTime,
-  SplineAreaSeries,
-  LineSeries,
-  SplineSeries,
-  RangeTooltip,
-  Tooltip,
-  Legend,
-  IStockChartEventArgs,
-  PeriodSelector
-} from "@syncfusion/ej2-react-charts";
-
+import { useState, useEffect, forwardRef, useImperativeHandle, memo, useRef } from 'react';
+import { createChart, AreaSeries, LineSeries } from 'lightweight-charts';
+import type { IChartApi, ISeriesApi } from 'lightweight-charts';
 import { buildPath } from "../../Path";
-import "@syncfusion/ej2-base/styles/material.css";
 
-const SAMPLE_CSS = `
-  .chart-gradient stop[offset="0"] { stop-opacity: 0.5; }
-  .chart-gradient stop[offset="0.3"] { stop-opacity: 0.4; }
-  .chart-gradient stop[offset="0.6"] { stop-opacity: 0.2; }
-  .chart-gradient stop[offset="1"] { stop-opacity: 0; }
-  
-  .control-pane {
-    text-align: left !important;
-  }
-  
-  #portfoliochart_stockChart_toolbar,
-  #portfoliochart_stockChart_PeriodsSelector,
-  #portfoliochart_stockChart_Indicator,
-  .e-stockchart-toolbar,
-  .e-period-selector,
-  .e-toolbar-item {
-    display: none !important;
-  }
-
+const STATS_CSS = `
   .portfolio-stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -47,41 +13,25 @@ const SAMPLE_CSS = `
     background: #f5f5f5;
     border-radius: 8px;
   }
-
   .stat-card {
     padding: 12px;
     background: white;
     border-radius: 6px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   }
-
   .stat-label {
     font-size: 12px;
     color: #666;
     margin-bottom: 4px;
   }
-
   .stat-value {
     font-size: 20px;
     font-weight: bold;
     color: #333;
   }
-
-  .stat-value.positive {
-    color: #00802f;
-  }
-
-  .stat-value.negative {
-    color: #d03535;
-  }
+  .stat-value.positive { color: #00802f; }
+  .stat-value.negative { color: #d03535; }
 `;
-
-const themes = [
-  "bootstrap5", "bootstrap5dark", "tailwind", "tailwinddark", "material", "materialdark",
-  "bootstrap4", "bootstrap", "bootstrapdark", "fabric", "fabricdark", "highcontrast",
-  "fluent", "fluentdark", "material3", "material3dark", "fluent2", "fluent2highcontrast",
-  "fluent2dark", "tailwind3", "tailwind3dark"
-];
 
 interface PortfolioChartProps {
   userId: string | number;
@@ -107,15 +57,18 @@ const PortfolioChartAdvanced = forwardRef(({ userId }: PortfolioChartProps, ref)
   const [stats, setStats] = useState<PortfolioStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [isTransitioning, setIsTransitioning] = useState(false); // Track period transitions
-  
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
   const [selectedPeriod, setSelectedPeriod] = useState(() => {
     return localStorage.getItem('portfolioChartPeriod') || '1d';
   });
 
-  // Use refs to track previous values and avoid unnecessary re-renders
   const chartDataRef = useRef<ChartDataPoint[]>([]);
   const statsRef = useRef<PortfolioStats | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<IChartApi | null>(null);
+  const areaSeriesRef = useRef<ISeriesApi<'Area'> | null>(null);
+  const lineSeriesRef = useRef<ISeriesApi<'Line'> | null>(null);
 
   useImperativeHandle(ref, () => ({
     refresh: () => {
@@ -124,8 +77,74 @@ const PortfolioChartAdvanced = forwardRef(({ userId }: PortfolioChartProps, ref)
   }));
 
   useEffect(() => {
+    if (!containerRef.current) return;
+
+    const chart = createChart(containerRef.current, {
+      layout: { background: { color: '#ffffff' }, textColor: '#333' },
+      grid: { vertLines: { visible: false }, horzLines: { color: '#f0f0f0' } },
+      rightPriceScale: { borderVisible: false },
+      timeScale: { borderVisible: false, timeVisible: true },
+      width: containerRef.current.clientWidth,
+      height: 500,
+    });
+
+    const areaSeries = chart.addSeries(AreaSeries, {
+      lineColor: '#1113a1',
+      topColor: 'rgba(64, 84, 165, 0.75)',
+      bottomColor: 'rgba(64, 84, 165, 0)',
+      lineWidth: 2,
+      title: 'Portfolio Value',
+    });
+
+    const lineSeries = chart.addSeries(LineSeries, {
+      color: '#ff6b6b',
+      lineWidth: 2,
+      title: 'Total Invested',
+    });
+
+    chartRef.current = chart;
+    areaSeriesRef.current = areaSeries;
+    lineSeriesRef.current = lineSeries;
+
+    const handleResize = () => {
+      if (containerRef.current) chart.applyOptions({ width: containerRef.current.clientWidth });
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      chart.remove();
+      chartRef.current = null;
+      areaSeriesRef.current = null;
+      lineSeriesRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!areaSeriesRef.current || !lineSeriesRef.current || !chartData.length) return;
+
+    const seen = new Set<number>();
+    const sorted = [...chartData]
+      .sort((a, b) => a.x.getTime() - b.x.getTime())
+      .filter(item => {
+        const t = Math.floor(item.x.getTime() / 1000);
+        if (seen.has(t)) return false;
+        seen.add(t);
+        return true;
+      });
+
+    type LWTime = import('lightweight-charts').Time;
+    const areaData = sorted.map(d => ({ time: Math.floor(d.x.getTime() / 1000) as unknown as LWTime, value: d.portfolioValue }));
+    const lineData = sorted.map(d => ({ time: Math.floor(d.x.getTime() / 1000) as unknown as LWTime, value: d.totalInvested }));
+
+    areaSeriesRef.current.setData(areaData);
+    lineSeriesRef.current.setData(lineData);
+    chartRef.current?.timeScale().fitContent();
+  }, [chartData]);
+
+  useEffect(() => {
     fetchPortfolioData(selectedPeriod, true);
-    
+
     const interval = setInterval(() => {
       fetchPortfolioData(selectedPeriod, false);
     }, 10000);
@@ -133,20 +152,16 @@ const PortfolioChartAdvanced = forwardRef(({ userId }: PortfolioChartProps, ref)
     return () => clearInterval(interval);
   }, [userId, selectedPeriod]);
 
-  const fetchPortfolioData = async (period: string = '1d', showLoading: boolean = true): Promise<void> => {
-    
+  const fetchPortfolioData = async (period = '1d', showLoading = true): Promise<void> => {
     try {
-      if (showLoading) {
-        setLoading(true);
-      }
+      if (showLoading) setLoading(true);
       setError("");
-      
+
       const performanceResponse = await fetch(buildPath('portfolio/performance'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, period })
       });
-      
       const performanceData = await performanceResponse.json();
 
       const summaryResponse = await fetch(buildPath('portfolio/summary'), {
@@ -154,7 +169,6 @@ const PortfolioChartAdvanced = forwardRef(({ userId }: PortfolioChartProps, ref)
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId })
       });
-
       const summaryData = await summaryResponse.json();
 
       if (performanceData.error || summaryData.error) {
@@ -162,25 +176,21 @@ const PortfolioChartAdvanced = forwardRef(({ userId }: PortfolioChartProps, ref)
         return;
       }
 
-      if (performanceData.performance && performanceData.performance.length > 0) {
-        const formattedData = performanceData.performance.map((item: any) => ({
+      if (performanceData.performance?.length > 0) {
+        const formattedData: ChartDataPoint[] = performanceData.performance.map((item: any) => ({
           x: new Date(item.timestamp),
           portfolioValue: item.portfolioValue,
           totalInvested: item.totalInvested,
           gain: item.gain
         }));
 
-        // More robust comparison - check if data actually changed
         let shouldUpdate = false;
-        
         if (chartDataRef.current.length !== formattedData.length) {
           shouldUpdate = true;
         } else if (formattedData.length > 0 && chartDataRef.current.length > 0) {
           const lastPrev = chartDataRef.current[chartDataRef.current.length - 1];
           const lastNew = formattedData[formattedData.length - 1];
-          
-          if (lastPrev.portfolioValue !== lastNew.portfolioValue ||
-              lastPrev.totalInvested !== lastNew.totalInvested) {
+          if (lastPrev.portfolioValue !== lastNew.portfolioValue || lastPrev.totalInvested !== lastNew.totalInvested) {
             shouldUpdate = true;
           }
         }
@@ -200,7 +210,7 @@ const PortfolioChartAdvanced = forwardRef(({ userId }: PortfolioChartProps, ref)
       }
 
       if (summaryData.portfolio) {
-        const newStats = {
+        const newStats: PortfolioStats = {
           currentValue: parseFloat(summaryData.portfolio.totalPortfolioValue) || 0,
           totalInvested: parseFloat(summaryData.portfolio.totalInvested) || 0,
           totalGain: parseFloat(summaryData.portfolio.totalGain) || 0,
@@ -208,66 +218,36 @@ const PortfolioChartAdvanced = forwardRef(({ userId }: PortfolioChartProps, ref)
           buyingPower: parseFloat(summaryData.portfolio.buyingPower) || 0
         };
 
-        // Check if stats actually changed using refs
-        let statsChanged = false;
-        
-        if (!statsRef.current) {
-          statsChanged = true;
-        } else {
-          if (statsRef.current.currentValue !== newStats.currentValue ||
-              statsRef.current.totalGain !== newStats.totalGain ||
-              statsRef.current.buyingPower !== newStats.buyingPower ||
-              statsRef.current.totalInvested !== newStats.totalInvested) {
-            statsChanged = true;
-          }
-        }
+        const statsChanged = !statsRef.current ||
+          statsRef.current.currentValue !== newStats.currentValue ||
+          statsRef.current.totalGain !== newStats.totalGain ||
+          statsRef.current.buyingPower !== newStats.buyingPower ||
+          statsRef.current.totalInvested !== newStats.totalInvested;
 
         if (statsChanged) {
           statsRef.current = newStats;
           setStats(newStats);
         }
       }
-
     } catch (err) {
       setError("Failed to load portfolio data");
     } finally {
-      if (showLoading) {
-        setLoading(false);
-      }
+      if (showLoading) setLoading(false);
     }
-  };
-
-  const load = (args: IStockChartEventArgs) => {
-    // Load customizations if needed
   };
 
   const handlePeriodChange = (period: string) => {
     setSelectedPeriod(period);
     localStorage.setItem('portfolioChartPeriod', period);
-    setIsTransitioning(true); // Mark as transitioning
+    setIsTransitioning(true);
     fetchPortfolioData(period, false).then(() => {
-      setIsTransitioning(false); // Done transitioning
+      setIsTransitioning(false);
     });
   };
 
-  const memoizedChartData = useMemo(() => chartData, [chartData]);
-
-  if (loading) {
-    return (
-      <div className="control-pane" style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '400px'
-      }}>
-        Loading portfolio chart...
-      </div>
-    );
-  }
-
   return (
-    <div className="control-pane">
-      <style>{SAMPLE_CSS}</style>
+    <div>
+      <style>{STATS_CSS}</style>
 
       {stats && (
         <div className="portfolio-stats">
@@ -299,12 +279,7 @@ const PortfolioChartAdvanced = forwardRef(({ userId }: PortfolioChartProps, ref)
         </div>
       )}
 
-      <div style={{ 
-        display: 'flex', 
-        gap: '10px', 
-        marginBottom: '15px',
-        flexWrap: 'wrap'
-      }}>
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '15px', flexWrap: 'wrap' }}>
         {['1d', '5d', '1mo', '3mo', '1y', 'ytd', 'all'].map(period => (
           <button
             key={period}
@@ -327,125 +302,25 @@ const PortfolioChartAdvanced = forwardRef(({ userId }: PortfolioChartProps, ref)
         ))}
       </div>
 
-      <svg style={{ height: 0 }}>
-        <defs>
-          {themes.map((theme) => (
-            <linearGradient
-              key={theme}
-              id={`${theme}-gradient-portfolio`}
-              className="chart-gradient"
-              x1="0"
-              x2="0"
-              y1="0"
-              y2="1"
-            >
-              <stop offset="0"></stop>
-              <stop offset="0.3"></stop>
-              <stop offset="0.6"></stop>
-              <stop offset="1"></stop>
-            </linearGradient>
-          ))}
-        </defs>
-      </svg>
-
-      <StockChartComponent
-        id="portfoliochart"
-        title="Portfolio Performance History"
-        load={load}
-        theme="Material3"
-        indicatorType={[]}
-        trendlineType={[]}
-        exportType={[]}
-        enableSelector={false}
-        enablePeriodSelector={false}
-        height='500'
-        primaryXAxis={{
-          valueType: "DateTime",
-          majorGridLines: { width: 0 },
-          crosshairTooltip: { enable: true }
-        }}
-        primaryYAxis={{
-          title: 'Value ($)',
-          lineStyle: { color: "transparent" },
-          majorTickLines: { color: "transparent", height: 0 },
-          labelFormat: '${value}',
-          minimum: 0
-        }}
-        tooltip={{
-          enable: true,
-          format: "<b>${point.x}</b><br/>Portfolio Value: <b>$${point.y}</b>",
-          shared: false
-        }}
-        crosshair={{
-          enable: true,
-          lineType: "Both",
-          snapToData: true,
-          dashArray: "5, 5"
-        }}
-        chartArea={{ border: { width: 0 } }}
-      >
-        <Inject
-          services={[
-            DateTime,
-            SplineAreaSeries,
-            LineSeries,
-            SplineSeries,
-            RangeTooltip,
-            Tooltip,
-            Crosshair,
-            Legend
-          ]}
-        />
-
-        <StockChartSeriesCollectionDirective>
-          <StockChartSeriesDirective
-            dataSource={memoizedChartData}
-            xName="x"
-            yName="portfolioValue"
-            type="SplineArea"
-            name="Portfolio Value"
-            fill="#4054a5ff"
-            border={{
-              width: 2,
-              color: "#1113a1ff"
-            }}
-            opacity={0.75}
-            animation={{ enable: false }}
-          />
-
-          <StockChartSeriesDirective
-            dataSource={memoizedChartData}
-            xName="x"
-            yName="totalInvested"
-            type="Spline"
-            name="Total Invested"
-            fill="transparent"
-            border={{
-              width: 2,
-              color: "#ff6b6b",
-              dashArray: "5,5"
-            }}
-            animation={{ enable: false }}
-          />
-        </StockChartSeriesCollectionDirective>
-      </StockChartComponent>
+      <div style={{ position: 'relative', height: '500px' }}>
+        {loading && (
+          <div style={{
+            position: 'absolute', inset: 0, display: 'flex',
+            justifyContent: 'center', alignItems: 'center',
+            background: 'white', zIndex: 1
+          }}>
+            Loading portfolio chart...
+          </div>
+        )}
+        <div ref={containerRef} style={{ height: '500px' }} />
+      </div>
 
       {error && (
-        <div style={{
-          color: 'red',
-          padding: '10px',
-          textAlign: 'center'
-        }}>
-          {error}
-        </div>
+        <div style={{ color: 'red', padding: '10px', textAlign: 'center' }}>{error}</div>
       )}
 
       {chartData.length === 0 && !error && !loading && (
-        <div style={{
-          padding: '20px',
-          textAlign: 'center',
-          color: '#666'
-        }}>
+        <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
           No portfolio history available yet. Start trading to build your history!
         </div>
       )}

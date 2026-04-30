@@ -1,47 +1,14 @@
-import { useState, useEffect } from 'react';
-import {StockChartComponent,StockChartSeriesCollectionDirective,StockChartSeriesDirective,Inject,Crosshair,DateTime,SplineAreaSeries,
-  LineSeries,SplineSeries,CandleSeries,HiloOpenCloseSeries,HiloSeries,RangeAreaSeries,Trendlines,RangeTooltip,Tooltip,EmaIndicator,RsiIndicator,
-  BollingerBands,TmaIndicator,MomentumIndicator,SmaIndicator,AtrIndicator,AccumulationDistributionIndicator,MacdIndicator,StochasticIndicator,Export,IStockChartEventArgs
-} from "@syncfusion/ej2-react-charts";
-
+import { useState, useEffect, useRef } from 'react';
+import { createChart, AreaSeries } from 'lightweight-charts';
+import type { IChartApi, ISeriesApi } from 'lightweight-charts';
 import { buildPath } from "../../Path";
-import "@syncfusion/ej2-base/styles/material.css";
-
-const SAMPLE_CSS = `
-  .chart-gradient stop[offset="0"] { stop-opacity: 0.5; }
-  .chart-gradient stop[offset="0.3"] { stop-opacity: 0.4; }
-  .chart-gradient stop[offset="0.6"] { stop-opacity: 0.2; }
-  .chart-gradient stop[offset="1"] { stop-opacity: 0; }
-  
-  /* Control pane layout fix */
-  .control-pane {
-    text-align: left !important;
-  }
-  
-  /* HIDE ALL SYNCFUSION TOOLBAR ELEMENTS */
-  #stockchartsplinearea_stockChart_toolbar,
-  #stockchartsplinearea_stockChart_PeriodsSelector,
-  #stockchartsplinearea_stockChart_Indicator,
-  .e-stockchart-toolbar,
-  .e-period-selector,
-  .e-toolbar-item {
-    display: none !important;
-  }
-`;
-
-const themes = [
-  "bootstrap5","bootstrap5dark","tailwind","tailwinddark","material","materialdark",
-  "bootstrap4","bootstrap","bootstrapdark","fabric","fabricdark","highcontrast",
-  "fluent","fluentdark","material3","material3dark","fluent2","fluent2highcontrast",
-  "fluent2dark","tailwind3","tailwind3dark"
-];
 
 interface StockChartProps {
   symbol: string;
 }
 
-interface ChartDataPoint {
-  x: Date;
+interface RawDataPoint {
+  x: string | Date;
   high: number;
   low: number;
   open: number;
@@ -50,20 +17,57 @@ interface ChartDataPoint {
 }
 
 const SplineArea = ({ symbol }: StockChartProps) => {
-  const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState('1y');
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<IChartApi | null>(null);
+  const seriesRef = useRef<ISeriesApi<'Area'> | null>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const chart = createChart(containerRef.current, {
+      layout: { background: { color: '#ffffff' }, textColor: '#333' },
+      grid: { vertLines: { visible: false }, horzLines: { color: '#f0f0f0' } },
+      rightPriceScale: { borderVisible: false },
+      timeScale: { borderVisible: false, timeVisible: true },
+      width: containerRef.current.clientWidth,
+      height: 400,
+    });
+
+    const series = chart.addSeries(AreaSeries, {
+      lineColor: '#1113a1',
+      topColor: 'rgba(64, 84, 165, 0.75)',
+      bottomColor: 'rgba(64, 84, 165, 0)',
+      lineWidth: 2,
+    });
+
+    chartRef.current = chart;
+    seriesRef.current = series;
+
+    const handleResize = () => {
+      if (containerRef.current) chart.applyOptions({ width: containerRef.current.clientWidth });
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      chart.remove();
+      chartRef.current = null;
+      seriesRef.current = null;
+    };
+  }, []);
+
   useEffect(() => {
     fetchStockHistory(symbol, selectedPeriod, true);
     fetchCurrentPrice(symbol);
 
-    // Auto-refresh every 5 seconds for real-time price updates
     const interval = setInterval(() => {
       fetchCurrentPrice(symbol);
-      fetchStockHistory(symbol, selectedPeriod, false); // Silent refresh
+      fetchStockHistory(symbol, selectedPeriod, false);
     }, 5000);
 
     return () => clearInterval(interval);
@@ -76,10 +80,8 @@ const SplineArea = ({ symbol }: StockChartProps) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ symbols: [ticker.toUpperCase()] })
       });
-      
       const data = await response.json();
-      
-      if (data.prices && data.prices[ticker.toUpperCase()]) {
+      if (data.prices?.[ticker.toUpperCase()]) {
         setCurrentPrice(data.prices[ticker.toUpperCase()]);
       }
     } catch (err) {
@@ -87,106 +89,65 @@ const SplineArea = ({ symbol }: StockChartProps) => {
     }
   };
 
-  const fetchStockHistory = async (ticker: string, period: string = '1y', showLoading: boolean = true) => {
+  const fetchStockHistory = async (ticker: string, period = '1y', showLoading = true) => {
     try {
-      // Only show loading on initial load or period change
-      if (showLoading) {
-        setLoading(true);
-      }
+      if (showLoading) setLoading(true);
       setError("");
-      
+
       const response = await fetch(buildPath(`stock/history/${ticker}?period=${period}`));
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
       const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("Server returned non-JSON response");
-      }
-      
+      if (!contentType?.includes("application/json")) throw new Error("Server returned non-JSON response");
+
       const data = await response.json();
-      
-      if (data.error || !data.data || data.data.length === 0) {
+
+      if (data.error || !data.data?.length) {
         setError(data.error || "No data available");
-        setChartData([{ 
-          x: new Date(), 
-          high: 100, 
-          low: 95, 
-          open: 98, 
-          close: 99, 
-          volume: 1000000 
-        }]);
-      } else {
-        // Convert date strings back to Date objects
-        const formattedData = data.data.map((item: any) => ({
-          ...item,
-          x: new Date(item.x)
-        }));
-        setChartData(formattedData);
-        
-        // If price API failed, use last close price from chart data
-        if (!currentPrice && formattedData.length > 0) {
-          const latestData = formattedData[formattedData.length - 1];
-          setCurrentPrice(latestData.close);
-        }
+        return;
+      }
+
+      const seen = new Set<number>();
+      const chartData = (data.data as RawDataPoint[])
+        .map(item => ({
+          time: Math.floor(new Date(item.x).getTime() / 1000) as unknown as import('lightweight-charts').Time,
+          value: item.high,
+        }))
+        .sort((a, b) => (a.time as number) - (b.time as number))
+        .filter(item => {
+          const t = item.time as number;
+          if (seen.has(t)) return false;
+          seen.add(t);
+          return true;
+        });
+
+      if (seriesRef.current) {
+        seriesRef.current.setData(chartData);
+        chartRef.current?.timeScale().fitContent();
+      }
+
+      if (!currentPrice && data.data.length > 0) {
+        setCurrentPrice(data.data[data.data.length - 1].close);
       }
     } catch (err) {
       console.error("Error fetching stock history:", err);
       setError("Failed to load chart data");
-      setChartData([{ 
-        x: new Date(), 
-        high: 100, 
-        low: 95, 
-        open: 98, 
-        close: 99, 
-        volume: 1000000 
-      }]);
     } finally {
-      if (showLoading) {
-        setLoading(false);
-      }
+      if (showLoading) setLoading(false);
     }
   };
 
-  const handlePeriodChange = (period: string) => {
-    setSelectedPeriod(period);
-    fetchStockHistory(symbol, period, false); // Silent refresh for smooth transition
-  };
-
-  const load = (args: IStockChartEventArgs) => {
-    // Load customizations
-  };
-
-  if (loading) {
-    return (
-      <div className="control-pane" style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '400px' 
-      }}>
-        Loading {symbol} chart...
-      </div>
-    );
-  }
-
   return (
-    <div className="control-pane">
-      <style>{SAMPLE_CSS}</style>
+    <div>
+      <h2 style={{ fontFamily: 'Segoe UI', fontWeight: '600', fontSize: '24px', color: '#19005e', margin: '0 0 15px 0' }}>
+        {currentPrice ? `${symbol} - $${currentPrice.toFixed(2)}` : `${symbol} Stock Price`}
+      </h2>
 
-      {/* Custom Period Selector Buttons */}
-      <div style={{ 
-        display: 'flex', 
-        gap: '10px', 
-        marginBottom: '15px',
-        flexWrap: 'wrap'
-      }}>
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '15px', flexWrap: 'wrap' }}>
         {['1d', '5d', '1mo', '3mo', '6mo', '1y', '5y', 'max'].map(period => (
           <button
             key={period}
-            onClick={() => handlePeriodChange(period)}
+            onClick={() => setSelectedPeriod(period)}
             style={{
               padding: '8px 16px',
               borderRadius: '6px',
@@ -203,117 +164,20 @@ const SplineArea = ({ symbol }: StockChartProps) => {
         ))}
       </div>
 
-      <svg style={{ height: 0 }}>
-        <defs>
-          {themes.map((theme) => (
-            <linearGradient
-              key={theme}
-              id={`${theme}-gradient-chart`}
-              className="chart-gradient"
-              x1="0"
-              x2="0"
-              y1="0"
-              y2="1"
-            >
-              <stop offset="0"></stop>
-              <stop offset="0.3"></stop>
-              <stop offset="0.6"></stop>
-              <stop offset="1"></stop>
-            </linearGradient>
-          ))}
-        </defs>
-      </svg>
+      <div style={{ position: 'relative', height: '400px' }}>
+        {loading && (
+          <div style={{
+            position: 'absolute', inset: 0, display: 'flex',
+            justifyContent: 'center', alignItems: 'center',
+            background: 'white', zIndex: 1
+          }}>
+            Loading {symbol} chart...
+          </div>
+        )}
+        <div ref={containerRef} style={{ height: '400px' }} />
+      </div>
 
-      <StockChartComponent
-        id="stockchartsplinearea"
-        title={currentPrice ? `${symbol} - $${currentPrice.toFixed(2)}` : `${symbol} Stock Price`}
-        titleStyle={{
-          fontFamily: 'Segoe UI',
-          fontWeight: '600',
-          size: '24px',
-          color: '#19005eff'
-        }}
-        load={load}
-        theme="Material3"
-        indicatorType={[]}
-        trendlineType={[]}
-        exportType={[]}
-        enableSelector={false}
-        enablePeriodSelector={false}
-        primaryXAxis={{
-          valueType: "DateTime",
-          majorGridLines: { width: 0 },
-          crosshairTooltip: { enable: true }
-        }}
-        primaryYAxis={{
-          lineStyle: { color: "transparent" },
-          majorTickLines: { color: "transparent", height: 0 },
-        }}
-        tooltip={{
-          enable: true,
-          format: "<b>${point.x}</b><br/>Stock Price: <b>${point.y}</b>",
-        }}
-        crosshair={{
-          enable: true,
-          lineType: "Both",
-          snapToData: true,
-          dashArray: "5, 5"
-        }}
-        chartArea={{ border: { width: 0 } }}
-      >
-        <Inject
-          services={[
-            DateTime,
-            SplineAreaSeries,
-            RangeTooltip,
-            Tooltip,
-            Crosshair,
-            LineSeries,
-            SplineSeries,
-            CandleSeries,
-            HiloOpenCloseSeries,
-            HiloSeries,
-            RangeAreaSeries,
-            Trendlines,
-            EmaIndicator,
-            RsiIndicator,
-            BollingerBands,
-            TmaIndicator,
-            MomentumIndicator,
-            SmaIndicator,
-            AtrIndicator,
-            Export,
-            AccumulationDistributionIndicator,
-            MacdIndicator,
-            StochasticIndicator
-          ]}
-        />
-
-        <StockChartSeriesCollectionDirective>
-          <StockChartSeriesDirective
-            dataSource={chartData}
-            xName="x"
-            yName="high"
-            type="SplineArea"
-            fill="#4054a5ff"
-            border={{ 
-              width: 2, 
-              color: "#1113a1ff"    
-            }}
-            opacity={.75}
-          />
-        </StockChartSeriesCollectionDirective>
-      </StockChartComponent>
-      
-      {error && (
-        <div style={{ 
-          color: 'red', 
-          padding: '10px', 
-          textAlign: 'center' 
-        }}>
-          {error}
-        </div>
-      )}
+      {error && <div style={{ color: 'red', padding: '10px', textAlign: 'center' }}>{error}</div>}
     </div>
   );
 };
